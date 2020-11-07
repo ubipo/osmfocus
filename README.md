@@ -1,6 +1,12 @@
- # OSMfocus Reborn
+**Fork Notice**
 
-OSMfocus Reborn is an open source tool for examining OpenStreetMap elements by moving around on a map.
+This app is a complete re-write of the now (07-11-2020) defunct OSMfocus by Network42 / MichaelVL.
+https://play.google.com/store/apps/details?id=dk.network42.osmfocus
+https://github.com/MichaelVL/osm-focus
+
+# OSMfocus Reborn
+
+OSMfocus Reborn is an open source tool for examining OpenStreetMap elements by moving around on a map. Written in Kotlin using Android Jetpack.
 
 ![Feature Graphic](images/featuregfx.png)
 
