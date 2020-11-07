@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".view.MainActivity" >
+
+    <data>
+
+        <variable
+            name="vm"
+            type="net.pfiers.osmfocus.viewmodel.MainViewModel" />
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <org.osmdroid.views.MapView
+            android:id="@+id/map"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </org.osmdroid.views.MapView>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/tagBoxLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!--            <androidx.fragment.app.FragmentContainerView-->
+            <!--                android:id="@+id/tagBoxFragment"-->
+            <!--                android:name="net.pfiers.osmfocusose.view.TagBoxFragment"-->
+            <!--                android:layout_width="wrap_content"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                tools:layout_editor_absoluteX="11dp"-->
+            <!--                tools:layout_editor_absoluteY="73dp">-->
+
+            <!--            </androidx.fragment.app.FragmentContainerView>-->
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <View
+            android:id="@+id/overlayBg"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#6D000000"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/overlayText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#77000000"
+            android:clickable="false"
+            android:gravity="center"
+            android:padding="5dp"
+            android:text="@{vm.overlayText}"
+            android:textAlignment="center"
+            android:textColor="#FFFFFF"
+            android:visibility="@{vm.overlayVisibility}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/map"
+            app:layout_constraintStart_toStartOf="@+id/map"
+            app:layout_constraintTop_toTopOf="@+id/map"
+            app:layout_constraintVertical_bias="0.45" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>
