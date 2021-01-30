@@ -20,3 +20,7 @@ fun <T> List<T>.subList(fromIndex: Int) =
 
 fun <T> List<T>.containedSubList(fromIndex: Int, toIndex: Int) =
     subList(fromIndex, min(size, toIndex))
+
+fun <T, S> Collection<T>.cartesianProduct(other: Iterable<S>): List<Pair<T, S>> {
+    return flatMap { first -> other.map { second -> Pair(first, second) } }
+}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".view.TagBoxFragment">
+    tools:context=".view.fragments.TagBoxFragment">
 
     <data>
 
@@ -13,13 +13,18 @@
             name="tagsText"
             type="String" />
 
+        <variable
+            name="frameVisibility"
+            type="int" />
+
     </data>
 
     <FrameLayout
         android:id="@+id/tagsWrapper"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@{frameBackground}">
+        android:background="@{frameBackground}"
+        android:visibility="@{frameVisibility}" >
 
         <TextView
             android:layout_width="wrap_content"

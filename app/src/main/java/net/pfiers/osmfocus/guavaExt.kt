@@ -1,6 +1,8 @@
 package net.pfiers.osmfocus
 
 import com.google.common.base.Stopwatch
+import com.google.common.eventbus.EventBus
+import com.google.common.eventbus.Subscribe
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
@@ -19,3 +21,11 @@ fun Stopwatch.restart(): Stopwatch {
     start()
     return this
 }
+
+@Suppress("UnstableApiUsage")
+fun <T> EventBus.listen(listener: (T) -> Unit) = register(object {
+    @Subscribe
+    fun recordCustomerChange(e: T) {
+        listener(e)
+    }
+})

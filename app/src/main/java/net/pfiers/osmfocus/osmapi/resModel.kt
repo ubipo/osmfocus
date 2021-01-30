@@ -4,10 +4,10 @@ import com.beust.klaxon.TypeFor
 import net.pfiers.osmfocus.osm.ElementType
 
 
-class Res(val elements: List<ResElement>)
+class OsmApiRes(val elements: List<OsmApiElement>)
 
 @TypeFor(field = "type", adapter = ResElementTypeAdapter::class)
-abstract class ResElement(
+abstract class OsmApiElement(
     val type: ElementType,
     val id: Long,
     val version: Int,
@@ -16,7 +16,7 @@ abstract class ResElement(
     val tags: Map<String, String>?
 )
 
-class ResNode(
+class OsmApiNode(
     type: ElementType,
     id: Long,
     version: Int,
@@ -25,9 +25,9 @@ class ResNode(
     val lat: Double,
     val lon: Double,
     tags: Map<String, String>? = null,
-): ResElement(type, id, version, changeset, uid, tags)
+): OsmApiElement(type, id, version, changeset, uid, tags)
 
-class ResWay(
+class OsmApiWay(
     type: ElementType,
     id: Long,
     version: Int,
@@ -35,7 +35,7 @@ class ResWay(
     uid: Int,
     val nodes: List<Long>,
     tags: Map<String, String>? = null
-) : ResElement(type, id, version, changeset, uid, tags)
+) : OsmApiElement(type, id, version, changeset, uid, tags)
 
 class ResRelationMember(
     val type: ElementType,
@@ -43,7 +43,7 @@ class ResRelationMember(
     val role: String
 )
 
-class ResRelation(
+class OsmApiRelation(
     type: ElementType,
     id: Long,
     version: Int,
@@ -51,4 +51,4 @@ class ResRelation(
     uid: Int,
     val members: List<ResRelationMember>,
     tags: Map<String, String>? = null
-) : ResElement(type, id, version, changeset, uid, tags)
+) : OsmApiElement(type, id, version, changeset, uid, tags)

@@ -3,7 +3,7 @@ package net.pfiers.osmfocus.tagboxlocations
 
 private typealias V = TbLoc.Y
 private typealias H = TbLoc.X
-val allTbScreenLocations = listOf(
+val tbLocations = listOf(
     TbLoc(H.LEFT,   V.TOP),
     TbLoc(H.MIDDLE, V.TOP),
     TbLoc(H.RIGHT,  V.TOP),

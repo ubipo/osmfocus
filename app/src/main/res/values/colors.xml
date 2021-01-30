@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
+    <color name="colorPrimary">#F45B69</color>
+    <color name="colorPrimaryDark">#F02D3D</color>
+    <color name="colorAccent">#028090</color>
+    <color name="colorSecondary">#29335C</color>
+    <color name="listSelectionBackground">#BBDEFB</color>
     <color name="tagBox">#FFFFFF</color>
 </resources>

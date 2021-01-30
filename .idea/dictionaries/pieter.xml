@@ -2,6 +2,8 @@
   <dictionary name="pieter">
     <words>
       <w>crosshair</w>
+      <w>mvvm</w>
+      <w>subdomains</w>
     </words>
   </dictionary>
 </component>

@@ -5,19 +5,19 @@ import net.pfiers.osmfocus.osm.*
 import org.locationtech.jts.geom.Coordinate
 
 
-fun ResNode.toOsmNode(): OsmNode {
+fun OsmApiNode.toOsmNode(): OsmNode {
     val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
-    return OsmNode(BasicMeta(id, version, changeset), tagsOrEmpty, Coordinate(lon, lat))
+    return OsmNode(VersionedIdMeta(id, version), tagsOrEmpty, Coordinate(lon, lat))
 }
 
 
-fun ResWay.toOsmWay(nodeDict: Set<OsmNode>): Pair<OsmWay, Set<OsmNode>> {
+fun OsmApiWay.toOsmWay(nodeDict: Set<OsmNode>): Pair<OsmWay, Set<OsmNode>> {
     val stubElements = mutableSetOf<OsmNode>()
     val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
-    val way = OsmWay(BasicMeta(id, version, changeset), tagsOrEmpty, nodes.map { nodeId ->
-        val nodeMeta = OsmMeta(nodeId)
+    val way = OsmWay(VersionedIdMeta(id, version), tagsOrEmpty, nodes.map { nodeId ->
+        val nodeMeta = IdMeta(nodeId)
         val find = { elem: OsmNode ->
-            elem.meta looseEquals nodeMeta
+            elem.idMeta looseEquals nodeMeta
         }
         val node = nodeDict.firstOrNull(find) ?: stubElements.firstOrNull (find) ?: OsmNode(nodeId)
         stubElements.add(node)
@@ -26,13 +26,13 @@ fun ResWay.toOsmWay(nodeDict: Set<OsmNode>): Pair<OsmWay, Set<OsmNode>> {
     return Pair(way, stubElements)
 }
 
-fun ResRelation.toOsmRelation(elementDict: Set<OsmElement>): Pair<OsmRelation, Set<OsmElement>> {
+fun OsmApiRelation.toOsmRelation(elementDict: Set<OsmElement>): Pair<OsmRelation, Set<OsmElement>> {
     val stubElements = mutableSetOf<OsmElement>()
     val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
-    val relation = OsmRelation(BasicMeta(id, version, changeset), tagsOrEmpty, members.map { resMember ->
+    val relation = OsmRelation(VersionedIdMeta(id, version), tagsOrEmpty, members.map { resMember ->
         val memberCls = resMember.type.cls
         val find = { elem: OsmElement ->
-            memberCls.isInstance(elem) && elem.meta.id == resMember.ref
+            memberCls.isInstance(elem) && elem.idMeta.id == resMember.ref
         }
         val memberElem = elementDict.firstOrNull(find) ?: stubElements.firstOrNull(find) ?: resMember.type.stubElement(resMember.ref)
         stubElements.add(memberElem)
@@ -52,25 +52,39 @@ fun ResRelation.toOsmRelation(elementDict: Set<OsmElement>): Pair<OsmRelation, S
 //        else -> error("Unknown ResElement \"${ResElement::class.simpleName}\"")
 //    }
 
-fun Iterable<ResElement>.toOsmElements(): Set<OsmElement> {
+fun Iterable<OsmApiElement>.toOsmElements(
+//    elementDict: HashMap<OsmElementTypeAndId, OsmElement>
+): Set<OsmElement> {
+//    val newElementDict = HashMap(elementDict)
+
+    val resNodes = ArrayList<OsmApiNode>()
+    val resWays = ArrayList<OsmApiWay>()
+    val resRelations = ArrayList<OsmApiRelation>()
+
+    // Essentially the same as calling .filterIsInstance three times
+    for (resElement in this) {
+        when(resElement) {
+            is OsmApiNode -> resNodes.add(resElement)
+            is OsmApiWay -> resWays.add(resElement)
+            is OsmApiRelation -> resRelations.add(resElement)
+        }
+    }
+
     Log.v("AAA", "> Nodes")
-    val resNodes = this.filterIsInstance<ResNode>()
-    val nodes = resNodes.map { it.toOsmNode() }.toMutableSet()
+    val newNodes = resNodes.map { it.toOsmNode() }.toMutableSet()
     Log.v("AAA", "< Nodes")
 
     Log.v("AAA", "> Ways")
-    val resWays = this.filterIsInstance<ResWay>()
     val ways = resWays.map {
-        val (way, stubs) = it.toOsmWay(nodes)
-        nodes.addAll(stubs)
+        val (way, stubs) = it.toOsmWay(newNodes)
+        newNodes.addAll(stubs)
         way
     }
     Log.v("AAA", "< Ways")
 
-    val elements = nodes.union(ways).toMutableSet()
+    val elements = newNodes.union(ways).toMutableSet()
 
     Log.v("AAA", "> Relations")
-    val resRelations = this.filterIsInstance<ResRelation>()
     resRelations.forEach {
         val (relation, stubs) = it.toOsmRelation(elements)
         elements.add(relation)

@@ -1,0 +1,35 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+<!--    <PreferenceCategory app:title="OpenStreetMap API">-->
+
+<!--        <ListPreference-->
+<!--            app:key="@string/prefApiBaseUrl"-->
+<!--            app:title="@string/osm_api_base_url"-->
+<!--            app:defaultValue="@string/apiBaseUrlValueDefault" />-->
+
+<!--        <Preference-->
+<!--            app:key="@string/prefApiBaseUrlCustom"-->
+<!--            app:isPreferenceVisible="false" />-->
+
+<!--        <ListPreference-->
+<!--            app:key="@string/prefBaseMap"-->
+<!--            app:title="@string/base_map" />-->
+
+<!--    </PreferenceCategory>-->
+
+<!--    <PreferenceCategory app:title="@string/sync_header">-->
+
+<!--        <SwitchPreferenceCompat-->
+<!--            app:key="sync"-->
+<!--            app:title="@string/sync_title" />-->
+
+<!--        <SwitchPreferenceCompat-->
+<!--            app:dependency="sync"-->
+<!--            app:key="attachment"-->
+<!--            app:summaryOff="@string/attachment_summary_off"-->
+<!--            app:summaryOn="@string/attachment_summary_on"-->
+<!--            app:title="@string/attachment_title" />-->
+
+<!--    </PreferenceCategory>-->
+
+</PreferenceScreen>

@@ -26,3 +26,6 @@ fun Envelope.toPolygon(factory: GeometryFactory) =
         Coordinate(minX, maxY),
         Coordinate(minX, minY)
     ).toTypedArray())
+
+val Envelope.centerX get() = (minX + maxX) / 2.0
+val Envelope.centerY get() = (minY + maxY) / 2.0

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mapFragment">
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.MapFragment"
+        android:label="fragment_map"
+        tools:layout="@layout/fragment_map" >
+        <action
+            android:id="@+id/action_mapFragment_to_settingsContainerFragment"
+            app:destination="@id/settingsContainerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsContainerFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.SettingsContainerFragment"
+        android:label="Settings" >
+        <action
+            android:id="@+id/action_settingsContainerFragment_to_userBaseMapsFragment"
+            app:destination="@id/userBaseMapsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/userBaseMapsFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.BaseMapsFragment"
+        android:label="Manage Base Maps"
+        tools:layout="@layout/fragment_base_maps" >
+        <action
+            android:id="@+id/action_userBaseMapsFragment_to_addUserBaseMapFragment"
+            app:destination="@id/addUserBaseMapFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addUserBaseMapFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.AddUserBaseMapFragment"
+        android:label="Add Base Map"
+        tools:layout="@layout/fragment_add_user_base_map" />
+
+</navigation>

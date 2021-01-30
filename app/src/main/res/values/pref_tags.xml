@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="prefApiBaseUrl">prefOsmApiBaseUrl</string>
+    <string name="prefApiBaseUrlCustom">prefOsmApiBaseUrlCustom</string>
+    <string name="prefBaseMap">prefBaseMap</string>
+    <string name="prefLastLocation">prefLastLocation</string>
+</resources>

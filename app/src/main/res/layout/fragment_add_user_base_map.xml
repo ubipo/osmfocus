@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".view.fragments.AddUserBaseMapFragment">
+    
+    <data>
+        
+        <variable
+            name="vm"
+            type="net.pfiers.osmfocus.viewmodel.AddUserBaseMapVM" />
+        
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="0dp"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/colorPrimary"
+            android:theme="@style/ToolbarTheme"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:popupTheme="@style/ToolbarPopupTheme" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:paddingLeft="@dimen/fragment_horizontal_margin"
+            android:paddingTop="@dimen/fragment_vertical_margin"
+            android:paddingRight="@dimen/fragment_horizontal_margin"
+            android:paddingBottom="@dimen/fragment_vertical_margin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+            <TextView
+                android:id="@+id/nameLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_user_base_map_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <EditText
+                android:id="@+id/name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/add_user_base_map_name_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                app:error="@{vm.nameErrorRes}"
+                android:text="@={vm.name}"
+                app:onFocus="@{(view, focused) -> vm.onNameFocusChange(focused)}"
+                app:onAfterTextChanged="@{() -> vm.onNameEdit()}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/nameLabel" />
+
+            <TextView
+                android:id="@+id/urlTemplateLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/add_user_base_map_template"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/name" />
+
+            <EditText
+                android:id="@+id/urlTemplate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/add_user_base_map_url_template_hint"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:selectAllOnFocus="true"
+                app:error="@{vm.urlTemplateErrorRes}"
+                android:text="@={vm.urlTemplate}"
+                app:onFocus="@{(_, hasFocus) -> vm.onUrlTemplateFocusChange(hasFocus)}"
+                app:onAfterTextChanged="@{() -> vm.onUrlTemplateEdit()}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/urlTemplateLabel" />
+
+            <TextView
+                android:id="@+id/urlTemplateInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:autoLink="web"
+                android:text="@string/add_user_base_map_template_info"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/urlTemplate" />
+
+            <Button
+                android:id="@+id/cancelBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginEnd="16dp"
+                android:text="@string/add_base_map_cancel"
+                android:onClick="@{() -> vm.cancel()}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/addBtn" />
+
+            <Button
+                android:id="@+id/addBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:enabled="@{vm.valid}"
+                android:onClick="@{() -> vm.addUserBaseMap()}"
+                android:text="@string/add_base_map_add"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

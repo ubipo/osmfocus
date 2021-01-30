@@ -8,10 +8,10 @@ import java.util.*
 
 typealias Tags = Map<String, String>
 
-open class OsmMeta(
+open class IdMeta(
     val id: Long
 ) : Serializable {
-    infix fun looseEquals(other: OsmMeta): Boolean =
+    infix fun looseEquals(other: IdMeta): Boolean =
         this === other
         || id == other.id
 
@@ -27,14 +27,13 @@ open class OsmMeta(
         id.hashCode()
 }
 
-class BasicMeta(
+class VersionedIdMeta(
     id: Long,
-    val version: Int,
-    val changeset: Long
-) : OsmMeta(id) {
+    val version: Int
+) : IdMeta(id) {
     override fun equals(other: Any?): Boolean =
         this === other || (
-            other is BasicMeta
+            other is VersionedIdMeta
             && id == other.id
             && version == other.version
         )
@@ -43,22 +42,29 @@ class BasicMeta(
         Objects.hash(id, version)
 }
 
+data class OsmElementTypeAndId(val type: ElementType, val idMeta: IdMeta)
+
 abstract class OsmElement(
-    val meta: OsmMeta,
+    val idMeta: IdMeta,
     val tags: Tags? = null
 ) : Serializable {
     /**
      * Stub element (e.g. relation member without geom/tags)
      */
-    constructor(id: Long) : this(OsmMeta(id))
+    constructor(id: Long) : this(IdMeta(id))
 
     abstract val isStub: Boolean
 
-    val type: ElementType
-        get() = ElementType.fromCls(this::class)
+    val type by lazy {
+        ElementType.fromCls(this::class)
+    }
+
+    val typeAndId by lazy {
+        OsmElementTypeAndId(type, idMeta)
+    }
 
     val url: URL
-        get() = URL("https://osm.org/${type.lower}/${meta.id}")
+        get() = URL("https://osm.org/${type.lower}/${idMeta.id}")
 }
 
 class Coordinate(
@@ -67,11 +73,11 @@ class Coordinate(
 )
 
 class OsmNode(
-    meta: OsmMeta,
+    meta: IdMeta,
     tags: Tags? = null,
     val coordinate: Coordinate? = null
 ): OsmElement(meta, tags) {
-    constructor(id: Long) : this(OsmMeta(id))
+    constructor(id: Long) : this(IdMeta(id))
 
     override val isStub: Boolean
         get() = coordinate == null && tags == null
@@ -79,19 +85,19 @@ class OsmNode(
     override fun equals(other: Any?): Boolean =
         this === other || (
             other is OsmNode
-            && meta == other.meta
+            && idMeta == other.idMeta
         )
 
     override fun hashCode(): Int =
-        meta.hashCode()
+        idMeta.hashCode()
 }
 
 class OsmWay(
-    meta: OsmMeta,
+    meta: IdMeta,
     tags: Tags? = null,
     val nodes: List<OsmNode>? = null
 ): OsmElement(meta, tags) {
-    constructor(id: Long) : this(OsmMeta(id))
+    constructor(id: Long) : this(IdMeta(id))
 
     override val isStub: Boolean
         get() = nodes == null && tags == null
@@ -99,11 +105,11 @@ class OsmWay(
     override fun equals(other: Any?): Boolean =
         this === other || (
             other is OsmWay
-            && meta == other.meta
+            && idMeta == other.idMeta
         )
 
     override fun hashCode(): Int =
-        meta.hashCode()
+        idMeta.hashCode()
 }
 
 class OsmRelationMember(
@@ -112,11 +118,11 @@ class OsmRelationMember(
 ) : Serializable
 
 class OsmRelation(
-    meta: OsmMeta,
+    meta: IdMeta,
     tags: Tags? = null,
     val members: List<OsmRelationMember>? = null
 ): OsmElement(meta, tags) {
-    constructor(id: Long) : this(OsmMeta(id))
+    constructor(id: Long) : this(IdMeta(id))
 
     override val isStub: Boolean
         get() = members == null && tags == null
@@ -124,11 +130,11 @@ class OsmRelation(
     override fun equals(other: Any?): Boolean =
         this === other || (
             other is OsmRelation
-            && meta == other.meta
+            && idMeta == other.idMeta
         )
 
     override fun hashCode(): Int =
-        meta.hashCode()
+        idMeta.hashCode()
 }
 
 fun ElementType.stubElement(id: Long) = when(this) {

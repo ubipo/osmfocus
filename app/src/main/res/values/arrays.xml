@@ -1,0 +1,24 @@
+<resources>
+    <!-- https://coolors.co/00ffff-ff0000-ff00ff-00ff00-ffff00-0000ff-ff8c00-7700ff -->
+    <array name="paletteVibrant">
+        <item>#00ffff</item>
+        <item>#ff0000</item>
+        <item>#ff00ff</item>
+        <item>#00ff00</item>
+        <item>#ffff00</item>
+        <item>#0000ff</item>
+        <item>#ff8c00</item>
+        <item>#007E00</item>
+    </array>
+    <!-- https://coolors.co/b01c1c-880e4f-4a148c-1a237e-004d40-827717-ff6f00-d33c0d -->
+    <array name="paletteMaterial">
+        <item>#b01c1c</item>
+        <item>#880e4f</item>
+        <item>#4a148c</item>
+        <item>#1a237e</item>
+        <item>#004d40</item>
+        <item>#827717</item>
+        <item>#ff6f00</item>
+        <item>#d33c0d</item>
+    </array>
+</resources>

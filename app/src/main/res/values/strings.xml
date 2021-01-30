@@ -2,4 +2,46 @@
     <string name="app_name">OSMfocus Reborn</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="settings">Settings</string>
+    <string name="osm_api_base_url">OSM API base URL</string>
+    <string name="osm_api_default">Default (api.openstreetmap.org)</string>
+    <string name="osm_api_testing">Testing (master.apis.dev.openstreetmap.org)</string>
+    <string name="osm_api_choose">Choose…</string>
+
+    <string name="base_map">Base Map</string>
+    <string name="base_map_default">OpenStreetMap Carto (Default)</string>
+    <string name="base_map_carto_belgium">OpenStreetMap Carto Belgium</string>
+    <string name="base_map_cartodb_voyager_w_labels">CartoDB Voyager w/ labels</string>
+    <string name="base_map_cartodb_voyager_wo_labels">CartoDB Voyager w/o labels</string>
+    <string name="base_map_cartodb_positron_w_labels">CartoDB Positron w/ labels</string>
+    <string name="base_map_cartodb_positron_wo_labels">CartoDB Positron w/o labels</string>
+    <string name="base_map_cartodb_dark_matter_w_labels">CartoDB Dark Matter w/ labels</string>
+    <string name="base_map_cartodb_dark_matter_wo_labels">CartoDB Dark Matter w/o labels</string>
+    <string name="base_map_manage">Manage…</string>
+    <string name="map_data_openstreetmap_contributors">Map data © OpenStreetMap contributors</string>
+    <string name="add_user_base_map_name_hint">My base map</string>
+    <string name="add_user_base_map_url_template_hint">https://{s}.tile.example.org/</string>
+    <string name="add_base_map_add">Add</string>
+    <string name="add_base_map_cancel">Cancel</string>
+    <string name="add_user_base_map_name">Name</string>
+    <string name="add_user_base_map_template">URL Template</string>
+    <string name="add_user_base_map_template_info">
+        The \"{s}\" will be replaced by \"a\", \"b\" and \"c\".
+        Zoom, x, and y get appended after the trailing slash like \"{z}/{x}/{y}.png\".
+        \n
+        \nFor more info about tile servers, see wiki.openstreetmap.org/wiki/Tile_servers .
+    </string>
+    <string name="user_base_maps_add_btn_description">Add base map</string>
+    <string name="base_maps_title_builtin">Built-in</string>
+    <string name="base_maps_title_user">Own</string>
+    <string name="base_maps_user_none">You don\'t have any custom base maps yet. Add one using the bottom-right + button.</string>
+    <string name="setting_title_base_map">Base Map</string>
+    
+    <string name="add_user_base_map_url_template_err_blank">Enter a URL Template</string>
+    <string name="add_user_base_map_url_template_err_syntax">Must be a valid URL</string>
+    <string name="add_user_base_map_url_template_err_http">Must be a http(s) URL</string>
+    <string name="add_user_base_map_name_err_blank">Enter a name</string>
+    <string name="map_location_btn_description">Move map to current location</string>
+    <string name="map_settings_btn_description">Open app settings</string>
 </resources>

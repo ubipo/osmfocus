@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API Base URL -->
+
+    <!-- Shown on-screen in ListPreference -->
+    <string-array name="apiBaseUrlEntries">
+        <item>@string/osm_api_default</item>
+        <item>@string/osm_api_testing</item>
+        <item>@string/osm_api_choose</item>
+    </string-array>
+
+    <!-- Language-independent values -->
+    <string name="apiBaseUrlValueDefault">main</string>
+    <string name="apiBaseUrlValueCustom">custom</string>
+    <string-array name="apiBaseUrlValues">
+        <item>@string/apiBaseUrlValueDefault</item>
+        <item>testing</item>
+        <item>@string/apiBaseUrlValueCustom</item>
+    </string-array>
+
+    <!-- Actual urls, mirrors apiBaseUrlValues -->
+    <string name="apiBaseUrlDefault">https://api.openstreetmap.org/api/0.6</string>
+    <string-array name="apiBaseUrls">
+        <item>@string/apiBaseUrlDefault</item>
+        <item>https://master.apis.dev.openstreetmap.org/api/0.6</item>
+    </string-array>
+</resources>

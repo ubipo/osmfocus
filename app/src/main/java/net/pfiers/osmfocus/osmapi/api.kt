@@ -1,57 +1,46 @@
 package net.pfiers.osmfocus.osmapi
 
-import android.util.Log
+import android.net.Uri
 import com.beust.klaxon.Klaxon
-import net.pfiers.osmfocus.BuildConfig
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
+import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.result.Result
+import com.github.kittinunf.result.map
+import com.github.kittinunf.result.mapError
+import com.google.common.net.HttpHeaders
+import com.google.common.net.MediaType
 import org.locationtech.jts.geom.Envelope
-import java.net.HttpURLConnection
 
 
-const val HTTP_USER_AGENT = "OSMfocus Reborn/${BuildConfig.VERSION_NAME}"
+//private const val HTTP_USER_AGENT = "OSMfocus Reborn/${BuildConfig.VERSION_NAME}"
 
-const val HTTP_SCHEME_SSL = "https"
-
-const val OSM_API_HOST = "api.openstreetmap.org"
-const val OSM_API_PATH_PREFIX = "api"
-const val OSM_API_VERSION = "0.6"
 const val OSM_API_EP_MAP = "map"
 const val OSM_API_PARAM_BBOX = "bbox"
 
+data class OsmApiConfig(
+    val baseUrl: Uri,
+    val userAgent: String
+)
+
 private val klaxon = Klaxon().converter(ElementTypeConverter())
-private val okHttp = OkHttpClient()
 
-fun parseRes(json: String) = klaxon.parse<Res>(json)
+@Suppress("UnstableApiUsage")
+private suspend fun OsmApiConfig.osmApiReq(
+    endpoint: String,
+    urlTransformer: Uri.Builder.() -> Unit
+): Result<OsmApiRes, Exception> {
+    val url = baseUrl.buildUpon().appendPath(endpoint)
+    urlTransformer(url)
 
-private fun apiReq(endpoint: String, urlBlock: HttpUrl.Builder.() -> Unit): Res {
-    val urlBuilder = HttpUrl.Builder().apply {
-        scheme(HTTP_SCHEME_SSL)
-        host(OSM_API_HOST)
-        addPathSegment(OSM_API_PATH_PREFIX)
-        addPathSegment(OSM_API_VERSION)
-        addPathSegment(endpoint)
-    }
-    urlBlock(urlBuilder)
-
-    val req = Request.Builder().apply {
-        url(urlBuilder.build())
-        header("Accept", "application/json")
-        header("User-Agent", HTTP_USER_AGENT)
-    }.build()
-
-    Log.v("BBB", "Calling ${req.url}")
-    val res = okHttp.newCall(req).execute()
-
-    if (res.code != HttpURLConnection.HTTP_OK)
-        error("Bad HTTP response code: ${res.code}")
-
-    val body = res.body ?: error("Empty body")
-
-    return parseRes(body.string()) ?: error("Empty JSON response")
+    return (url.build().toString()
+        .httpGet()
+        .header(HttpHeaders.USER_AGENT, userAgent)
+        .header(HttpHeaders.ACCEPT, MediaType.JSON_UTF_8)
+        .awaitStringResponseResult().third as Result<String, Exception>)
+        .map { klaxon.parse<OsmApiRes>(it) ?: throw Exception("Empty JSON response") }
+        .mapError { Exception("Http error: $it") }
 }
 
-fun map(envelope: Envelope) = apiReq(OSM_API_EP_MAP) {
-        addEncodedQueryParameter(OSM_API_PARAM_BBOX, envelope.toApiBboxStr())
+suspend fun OsmApiConfig.osmApiMapReq(envelope: Envelope) = osmApiReq(OSM_API_EP_MAP) {
+        appendQueryParameter(OSM_API_PARAM_BBOX, envelope.toApiBboxStr())
     }
