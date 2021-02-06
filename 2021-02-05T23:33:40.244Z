@@ -1,0 +1,16 @@
+java.lang.Exception: Http error: e.a.a.r: Unable to instantiate OsmApiRes:No argument provided for a required parameter: parameter #0 arg0 of fun <init>((kotlin.collections.MutableList<out net.pfiers.osmfocus.osmapi.OsmApiElement!>..kotlin.collections.List<net.pfiers.osmfocus.osmapi.OsmApiElement!>?)): net.pfiers.osmfocus.osmapi.OsmApiRes
+
+	at net.pfiers.osmfocus.osmapi.a$d.a(api.kt:41)
+	at net.pfiers.osmfocus.osmapi.a$d.s(Unknown Source:2)
+	at e.b.a.b.b.a(Result.kt:51)
+	at net.pfiers.osmfocus.osmapi.a.b(api.kt:41)
+	at net.pfiers.osmfocus.osmapi.a.a(api.kt:44)
+	at net.pfiers.osmfocus.MapApiDownloadManager.protectedDownload(MapApiDownloadManager.kt:148)
+	at net.pfiers.osmfocus.MapApiDownloadManager.download(MapApiDownloadManager.kt:89)
+	at net.pfiers.osmfocus.view.fragments.MapFragment$j$a.h(MapFragment.kt:416)
+	at f.d0.k.a.a.n(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.y0.run(DispatchedTask.kt:106)
+	at kotlinx.coroutines.e3.a.D(CoroutineScheduler.kt:571)
+	at kotlinx.coroutines.e3.a$b.c(CoroutineScheduler.kt:738)
+	at kotlinx.coroutines.e3.a$b.m(CoroutineScheduler.kt:678)
+	at kotlinx.coroutines.e3.a$b.run(CoroutineScheduler.kt:665)

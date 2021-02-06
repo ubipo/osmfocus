@@ -1,12 +1,13 @@
 package net.pfiers.osmfocus.osmapi
 
+import androidx.annotation.Keep
 import com.beust.klaxon.TypeFor
 import net.pfiers.osmfocus.osm.ElementType
-
 
 class OsmApiRes(val elements: List<OsmApiElement>)
 
 @TypeFor(field = "type", adapter = ResElementTypeAdapter::class)
+@Keep
 abstract class OsmApiElement(
     val type: ElementType,
     val id: Long,
@@ -16,6 +17,7 @@ abstract class OsmApiElement(
     val tags: Map<String, String>?
 )
 
+@Keep
 class OsmApiNode(
     type: ElementType,
     id: Long,
@@ -37,7 +39,7 @@ class OsmApiWay(
     tags: Map<String, String>? = null
 ) : OsmApiElement(type, id, version, changeset, uid, tags)
 
-class ResRelationMember(
+class OsmApiRelationMember(
     val type: ElementType,
     val ref: Long,
     val role: String
@@ -49,6 +51,6 @@ class OsmApiRelation(
     version: Int,
     changeset: Long,
     uid: Int,
-    val members: List<ResRelationMember>,
+    val members: List<OsmApiRelationMember>,
     tags: Map<String, String>? = null
 ) : OsmApiElement(type, id, version, changeset, uid, tags)

@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.Keep
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
@@ -28,6 +29,7 @@ import com.github.kittinunf.result.getOrElse
 import com.github.kittinunf.result.onError
 import com.google.common.eventbus.Subscribe
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.basemaps.BaseMap
@@ -36,16 +38,18 @@ import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.jts.CoordinateConverter
 import net.pfiers.osmfocus.kotlin.cartesianProduct
 import net.pfiers.osmfocus.kotlin.containedSubList
+import net.pfiers.osmfocus.kotlin.noIndividualValueReuse
 import net.pfiers.osmfocus.kotlin.toLinkedMap
 import net.pfiers.osmfocus.osm.OsmElement
 import net.pfiers.osmfocus.osmapi.OsmApiConfig
 import net.pfiers.osmfocus.osmdroid.overlays.CrosshairOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.GeometryOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.TagBoxLineOverlay
-import net.pfiers.osmfocus.osmdroid.toCoordinate
 import net.pfiers.osmfocus.osmdroid.toEnvelope
 import net.pfiers.osmfocus.osmdroid.toGeoPoint
 import net.pfiers.osmfocus.osmdroid.toPoint
+import net.pfiers.osmfocus.settings.toGeoPoint
+import net.pfiers.osmfocus.settings.toSettingsLocation
 import net.pfiers.osmfocus.tagboxlocations.*
 import net.pfiers.osmfocus.view.MaxDownloadAreaExceededException
 import net.pfiers.osmfocus.view.PaletteId
@@ -65,8 +69,13 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
+import java.io.File
+import java.time.Instant
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.collections.HashSet
 import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 
 // TODO: Convert to MVVM
@@ -85,7 +94,7 @@ class MapFragment : Fragment(), MapEventsReceiver,
     private lateinit var navVM: NavVM
     private lateinit var attributionVM: AttributionVM
     private var moveToCurrentLocationOnLocationPermissionGranted = AtomicBoolean()
-    val requestPermissionLauncher = registerForActivityResult(
+    private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
@@ -116,6 +125,7 @@ class MapFragment : Fragment(), MapEventsReceiver,
     @Suppress("UnstableApiUsage")
     private val downloadManagerEventHandler = object {
         @Subscribe
+        @Keep
         fun onPropChange(e: PropertyChangedEvent<Boolean>) {
             when (e.property) {
                 downloadManager::isDownloading -> {
@@ -136,8 +146,8 @@ class MapFragment : Fragment(), MapEventsReceiver,
                         val envelope = map.boundingBox.toEnvelope()
                         // TODO: Fix background scope / exception handling mess
                         val handler = CoroutineExceptionHandler { _, exception ->
-                            Log.e("AAA", "Printing uncaught exception stack trace")
-                            exception.printStackTrace()
+                            Log.e("AAA", "Logging uncaught exception stack trace")
+                            Log.e("AAA", exception.stackTraceToString())
                         }
                         backgroundScope.launch(handler) {
                             updateHighlightedElements(centerPoint, envelope)
@@ -148,6 +158,7 @@ class MapFragment : Fragment(), MapEventsReceiver,
         }
 
         @Subscribe
+        @Keep
         fun onDownloadEnd(e: DownloadEndedEvent) {
             e.result.onError { ex ->
                 when (ex) {
@@ -247,10 +258,11 @@ class MapFragment : Fragment(), MapEventsReceiver,
 
         map.minZoomLevel = 4.0
 
-        val coordinateJson = prefs.getString(prefTagLastLocation, null)
-        val centerCoordinates = coordinateJson?.let { coordinateKlaxon.parse<Coordinate>(it) }
-            ?: DEFAULT_CENTER
-        map.controller.setCenter(centerCoordinates.toGeoPoint())
+        backgroundScope.launch {
+            val settings = app.settingsDataStore.data.first()
+            map.controller.setCenter(settings.lastLocation.toGeoPoint())
+        }
+
         map.controller.setZoom(14.0)
         map.isVerticalMapRepetitionEnabled = false
         val ts = MapView.getTileSystem()
@@ -268,11 +280,26 @@ class MapFragment : Fragment(), MapEventsReceiver,
         map.overlayManager.addAll(geometryOverlays.values)
         map.overlayManager.addAll(lineOverlays.values)
 
+        val settingsDataStore = app.settingsDataStore
+
         map.addMapListener(object : MapListener {
+            var previousSaveLocationJob: Job? = null
+
             override fun onScroll(event: ScrollEvent?): Boolean {
                 mapScrollHandler()
-                val newCoordinateJson = coordinateKlaxon.toJsonString(map.mapCenter.toCoordinate())
-                prefs.edit().putString(prefTagLastLocation, newCoordinateJson).apply()
+                backgroundScope.launch {
+                    synchronized(this@MapFragment) {
+                        previousSaveLocationJob?.cancel()
+                        previousSaveLocationJob = backgroundScope.launch {
+                            delay((0.5).seconds)
+                            settingsDataStore.updateData { currentSettings ->
+                                currentSettings.toBuilder()
+                                    .setLastLocation(map.mapCenter.toSettingsLocation())
+                                    .build()
+                            }
+                        }
+                    }
+                }
                 return false
             }
 
@@ -309,7 +336,8 @@ class MapFragment : Fragment(), MapEventsReceiver,
         )
         if (locationPermission == PermissionChecker.PERMISSION_GRANTED) {
             val locationManager = getSystemService(requireContext(), LocationManager::class.java)!!
-            val lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            val lastKnownLocation =
+                locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             if (lastKnownLocation != null) {
                 map.controller.animateTo(lastKnownLocation.toGeoPoint())
             }
@@ -378,8 +406,13 @@ class MapFragment : Fragment(), MapEventsReceiver,
         val centerPoint = map.mapCenter.toPoint(geometryFactory)
         val envelope = map.boundingBox.toEnvelope()
         val handler = CoroutineExceptionHandler { _, exception ->
-            Log.e("AAA", "Printing uncaught exception stack trace")
-            exception.printStackTrace()
+            Log.e("AAA", "Logging uncaught exception stack trace")
+            Log.e("AAA", exception.stackTraceToString())
+            val logFile = File(requireContext().filesDir, "stacktrace-" + Instant.now().toString())
+            logFile.printWriter().use {
+                exception.printStackTrace(it)
+            }
+            Log.e("AAA", "Dumped uncaught exception stack trace to ${logFile.absolutePath}")
         }
         backgroundScope.launch(handler) { updateHighlightedElements(centerPoint, envelope) }
         backgroundScope.launch(handler) {
@@ -448,11 +481,9 @@ class MapFragment : Fragment(), MapEventsReceiver,
 
             ensureActive()
 
-            val tagBoxElementPairs =
-                mapTbLocsToElements(displayedElements) { tbLoc -> tbLoc.toEnvelopeCoordinate(
-                    envelope
-                )
-                }
+            val tagBoxElementPairs = mapTbLocsToElements(displayedElements) { tbLoc ->
+                tbLoc.toEnvelopeCoordinate(envelope)
+            }
 
             ensureActive()
 
@@ -495,29 +526,21 @@ class MapFragment : Fragment(), MapEventsReceiver,
     @ExperimentalTime
     private fun getElementsToDisplay(
         centerPoint: Point, envelope: Envelope
-    ): List<ElementToDisplayData> {
-//        val (centerPoint, boundingBox)= withContext(
-//            lifecycleScope.coroutineContext
-//        ) {
-//            Pair(map.mapCenter.toPoint(FAC), map.boundingBox)
-//        }
-//        val boundingBoxEnvelope = boundingBox.toEnvelope()
-
-        val applicableElements: MutableList<ElementToDisplayData> = mutableListOf()
-        for (element in downloadManager.elements.keys) {
-            if (element.tags.isNullOrEmpty()) continue
-            val geometry = downloadManager.getElementGeometry(element)
-            if (geometry.isEmpty) continue
-            if (!envelope.intersects(geometry.envelopeInternal)) continue // Rough check
-            val closestCoordinate = DistanceOp.nearestPoints(geometry, centerPoint)[0]
-            if (!envelope.intersects(closestCoordinate)) continue // Robust check
-            applicableElements.add(ElementToDisplayData(element, geometry, closestCoordinate))
-        }
-
-        return applicableElements.sortedBy { e ->
+    ): List<ElementToDisplayData> = downloadManager.elements.keys.asSequence()
+        .filterNot { e -> e.tags.isNullOrEmpty() }
+        .mapNotNull { e ->
+            downloadManager.getElementGeometry(e).takeIf { g ->
+                !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
+            }?.let { g ->
+                DistanceOp.nearestPoints(g, centerPoint)[0].takeIf { nearCenterCoordinate ->
+                    envelope.intersects(nearCenterCoordinate) // Robust check
+                }?.let { nearCenterCoordinate ->
+                    ElementToDisplayData(e, g, nearCenterCoordinate)
+                }
+            }
+        }.sortedBy { e ->
             centerPoint.coordinate.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
-        }.containedSubList(0, tbLocations.size)
-    }
+        }.toList().containedSubList(0, tbLocations.size)
 
     /**
      * Optimally maps tag box locations to elements
@@ -531,13 +554,12 @@ class MapFragment : Fragment(), MapEventsReceiver,
     private fun mapTbLocsToElements(
         displayedElements: List<ElementToDisplayData>,
         tbLocToCoordinate: (tbLoc: TbLoc) -> Coordinate
-    ): Map<TbLoc, ElementToDisplayData> =
-        tbLocations
+    ): Map<TbLoc, ElementToDisplayData> = tbLocations
             .cartesianProduct(displayedElements)
-            .sortedByDescending { (tbLoc, elementData) ->
-                val tbLocCoordinate = tbLocToCoordinate(tbLoc)
-                tbLocCoordinate.distance(elementData.nearCenterCoordinate)
+            .sortedBy { (tbLoc, elementData) ->
+                tbLocToCoordinate(tbLoc).distance(elementData.nearCenterCoordinate)
             }
+            .noIndividualValueReuse()
             .toMap()
 
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
@@ -550,7 +572,7 @@ class MapFragment : Fragment(), MapEventsReceiver,
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         val res = requireContext().resources
-        when(key) {
+        when (key) {
             prefTagApiBaseUrl -> {
                 val value = prefs.getString(
                     prefTagApiBaseUrl,
@@ -584,11 +606,10 @@ class MapFragment : Fragment(), MapEventsReceiver,
         const val MAX_DOWNLOAD_AREA = 500.0 * 500 // m^2, 500 * 500 = tiny city block
         const val MIN_DOWNLOAD_ZOOM_LEVEL = 19
         val PALETTE = PaletteId.PALETTE_VIBRANT
-        val DEFAULT_CENTER = Coordinate(4.7011675, 50.879202)
 
         private val geometryFactory = GeometryFactory()
 
-        private val backgroundScope = CoroutineScope(Dispatchers.Default)
+        private val backgroundScope = CoroutineScope(Job() + Dispatchers.IO)
 
         private fun createOsmApiConfig(baseUrl: String) =
             OsmApiConfig(

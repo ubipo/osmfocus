@@ -1,6 +1,7 @@
 package net.pfiers.osmfocus.osmapi
 
 import android.net.Uri
+import android.util.Log
 import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
 import com.github.kittinunf.fuel.httpGet
@@ -37,8 +38,9 @@ private suspend fun OsmApiConfig.osmApiReq(
         .header(HttpHeaders.USER_AGENT, userAgent)
         .header(HttpHeaders.ACCEPT, MediaType.JSON_UTF_8)
         .awaitStringResponseResult().third as Result<String, Exception>)
-        .map { klaxon.parse<OsmApiRes>(it) ?: throw Exception("Empty JSON response") }
-        .mapError { Exception("Http error: $it") }
+        .map {
+            klaxon.parse<OsmApiRes>(it) ?: throw Exception("Empty JSON response")
+        }
 }
 
 suspend fun OsmApiConfig.osmApiMapReq(envelope: Envelope) = osmApiReq(OSM_API_EP_MAP) {

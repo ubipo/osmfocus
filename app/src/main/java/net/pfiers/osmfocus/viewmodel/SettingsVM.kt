@@ -21,9 +21,7 @@ class SettingsVM(
 
     init {
         viewModelScope.launch {
-            Log.v("AAA", "Getting settings...")
             settingsDataStore.data.collect { settings ->
-                Log.v("AAA", "Got settings! ${settings.baseMapUid}")
                 val baseMapUid = settings.baseMapUid.ifEmpty { null }
                 baseMap.value = baseMapUid?.let { baseMapRepository.getOrDefault(it) }
             }

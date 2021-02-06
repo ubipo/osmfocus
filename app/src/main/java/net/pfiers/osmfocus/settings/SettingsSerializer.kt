@@ -11,6 +11,12 @@ import java.io.OutputStream
 class SettingsSerializer: Serializer<Settings> {
     override val defaultValue: Settings = Settings.newBuilder()
         .setBaseMapUid(BaseMapRepository.uidOfDefault)
+        .setLastLocation(
+            Settings.Location.newBuilder()
+                .setLongitude(4.7011675)
+                .setLatitude(50.879202)
+                .build()
+        )
         .build()
 
     override fun readFrom(input: InputStream): Settings {

@@ -1,9 +1,10 @@
 package net.pfiers.osmfocus.osm
 
+import androidx.annotation.Keep
 import java.util.*
 import kotlin.reflect.KClass
 
-
+@Keep
 enum class ElementType {
     NODE,
     WAY,

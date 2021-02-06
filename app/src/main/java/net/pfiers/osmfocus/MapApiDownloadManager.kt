@@ -3,6 +3,7 @@
 package net.pfiers.osmfocus
 
 import android.util.Log
+import androidx.annotation.Keep
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.onError
@@ -29,6 +30,7 @@ import kotlin.time.toDuration
 class DownloadEndedEvent(val result: Result<Unit, Exception>)
 
 @ExperimentalTime
+@Keep
 class MapApiDownloadManager(
     var apiConfig: OsmApiConfig,
     maxQps: Double,
