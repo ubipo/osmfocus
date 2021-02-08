@@ -1,0 +1,3 @@
+<en-US>
+Made download more robust, added settings
+</en-US> 
