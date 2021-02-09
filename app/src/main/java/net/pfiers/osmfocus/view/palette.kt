@@ -15,7 +15,6 @@ const val PALETTE_SIZE = 8
 typealias Palettes = Map<PaletteId, List<Int>>
 fun generatePalettes(context: Context): Palettes =
     PaletteId.values().map { paletteId ->
-        Log.v("AAA", "Get palette")
         val arr = context.resources.obtainTypedArray(paletteId.id)
         if (arr.length() != PALETTE_SIZE) error("Bad palette size")
         val colors = mutableListOf<Int>()

@@ -1,6 +1,5 @@
 package net.pfiers.osmfocus.viewmodel
 
-import android.util.Log
 import androidx.databinding.ObservableField
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
@@ -31,11 +30,11 @@ class SettingsVM(
     //https://github.com/android/architecture-samples/blob/todo-mvvm-databinding/todoapp/app/src/main/java/com/example/android/architecture/blueprints/todoapp/tasks/TasksNavigator.java
     interface Navigator {
         fun gotoBaseMaps()
+        fun showAbout()
     }
 
-    fun editBaseMaps() {
-        navigator.gotoBaseMaps()
-    }
+    fun editBaseMaps() = navigator.gotoBaseMaps()
+    fun showAbout() = navigator.showAbout()
 
     companion object {
         fun createFactory(creator: () -> SettingsVM) = net.pfiers.osmfocus.createVMFactory(creator)

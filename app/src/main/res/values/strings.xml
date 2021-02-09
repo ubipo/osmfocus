@@ -37,11 +37,47 @@
     <string name="base_maps_title_user">Own</string>
     <string name="base_maps_user_none">You don\'t have any custom base maps yet. Add one using the bottom-right + button.</string>
     <string name="setting_title_base_map">Base Map</string>
-    
+
     <string name="add_user_base_map_url_template_err_blank">Enter a URL Template</string>
     <string name="add_user_base_map_url_template_err_syntax">Must be a valid URL</string>
     <string name="add_user_base_map_url_template_err_http">Must be a http(s) URL</string>
     <string name="add_user_base_map_name_err_blank">Enter a name</string>
     <string name="map_location_btn_description">Move map to current location</string>
     <string name="map_settings_btn_description">Open app settings</string>
+    <string name="source_code">Source code</string>
+    <string name="title_about">About</string>
+    <string name="more_info">More info</string>
+    <string name="app_info_dialog_title">App info</string>
+    <string name="app_info_dialog_text">
+        <![CDATA[
+        <h2>This app</h2>
+        <p>OSMfocus Reborn is an app to examine OpenStreetMap (OSM) elements and "focus" your view of the map.</p>
+        <p>Written in Kotlin using Android Jetpack.</p>
+        <p>Licensed under the <a href="https://github.com/ubipo/osmfocus/blob/master/LICENSE">"Apache License 2.0"</a>.</p>
+
+        <h2>Fork notice</h2>
+        <p>This app is a complete re-write of the now (07-11-2020) defunct <a href="https://github.com/MichaelVL/osm-focus">OSMfocus by Network42 / MichaelVL</a>.</p>
+
+        <h2>License notices</h2>
+        <p>OSMfocus Reborn allows you to view OpenStreetMap data. This data is <a href="https://www.openstreetmap.org/copyright">© (Copyright) OpenStreetMap contributors</a> and is available under the <a href="https://opendatacommons.org/licenses/odbl/">Open Database License</a>.</p>
+
+        <p>OSMfocus Reborn uses (remixed) names and ideas from OSMfocus (MichaelVL) v0.1.1r1, which is available under the <a href="https://github.com/MichaelVL/osm-focus/blob/master/LICENSE">"Apache License 2.0"</a>.</p>
+
+        <p>OSMfocus Reborn uses a remixed version of the OpenStreetMap logo, as per the <a href="https://wiki.osmfoundation.org/wiki/Trademark_Policy">Trademark Policy §3.5</a>.</p>
+
+        <h2>Libraries</h2>
+        <ul>
+            <li><a href="https://github.com/osmdroid/osmdroid">osmdroid</a>: slippy map</li>
+            <li><a href="https://github.com/locationtech/jts">JTS Topology Suite</a></li>
+        </ul>
+        ]]>
+    </string>
+    <string name="more_info_second_line">Notices, license</string>
+    <string name="source_code_second_line">Git repository for this app</string>
+    <string name="coffee">Buy me a coffee!</string>
+    <string name="coffee_second_line">Like what I made? Make a donation :)</string>
+    <string name="issues">Issues / improvements</string>
+    <string name="issues_second_line">Found a bug or some missing functionality?</string>
+    <string name="about_second_line">Issues, suggestions, notices…</string>
+    <string name="about">About</string>
 </resources>

@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/mapFragment"
         android:name="net.pfiers.osmfocus.view.fragments.MapFragment"
-        android:label="fragment_map"
+        android:label="Map"
         tools:layout="@layout/fragment_map" >
         <action
             android:id="@+id/action_mapFragment_to_settingsContainerFragment"
@@ -22,6 +22,9 @@
         <action
             android:id="@+id/action_settingsContainerFragment_to_userBaseMapsFragment"
             app:destination="@id/userBaseMapsFragment" />
+        <action
+            android:id="@+id/action_settingsContainerFragment_to_aboutFragment"
+            app:destination="@id/aboutFragment" />
     </fragment>
     <fragment
         android:id="@+id/userBaseMapsFragment"
@@ -37,5 +40,19 @@
         android:name="net.pfiers.osmfocus.view.fragments.AddUserBaseMapFragment"
         android:label="Add Base Map"
         tools:layout="@layout/fragment_add_user_base_map" />
+    <fragment
+        android:id="@+id/moreInfoFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.MoreInfoFragment"
+        android:label="More info"
+        tools:layout="@layout/fragment_more_info" />
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.AboutFragment"
+        android:label="About"
+        tools:layout="@layout/fragment_about" >
+        <action
+            android:id="@+id/action_aboutFragment_to_moreInfoFragment"
+            app:destination="@id/moreInfoFragment" />
+    </fragment>
 
 </navigation>

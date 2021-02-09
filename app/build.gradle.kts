@@ -8,6 +8,7 @@ plugins {
     kotlin("kapt")
     kotlin("android.extensions")
     id("com.google.protobuf")
+    id("kotlin-android")
 }
 
 android {
