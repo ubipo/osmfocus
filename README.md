@@ -5,7 +5,7 @@ Google Play: https://play.google.com/store/apps/details?id=dk.network42.osmfocus
 
 # OSMFocus Reborn
 
-![F-Droid](https://img.shields.io/f-droid/v/net.pfiers.osmfocus) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ubipo/osmfocus) <a href="https://www.buymeacoffee.com/gbraad" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" height="20"></a>
+![F-Droid](https://img.shields.io/f-droid/v/net.pfiers.osmfocus) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ubipo/osmfocus) <a href="https://www.buymeacoffee.com/pfiers" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" height="20"></a>
 
 OSMFocus Reborn is an open source tool for examining OpenStreetMap elements by moving around on a map.
 Written in Kotlin using Android Jetpack.
