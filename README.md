@@ -10,13 +10,13 @@ Google Play: https://play.google.com/store/apps/details?id=dk.network42.osmfocus
 OSMFocus Reborn is an open source tool for examining OpenStreetMap elements by moving around on a map.
 Written in Kotlin using Android Jetpack.
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="75">](https://f-droid.org/packages/net.pfiers.osmfocus) [<img height="75" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">](https://play.google.com/store/apps/details?id=net.pfiers.osmfocus)
-
 ![Feature Graphic](images/featuregfx.png)
 
 Move the crosshair in the middle of the map over a building or road to view its keys and values. A line will be drawn connecting the element with a box on the side of the screen. This box contains every tag of the element in OpenStreetMap. Use this information to find bugs or to investigate an area closer. Click on one of the boxes if you want even more detailed information.
 
 Change the basemap (background layer) or add your own by going to the settings screen (cog icon).
+
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="75">](https://f-droid.org/packages/net.pfiers.osmfocus) [<img height="75" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">](https://play.google.com/store/apps/details?id=net.pfiers.osmfocus)
 
 ## Source, issue tracking and more info
 
