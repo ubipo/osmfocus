@@ -3,10 +3,8 @@ package net.pfiers.osmfocus.osmdroid.overlays
 import android.graphics.Canvas
 import androidx.annotation.ColorInt
 import net.pfiers.osmfocus.osmdroid.toOverlay
-import net.pfiers.osmfocus.tagboxlocations.TbLoc
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.Point
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 

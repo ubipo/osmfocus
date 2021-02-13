@@ -5,8 +5,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import androidx.annotation.ColorInt
 import net.pfiers.osmfocus.toPath
-import net.pfiers.osmfocus.jts.asInteriorRingList
-import net.pfiers.osmfocus.jts.asList
+import net.pfiers.osmfocus.extensions.asInteriorRingList
+import net.pfiers.osmfocus.extensions.asList
 import net.pfiers.osmfocus.osmdroid.toGeoPoint
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.MultiPolygon

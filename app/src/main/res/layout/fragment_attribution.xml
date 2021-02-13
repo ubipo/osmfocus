@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:background="#54FFFFFF">
 
-        <net.pfiers.osmfocus.view.VerticalTextView
+        <net.pfiers.osmfocus.view.support.VerticalTextView
             android:id="@+id/dataAttribution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -28,7 +28,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <net.pfiers.osmfocus.view.VerticalTextView
+        <net.pfiers.osmfocus.view.support.VerticalTextView
             android:id="@+id/tileAttribution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

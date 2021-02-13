@@ -1,16 +1,13 @@
 package net.pfiers.osmfocus.view.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import net.pfiers.osmfocus.OsmFocusApplication
-import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.app
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
-import net.pfiers.osmfocus.viewmodel.BaseMapsVM
+import net.pfiers.osmfocus.extensions.app
 import net.pfiers.osmfocus.viewmodel.SettingsVM
 
 class SettingsFragment : Fragment() {

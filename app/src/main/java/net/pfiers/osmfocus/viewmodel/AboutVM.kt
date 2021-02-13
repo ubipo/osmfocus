@@ -1,6 +1,7 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
+import net.pfiers.osmfocus.extensions.createVMFactory
 
 class AboutVM(private val navigator: Navigator) : ViewModel() {
     //https://github.com/android/architecture-samples/blob/todo-mvvm-databinding/todoapp/app/src/main/java/com/example/android/architecture/blueprints/todoapp/tasks/TasksNavigator.java
@@ -17,6 +18,6 @@ class AboutVM(private val navigator: Navigator) : ViewModel() {
     fun showIssueTracker() = navigator.showIssueTracker()
 
     companion object {
-        fun createFactory(creator: () -> AboutVM) = net.pfiers.osmfocus.createVMFactory(creator)
+        fun createFactory(creator: () -> AboutVM) = createVMFactory(creator)
     }
 }

@@ -4,11 +4,16 @@ option java_package = "net.pfiers.osmfocus";
 option java_multiple_files = true;
 
 message Settings {
+
   message Location {
     double longitude = 1;
     double latitude = 2;
   }
 
   string baseMapUid = 1;
+
   Location lastLocation = 2;
+
+  string apiBaseUrl = 3;
+
 }

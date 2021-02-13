@@ -1,7 +1,6 @@
 package net.pfiers.osmfocus.view.fragments
 
 import android.Manifest
-import android.content.SharedPreferences
 import android.graphics.Rect
 import android.location.LocationManager
 import android.net.Uri
@@ -23,7 +22,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.beust.klaxon.Klaxon
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.getOrElse
 import com.github.kittinunf.result.onError
@@ -32,28 +30,30 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import net.pfiers.osmfocus.*
-import net.pfiers.osmfocus.basemaps.BaseMap
-import net.pfiers.osmfocus.basemaps.resolveAbcSubdomains
+import net.pfiers.osmfocus.service.basemaps.BaseMap
+import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
-import net.pfiers.osmfocus.jts.CoordinateConverter
-import net.pfiers.osmfocus.kotlin.cartesianProduct
-import net.pfiers.osmfocus.kotlin.containedSubList
-import net.pfiers.osmfocus.kotlin.noIndividualValueReuse
-import net.pfiers.osmfocus.kotlin.toLinkedMap
-import net.pfiers.osmfocus.osm.OsmElement
-import net.pfiers.osmfocus.osmapi.OsmApiConfig
+import net.pfiers.osmfocus.extensions.app
+import net.pfiers.osmfocus.extensions.createVMFactory
+import net.pfiers.osmfocus.extensions.kotlin.cartesianProduct
+import net.pfiers.osmfocus.extensions.kotlin.containedSubList
+import net.pfiers.osmfocus.extensions.kotlin.noIndividualValueReuse
+import net.pfiers.osmfocus.extensions.kotlin.toLinkedMap
+import net.pfiers.osmfocus.extensions.value
+import net.pfiers.osmfocus.service.osm.OsmElement
 import net.pfiers.osmfocus.osmdroid.overlays.CrosshairOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.GeometryOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.TagBoxLineOverlay
 import net.pfiers.osmfocus.osmdroid.toEnvelope
 import net.pfiers.osmfocus.osmdroid.toGeoPoint
 import net.pfiers.osmfocus.osmdroid.toPoint
-import net.pfiers.osmfocus.settings.toGeoPoint
-import net.pfiers.osmfocus.settings.toSettingsLocation
-import net.pfiers.osmfocus.tagboxlocations.*
-import net.pfiers.osmfocus.view.MaxDownloadAreaExceededException
+import net.pfiers.osmfocus.service.MapApiDownloadManager
+import net.pfiers.osmfocus.service.settings.toGeoPoint
+import net.pfiers.osmfocus.service.settings.toSettingsLocation
+import net.pfiers.osmfocus.service.tagboxlocations.*
+import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
 import net.pfiers.osmfocus.view.PaletteId
-import net.pfiers.osmfocus.view.ZoomLevelRecededException
+import net.pfiers.osmfocus.service.ZoomLevelRecededException
 import net.pfiers.osmfocus.view.generatePalettes
 import net.pfiers.osmfocus.viewmodel.*
 import org.locationtech.jts.geom.*
@@ -73,7 +73,6 @@ import java.io.File
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.collections.HashSet
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -81,18 +80,16 @@ import kotlin.time.seconds
 // TODO: Convert to MVVM
 @Suppress("UnstableApiUsage")
 @ExperimentalTime
-class MapFragment : Fragment(), MapEventsReceiver,
-    SharedPreferences.OnSharedPreferenceChangeListener {
+class MapFragment : Fragment(), MapEventsReceiver {
     private lateinit var binding: FragmentMapBinding
-    private lateinit var prefs: SharedPreferences
     private val mapVM: MapVM by viewModels {
-        val db = (requireActivity().application as OsmFocusApplication).db
         val navigator = requireActivity()
         if (navigator !is MapVM.Navigator) error("MapFragment containing activity must be MapVM.Navigator")
-        createVMFactory { MapVM(db, navigator) }
+        createVMFactory { MapVM(app.db, app.settingsDataStore, navigator) }
     }
     private lateinit var navVM: NavVM
     private lateinit var attributionVM: AttributionVM
+
     private var moveToCurrentLocationOnLocationPermissionGranted = AtomicBoolean()
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -106,52 +103,21 @@ class MapFragment : Fragment(), MapEventsReceiver,
     private lateinit var map: MapView
     private lateinit var tagBoxContainers: LinkedHashMap<TbLoc, FragmentContainerView>
     private lateinit var tagBoxFragments: MutableMap<TbLoc, TagBoxFragment>
-    private lateinit var downloadManager: MapApiDownloadManager
     private lateinit var lineOverlays: Map<TbLoc, TagBoxLineOverlay>
     private lateinit var geometryOverlays: Map<TbLoc, GeometryOverlay>
 
-    private lateinit var prefTagApiBaseUrl: String
-    private lateinit var prefTagApiBaseUrlCustom: String
-    private lateinit var prefTagBaseMap: String
-    private lateinit var prefTagLastLocation: String
-
-    private lateinit var apiBaseUrlValues: Array<String>
-    private lateinit var apiBaseUrls: Array<String>
-
     private lateinit var palette: List<Int>
-
-    private val coordinateKlaxon = Klaxon().converter(CoordinateConverter())
 
     @Suppress("UnstableApiUsage")
     private val downloadManagerEventHandler = object {
         @Subscribe
         @Keep
-        fun onPropChange(e: PropertyChangedEvent<Boolean>) {
-            when (e.property) {
-                downloadManager::isDownloading -> {
-                    val isDownloading = e.newValue
-                    if (isDownloading) {
+        fun onDownloadEnd(e: MapApiDownloadManager.DownloadEndedEvent) {
+            e.result.onError { ex ->
+                when (ex) {
+                    is ZoomLevelRecededException, is MaxDownloadAreaExceededException -> {
                         mapVM.overlayVisibility.set(View.VISIBLE)
-                        mapVM.overlayText.set("Downloading...")
-                    }
-                }
-                downloadManager::isProcessing -> {
-                    val isProcessing = e.newValue
-                    if (isProcessing) {
-                        mapVM.overlayVisibility.set(View.VISIBLE)
-                        mapVM.overlayText.set("Processing...")
-                    } else {
-                        mapVM.overlayVisibility.set(View.INVISIBLE)
-                        val centerPoint = map.mapCenter.toPoint(geometryFactory)
-                        val envelope = map.boundingBox.toEnvelope()
-                        // TODO: Fix background scope / exception handling mess
-                        val handler = CoroutineExceptionHandler { _, exception ->
-                            Log.e("AAA", "Logging uncaught exception stack trace")
-                            Log.e("AAA", exception.stackTraceToString())
-                        }
-                        backgroundScope.launch(handler) {
-                            updateHighlightedElements(centerPoint, envelope)
-                        }
+                        mapVM.overlayText.set("Zoom in to show data")
                     }
                 }
             }
@@ -159,14 +125,16 @@ class MapFragment : Fragment(), MapEventsReceiver,
 
         @Subscribe
         @Keep
-        fun onDownloadEnd(e: DownloadEndedEvent) {
-            e.result.onError { ex ->
-                when (ex) {
-                    is ZoomLevelRecededException, is MaxDownloadAreaExceededException -> {
-                        mapVM.overlayVisibility.set(View.VISIBLE)
-                        mapVM.overlayText.set("Zoom in to show data, long press to toggle buttons")
-                    }
-                }
+        fun onNewElements(e: MapApiDownloadManager.NewElementsEvent) {
+            val centerPoint = map.mapCenter.toPoint(geometryFactory)
+            val envelope = map.boundingBox.toEnvelope()
+            // TODO: Fix background scope / exception handling mess
+            val handler = CoroutineExceptionHandler { _, exception ->
+                Log.e("AAA", "Logging uncaught exception stack trace")
+                Log.e("AAA", exception.stackTraceToString())
+            }
+            backgroundScope.launch(handler) {
+                updateHighlightedElements(centerPoint, envelope)
             }
         }
     }
@@ -174,26 +142,6 @@ class MapFragment : Fragment(), MapEventsReceiver,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let { }
-
-        apiBaseUrlValues = res.getStringArray(R.array.apiBaseUrlValues)
-        apiBaseUrls = res.getStringArray(R.array.apiBaseUrls)
-
-        prefTagApiBaseUrl = res.getString(R.string.prefApiBaseUrl)
-        prefTagApiBaseUrlCustom = res.getString(R.string.prefApiBaseUrlCustom)
-        prefTagBaseMap = res.getString(R.string.prefBaseMap)
-        prefTagLastLocation = res.getString(R.string.prefLastLocation)
-
-        prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        prefs.registerOnSharedPreferenceChangeListener(this)
-
-        val apiBaseUrlValue = prefs.getString(
-            prefTagApiBaseUrl,
-            res.getString(R.string.apiBaseUrlValueDefault)
-        )!!
-        val apiBaseUrl = getApiBaseUrl(apiBaseUrlValue)
-        downloadManager = MapApiDownloadManager(
-            createOsmApiConfig(apiBaseUrl), MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, geometryFactory
-        )
 
         @Suppress("MapGetWithNotNullAssertionOperator")
         palette = generatePalettes(requireContext())[PALETTE]!!
@@ -216,18 +164,6 @@ class MapFragment : Fragment(), MapEventsReceiver,
         tagBoxFragments = lTagBoxFragments
     }
 
-    private fun getApiBaseUrl(value: String): String {
-        val defaultUrl = res.getString(R.string.apiBaseUrlDefault)
-
-        val valueCustom = res.getString(R.string.apiBaseUrlValueCustom)
-        if (value == valueCustom) {
-            return prefs.getString(prefTagApiBaseUrlCustom, defaultUrl)!!
-        }
-
-        val valueId = apiBaseUrlValues.indexOf(value)
-        return apiBaseUrls.getOrNull(valueId) ?: defaultUrl
-    }
-
     @Suppress("UnstableApiUsage")
     @ExperimentalTime
     override fun onCreateView(
@@ -240,6 +176,23 @@ class MapFragment : Fragment(), MapEventsReceiver,
         attributionVM = vmProvider[AttributionVM::class.java]
 
         binding.vm = mapVM
+
+        mapVM.downloadState.observe(viewLifecycleOwner) { state ->
+            val icon = when (state) {
+                MapApiDownloadManager.State.CALLED, MapApiDownloadManager.State.ENVELOPE -> R.drawable.ic_baseline_change_circle_24
+                MapApiDownloadManager.State.TIMEOUT -> R.drawable.ic_baseline_timer_24
+                MapApiDownloadManager.State.REQUEST -> R.drawable.ic_baseline_cloud_download_24
+                else -> null
+            }
+            if (icon != null) {
+                binding.progressIndicator.visibility = View.VISIBLE
+                binding.progressIndicator.setImageResource(icon)
+            } else {
+                binding.progressIndicator.visibility = View.GONE
+            }
+        }
+
+        mapVM.downloadManager.eventBus.register(this)
 
         addTagBoxFragmentContainers()
 
@@ -348,7 +301,7 @@ class MapFragment : Fragment(), MapEventsReceiver,
     }
 
     override fun onStart() {
-        downloadManager.eventBus.register(downloadManagerEventHandler)
+        mapVM.downloadManager.eventBus.register(downloadManagerEventHandler)
         val tran = parentFragmentManager.beginTransaction()
         for ((tbLoc, tagBoxFragment) in tagBoxFragments) {
             val tagBoxContainer = tagBoxContainers[tbLoc]!!
@@ -361,18 +314,13 @@ class MapFragment : Fragment(), MapEventsReceiver,
     @Suppress("UnstableApiUsage")
     @ExperimentalTime
     override fun onStop() {
-        downloadManager.eventBus.unregister(downloadManagerEventHandler)
+        mapVM.downloadManager.eventBus.unregister(downloadManagerEventHandler)
         val tran = parentFragmentManager.beginTransaction()
         for (tagBoxFragment in tagBoxFragments.values) {
             tran.remove(tagBoxFragment)
         }
         tran.commitAllowingStateLoss()
         super.onStop()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        prefs.unregisterOnSharedPreferenceChangeListener(this)
     }
 
     private fun addTagBoxFragmentContainers() {
@@ -417,15 +365,15 @@ class MapFragment : Fragment(), MapEventsReceiver,
         backgroundScope.launch(handler) { updateHighlightedElements(centerPoint, envelope) }
         backgroundScope.launch(handler) {
             val downloadJob = async {
-                downloadManager.download {
+                mapVM.downloadManager.download {
                     getMapEnvelope()
                 }
             }
-            downloadJob.await().getOrElse { ex ->
+            downloadJob.await().onError { ex ->
                 if (ex is ZoomLevelRecededException || ex is MaxDownloadAreaExceededException) {
 //                    mapViewModel.overlayVisibility.set(View.VISIBLE)
 //                    mapViewModel.overlayText.set("Zoom in to download data")
-                } else if (ex is MapApiDownloadManager.Companion.FresherDownloadCe) {
+                } else if (ex is MapApiDownloadManager.FresherDownloadCe) {
                     return@launch // Ignore
                 } else {
                     handler.handleException(coroutineContext, ex)
@@ -526,10 +474,10 @@ class MapFragment : Fragment(), MapEventsReceiver,
     @ExperimentalTime
     private fun getElementsToDisplay(
         centerPoint: Point, envelope: Envelope
-    ): List<ElementToDisplayData> = downloadManager.elements.keys.asSequence()
+    ): List<ElementToDisplayData> = mapVM.downloadManager.elements.keys.asSequence()
         .filterNot { e -> e.tags.isNullOrEmpty() }
         .mapNotNull { e ->
-            downloadManager.getElementGeometry(e).takeIf { g ->
+            mapVM.downloadManager.getElementGeometry(e).takeIf { g ->
                 !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
             }?.let { g ->
                 DistanceOp.nearestPoints(g, centerPoint)[0].takeIf { nearCenterCoordinate ->
@@ -555,12 +503,12 @@ class MapFragment : Fragment(), MapEventsReceiver,
         displayedElements: List<ElementToDisplayData>,
         tbLocToCoordinate: (tbLoc: TbLoc) -> Coordinate
     ): Map<TbLoc, ElementToDisplayData> = tbLocations
-            .cartesianProduct(displayedElements)
-            .sortedBy { (tbLoc, elementData) ->
-                tbLocToCoordinate(tbLoc).distance(elementData.nearCenterCoordinate)
-            }
-            .noIndividualValueReuse()
-            .toMap()
+        .cartesianProduct(displayedElements)
+        .sortedBy { (tbLoc, elementData) ->
+            tbLocToCoordinate(tbLoc).distance(elementData.nearCenterCoordinate)
+        }
+        .noIndividualValueReuse()
+        .toMap()
 
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
 
@@ -568,20 +516,6 @@ class MapFragment : Fragment(), MapEventsReceiver,
         val current = binding.btnContainer.visibility
         binding.btnContainer.visibility = if (current == View.GONE) View.VISIBLE else View.GONE
         return true
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        val res = requireContext().resources
-        when (key) {
-            prefTagApiBaseUrl -> {
-                val value = prefs.getString(
-                    prefTagApiBaseUrl,
-                    res.getString(R.string.apiBaseUrlValueDefault)
-                )!!
-                val apiBaseUrl = getApiBaseUrl(value)
-                downloadManager.apiConfig = createOsmApiConfig(apiBaseUrl)
-            }
-        }
     }
 
     private fun tileSourceFromBaseMap(baseMap: BaseMap): XYTileSource {
@@ -602,20 +536,12 @@ class MapFragment : Fragment(), MapEventsReceiver,
 
     companion object {
         const val ENVELOPE_BUFFER_FACTOR = 1.2
-        const val MAX_DOWNLOAD_QPS = 1.0 // Queries per second
-        const val MAX_DOWNLOAD_AREA = 500.0 * 500 // m^2, 500 * 500 = tiny city block
         const val MIN_DOWNLOAD_ZOOM_LEVEL = 19
         val PALETTE = PaletteId.PALETTE_VIBRANT
 
         private val geometryFactory = GeometryFactory()
 
         private val backgroundScope = CoroutineScope(Job() + Dispatchers.IO)
-
-        private fun createOsmApiConfig(baseUrl: String) =
-            OsmApiConfig(
-                Uri.parse(baseUrl),
-                "${BuildConfig.APPLICATION_ID}/${BuildConfig.VERSION_NAME}"
-            )
 
         @JvmStatic
         fun newInstance() =

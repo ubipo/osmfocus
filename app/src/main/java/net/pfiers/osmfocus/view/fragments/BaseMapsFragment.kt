@@ -7,34 +7,31 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.databinding.ObservableBoolean
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.ui.NavigationUI
-import androidx.recyclerview.selection.ItemDetailsLookup
-import androidx.recyclerview.selection.ItemKeyProvider
-import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.widget.*
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
-import net.pfiers.osmfocus.*
-import net.pfiers.osmfocus.basemaps.*
+import kotlinx.coroutines.launch
+import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsBinding
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsItemBinding
-import net.pfiers.osmfocus.db.UserBaseMap
-import net.pfiers.osmfocus.kotlin.nullIfNegative
+import net.pfiers.osmfocus.extensions.app
+import net.pfiers.osmfocus.extensions.createVMFactory
+import net.pfiers.osmfocus.service.basemaps.*
+import net.pfiers.osmfocus.service.db.UserBaseMap
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
 import net.pfiers.osmfocus.viewmodel.NavVM
 import kotlin.time.ExperimentalTime
@@ -79,7 +76,8 @@ class BaseMapsFragment : Fragment() {
 
         val selectedItemFlow: Flow<BaseMap> = app.settingsDataStore.data
             .map { settings ->
-                settings.baseMapUid.ifEmpty { null }?.let { repository.get(it) } ?: BaseMapRepository.default
+                settings.baseMapUid.ifEmpty { null }?.let { repository.get(it) }
+                    ?: BaseMapRepository.default
             }
 
         val backgroundScope = CoroutineScope(Job() + Dispatchers.Main)
@@ -107,7 +105,8 @@ class BaseMapsFragment : Fragment() {
         )
         builtinBaseMapAdapter.submitList(builtinBaseMaps)
         binding.buildInList.adapter = builtinBaseMapAdapter
-        binding.buildInList.layoutManager = GridLayoutManager(context, 1) //https://stackoverflow.com/a/48603061/7120579
+        binding.buildInList.layoutManager =
+            GridLayoutManager(context, 1) //https://stackoverflow.com/a/48603061/7120579
 
         userBaseMapAdapter = BaseMapListAdapter(
             lifecycleScope,
@@ -139,7 +138,7 @@ class BaseMapsFragment : Fragment() {
     }
 
     // uses scope and lifecycle of fragment, not safe for external use, ergo, private
-    private class BaseMapListAdapter <T: BaseMap>(
+    private class BaseMapListAdapter<T : BaseMap>(
         private val uiScope: CoroutineScope,
         private val backgroundScope: CoroutineScope,
         private val lifecycleOwner: LifecycleOwner,
@@ -148,12 +147,20 @@ class BaseMapsFragment : Fragment() {
         private val repository: BaseMapRepository,
         private val selectedItemFlow: Flow<BaseMap?>,
         private val updateSelectedItem: (newBaseMap: BaseMap) -> Unit
-    ): ListAdapter<T, BaseMapListAdapter.Holder>(BaseMapComparator<T>(context)) {
+    ) : ListAdapter<T, BaseMapListAdapter.Holder>(BaseMapComparator<T>(context)) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val binding = FragmentBaseMapsItemBinding.inflate(LayoutInflater.from(parent.context))
             // has implications: https://medium.com/@stephen.brewer/an-adventure-with-recyclerview-databinding-livedata-and-room-beaae4fc8116
             binding.lifecycleOwner = lifecycleOwner
-            return Holder(binding, backgroundScope, uiScope, snackbarView, repository, selectedItemFlow, updateSelectedItem)
+            return Holder(
+                binding,
+                backgroundScope,
+                uiScope,
+                snackbarView,
+                repository,
+                selectedItemFlow,
+                updateSelectedItem
+            )
         }
 
         override fun onBindViewHolder(holder: Holder, position: Int) {
@@ -168,7 +175,7 @@ class BaseMapsFragment : Fragment() {
             private val repository: BaseMapRepository,
             private val selectedItemFlow: Flow<BaseMap?>,
             private val updateSelectedItem: (newBaseMap: BaseMap) -> Unit
-        ): RecyclerView.ViewHolder(binding.root) {
+        ) : RecyclerView.ViewHolder(binding.root) {
             lateinit var baseMap: BaseMap
 
             fun bind(baseMap: BaseMap) {
@@ -211,7 +218,8 @@ class BaseMapsFragment : Fragment() {
             }
         }
 
-        class BaseMapComparator <T: BaseMap>(private val context: Context): DiffUtil.ItemCallback<T>() {
+        class BaseMapComparator<T : BaseMap>(private val context: Context) :
+            DiffUtil.ItemCallback<T>() {
             override fun areItemsTheSame(a: T, b: T): Boolean = a.areItemsTheSame(b)
 
             override fun areContentsTheSame(a: T, b: T): Boolean = a.areContentsTheSame(

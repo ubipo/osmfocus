@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.onError
 import kotlinx.coroutines.launch
-import net.pfiers.osmfocus.NonNullObservableField
 import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.basemaps.BaseMapRepository
-import net.pfiers.osmfocus.basemaps.resolveAbcSubdomains
-import net.pfiers.osmfocus.db.UserBaseMap
-import net.pfiers.osmfocus.value
+import net.pfiers.osmfocus.extensions.NonNullObservableField
+import net.pfiers.osmfocus.extensions.value
+import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
+import net.pfiers.osmfocus.service.db.UserBaseMap
 import java.net.URISyntaxException
 import java.util.*
 

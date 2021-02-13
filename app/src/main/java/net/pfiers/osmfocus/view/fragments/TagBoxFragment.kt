@@ -10,10 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.fragment.app.Fragment
-import androidx.preference.PreferenceManager
-import net.pfiers.osmfocus.androidUri
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
-import net.pfiers.osmfocus.osm.OsmElement
+import net.pfiers.osmfocus.extensions.androidUri
+import net.pfiers.osmfocus.service.osm.OsmElement
 import kotlin.properties.Delegates
 
 
@@ -87,10 +86,10 @@ class TagBoxFragment(
             element: OsmElement? = null,
             onHitRectChange: ((Rect) -> Unit)? = null
         ) = TagBoxFragment(onHitRectChange).apply {
-                arguments = Bundle().apply {
-                    putSerializable(ARG_ELEMENT, element)
-                    putInt(ARG_COLOR, color)
-                }
+            arguments = Bundle().apply {
+                putSerializable(ARG_ELEMENT, element)
+                putInt(ARG_COLOR, color)
             }
+        }
     }
 }

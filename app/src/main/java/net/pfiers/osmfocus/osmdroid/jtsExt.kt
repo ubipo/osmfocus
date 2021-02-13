@@ -1,7 +1,7 @@
 package net.pfiers.osmfocus.osmdroid
 
 import androidx.annotation.ColorInt
-import net.pfiers.osmfocus.jts.asList
+import net.pfiers.osmfocus.extensions.asList
 import net.pfiers.osmfocus.osmdroid.overlays.GeometryCollectionOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.LineStringOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.PointOverlay

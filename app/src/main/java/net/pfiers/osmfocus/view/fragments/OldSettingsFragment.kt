@@ -1,17 +1,6 @@
 package net.pfiers.osmfocus.view.fragments
 
-import android.content.SharedPreferences
-import android.os.Bundle
-import android.util.Log
-import androidx.annotation.StringRes
-import androidx.fragment.app.viewModels
-import androidx.preference.ListPreference
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import net.pfiers.osmfocus.*
-import net.pfiers.osmfocus.basemaps.builtinBaseMaps
-import net.pfiers.osmfocus.viewmodel.BaseMapsVM
-import net.pfiers.osmfocus.viewmodel.NavVM
 
 // old settings fragment
 /**

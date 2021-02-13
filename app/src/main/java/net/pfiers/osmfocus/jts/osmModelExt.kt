@@ -1,6 +1,6 @@
 package net.pfiers.osmfocus.jts
 
-import net.pfiers.osmfocus.osm.*
+import net.pfiers.osmfocus.service.osm.*
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory
 

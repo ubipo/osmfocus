@@ -7,9 +7,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.basemaps.BaseMap
-import net.pfiers.osmfocus.basemaps.BaseMapRepository
-import net.pfiers.osmfocus.value
+import net.pfiers.osmfocus.extensions.createVMFactory
+import net.pfiers.osmfocus.extensions.value
+import net.pfiers.osmfocus.service.basemaps.BaseMap
+import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
 
 class SettingsVM(
     private val settingsDataStore: DataStore<Settings>,
@@ -37,6 +38,6 @@ class SettingsVM(
     fun showAbout() = navigator.showAbout()
 
     companion object {
-        fun createFactory(creator: () -> SettingsVM) = net.pfiers.osmfocus.createVMFactory(creator)
+        fun createFactory(creator: () -> SettingsVM) = createVMFactory(creator)
     }
 }

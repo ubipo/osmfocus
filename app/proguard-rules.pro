@@ -19,12 +19,12 @@
 -keepattributes *Annotation*
 #-keep class com.google.common.eventbus.** { *; }
 
--keep class net.pfiers.osmfocus.osmapi.OsmApiRes { *; }
--keep class net.pfiers.osmfocus.osmapi.OsmApiElement { *; }
--keep class net.pfiers.osmfocus.osmapi.OsmApiNode { *; }
--keep class net.pfiers.osmfocus.osmapi.OsmApiWay { *; }
--keep class net.pfiers.osmfocus.osmapi.OsmApiRelation { *; }
--keep class net.pfiers.osmfocus.osmapi.OsmApiRelationMember { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.OsmApiRes { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.OsmApiElement { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.OsmApiNode { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.OsmApiWay { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.OsmApiRelation { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.OsmApiRelationMember { *; }
 
 -keepattributes RuntimeVisibleAnnotations
 -keep class kotlin.Metadata { *; }
