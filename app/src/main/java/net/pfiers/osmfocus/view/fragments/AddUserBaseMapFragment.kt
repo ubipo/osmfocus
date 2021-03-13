@@ -9,8 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.ui.NavigationUI
 import net.pfiers.osmfocus.databinding.FragmentAddUserBaseMapBinding
-import net.pfiers.osmfocus.extensions.app
 import net.pfiers.osmfocus.extensions.createVMFactory
+import net.pfiers.osmfocus.view.support.app
 import net.pfiers.osmfocus.viewmodel.AddUserBaseMapVM
 import net.pfiers.osmfocus.viewmodel.NavVM
 

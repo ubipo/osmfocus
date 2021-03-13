@@ -6,6 +6,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"  />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+<!--            <data android:="image/jpeg" />-->
+        </intent>
+    </queries>
+
     <application
         android:name=".OsmFocusApplication"
         android:allowBackup="true"
@@ -15,15 +22,32 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity
             android:name=".view.MainActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
+            <intent-filter>
+
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+
             </intent-filter>
+
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="net.pfiers.osmfocus.email_attachments_fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/email_attachments_filepaths" />
+
+        </provider>
+
     </application>
 
 </manifest>

@@ -1,14 +1,12 @@
 package net.pfiers.osmfocus.extensions
 
-import android.content.res.Resources
 import android.net.Uri
 import androidx.databinding.Observable
 import androidx.databinding.ObservableField
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import net.pfiers.osmfocus.OsmFocusApplication
 import java.net.URL
+
 
 val URL.androidUri: Uri get() = Uri.parse(toExternalForm())
 
@@ -32,9 +30,6 @@ val URL.androidUri: Uri get() = Uri.parse(toExternalForm())
 //    }
 //}
 
-val Fragment.res: Resources
-    get() = requireContext().resources
-
 var <T> ObservableField<T>.value
     get() = get()
     set(value) = set(value)
@@ -50,9 +45,6 @@ var ObservableField<String>.valueOrEmpty
 var <T : Any> NonNullObservableField<T>.valueOrEmpty
     get() = get()
     set(value) = set(value)
-
-val Fragment.app
-    get() = requireActivity().application as OsmFocusApplication
 
 inline fun <reified S : ViewModel> createVMFactory(crossinline creator: () -> S) =
     object : ViewModelProvider.Factory {
@@ -77,4 +69,3 @@ class NonNullObservableField<T : Any>(
     @Suppress("RedundantOverride") // Only allow non-null `value`.
     override fun set(value: T) = super.set(value)
 }
-

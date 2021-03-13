@@ -4,19 +4,17 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import com.google.protobuf.InvalidProtocolBufferException
 import net.pfiers.osmfocus.Settings
+import net.pfiers.osmfocus.osmdroid.toGeoPoint
 import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import org.locationtech.jts.geom.Coordinate
 import java.io.InputStream
 import java.io.OutputStream
 
 class SettingsSerializer: Serializer<Settings> {
     override val defaultValue: Settings = Settings.newBuilder()
+        .setApiBaseUrl(DEFAULT_API_BASE_URL)
         .setBaseMapUid(BaseMapRepository.uidOfDefault)
-        .setLastLocation(
-            Settings.Location.newBuilder()
-                .setLongitude(4.7011675)
-                .setLatitude(50.879202)
-                .build()
-        )
+        .setLastLocation(DEFAULT_LAST_LOCATION.toSettingsLocation())
         .build()
 
     override fun readFrom(input: InputStream): Settings {
@@ -31,4 +29,8 @@ class SettingsSerializer: Serializer<Settings> {
         t: Settings,
         output: OutputStream
     ) = t.writeTo(output)
+
+    companion object {
+
+    }
 }

@@ -30,17 +30,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import net.pfiers.osmfocus.*
-import net.pfiers.osmfocus.service.basemaps.BaseMap
-import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
-import net.pfiers.osmfocus.extensions.app
 import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.extensions.kotlin.cartesianProduct
 import net.pfiers.osmfocus.extensions.kotlin.containedSubList
 import net.pfiers.osmfocus.extensions.kotlin.noIndividualValueReuse
 import net.pfiers.osmfocus.extensions.kotlin.toLinkedMap
 import net.pfiers.osmfocus.extensions.value
-import net.pfiers.osmfocus.service.osm.OsmElement
 import net.pfiers.osmfocus.osmdroid.overlays.CrosshairOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.GeometryOverlay
 import net.pfiers.osmfocus.osmdroid.overlays.TagBoxLineOverlay
@@ -48,13 +44,15 @@ import net.pfiers.osmfocus.osmdroid.toEnvelope
 import net.pfiers.osmfocus.osmdroid.toGeoPoint
 import net.pfiers.osmfocus.osmdroid.toPoint
 import net.pfiers.osmfocus.service.MapApiDownloadManager
+import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
+import net.pfiers.osmfocus.service.ZoomLevelRecededException
+import net.pfiers.osmfocus.service.basemaps.BaseMap
+import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
+import net.pfiers.osmfocus.service.osm.OsmElement
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocations.*
-import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
-import net.pfiers.osmfocus.view.PaletteId
-import net.pfiers.osmfocus.service.ZoomLevelRecededException
-import net.pfiers.osmfocus.view.generatePalettes
+import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.operation.distance.DistanceOp
@@ -82,13 +80,12 @@ import kotlin.time.seconds
 @ExperimentalTime
 class MapFragment : Fragment(), MapEventsReceiver {
     private lateinit var binding: FragmentMapBinding
-    private val mapVM: MapVM by viewModels {
-        val navigator = requireActivity()
-        if (navigator !is MapVM.Navigator) error("MapFragment containing activity must be MapVM.Navigator")
-        createVMFactory { MapVM(app.db, app.settingsDataStore, navigator) }
+    private val mapVM: MapVM by viewModels({ requireActivity() }) {
+        createVMFactory { MapVM(app.db, app.settingsDataStore, activityAs()) }
     }
     private lateinit var navVM: NavVM
     private lateinit var attributionVM: AttributionVM
+    private val exceptionHandler by lazy { activityAs<ExceptionHandler>() }
 
     private var moveToCurrentLocationOnLocationPermissionGranted = AtomicBoolean()
     private val requestPermissionLauncher = registerForActivityResult(
@@ -128,12 +125,8 @@ class MapFragment : Fragment(), MapEventsReceiver {
         fun onNewElements(e: MapApiDownloadManager.NewElementsEvent) {
             val centerPoint = map.mapCenter.toPoint(geometryFactory)
             val envelope = map.boundingBox.toEnvelope()
-            // TODO: Fix background scope / exception handling mess
-            val handler = CoroutineExceptionHandler { _, exception ->
-                Log.e("AAA", "Logging uncaught exception stack trace")
-                Log.e("AAA", exception.stackTraceToString())
-            }
-            backgroundScope.launch(handler) {
+            // TODO: Fix background scope
+            backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
                 updateHighlightedElements(centerPoint, envelope)
             }
         }
@@ -353,17 +346,8 @@ class MapFragment : Fragment(), MapEventsReceiver {
     private fun mapScrollHandler() {
         val centerPoint = map.mapCenter.toPoint(geometryFactory)
         val envelope = map.boundingBox.toEnvelope()
-        val handler = CoroutineExceptionHandler { _, exception ->
-            Log.e("AAA", "Logging uncaught exception stack trace")
-            Log.e("AAA", exception.stackTraceToString())
-            val logFile = File(requireContext().filesDir, "stacktrace-" + Instant.now().toString())
-            logFile.printWriter().use {
-                exception.printStackTrace(it)
-            }
-            Log.e("AAA", "Dumped uncaught exception stack trace to ${logFile.absolutePath}")
-        }
-        backgroundScope.launch(handler) { updateHighlightedElements(centerPoint, envelope) }
-        backgroundScope.launch(handler) {
+        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) { updateHighlightedElements(centerPoint, envelope) }
+        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
             val downloadJob = async {
                 mapVM.downloadManager.download {
                     getMapEnvelope()
@@ -376,7 +360,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
                 } else if (ex is MapApiDownloadManager.FresherDownloadCe) {
                     return@launch // Ignore
                 } else {
-                    handler.handleException(coroutineContext, ex)
+                    exceptionHandler.coroutineExceptionHandler.handleException(coroutineContext, ex)
                 }
                 return@launch
             }
@@ -542,13 +526,5 @@ class MapFragment : Fragment(), MapEventsReceiver {
         private val geometryFactory = GeometryFactory()
 
         private val backgroundScope = CoroutineScope(Job() + Dispatchers.IO)
-
-        @JvmStatic
-        fun newInstance() =
-            MapFragment().apply {
-                arguments = Bundle().apply {
-
-                }
-            }
     }
 }

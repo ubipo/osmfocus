@@ -51,18 +51,30 @@
     <string name="app_info_dialog_text">
         <![CDATA[
         <h2>This app</h2>
-        <p>OSMfocus Reborn is an app to examine OpenStreetMap (OSM) elements and "focus" your view of the map.</p>
+        <p>OSMfocus Reborn is an app to examine OpenStreetMap (OSM) elements and "focus" your view
+            of the map.</p>
         <p>Written in Kotlin using Android Jetpack.</p>
-        <p>Licensed under the <a href="https://github.com/ubipo/osmfocus/blob/master/LICENSE">"Apache License 2.0"</a>.</p>
+        <p>Licensed under the <a href="https://github.com/ubipo/osmfocus/blob/master/LICENSE">"Apache
+            License 2.0"</a>.</p>
 
         <h2>Fork notice</h2>
-        <p>This app is a complete re-write of the now (07-11-2020) defunct <a href="https://github.com/MichaelVL/osm-focus">OSMfocus by Network42 / MichaelVL</a>.</p>
+        <p>This app is a complete re-write of the now (07-11-2020) defunct <a
+            href="https://github.com/MichaelVL/osm-focus">OSMfocus by Network42 / MichaelVL</a>.</p>
 
         <h2>License notices</h2>
-        <p>OSMFocus Reborn allows you to view OpenStreetMap data. This data is <a href="https://www.openstreetmap.org/copyright">© (Copyright) OpenStreetMap contributors</a> and is available under the <a href="https://opendatacommons.org/licenses/odbl/">Open Database License</a>.</p>
-        <p>OSMFocus Reborn uses (remixed) names and ideas from OSMFocus (MichaelVL) v0.1.1r1, which is available under the <a href="https://github.com/MichaelVL/osm-focus/blob/master/LICENSE">&quot;Apache License 2.0&quot;</a>.</p>
-        <p>OSMFocus Reborn uses a remixed version of the OpenStreetMap logo, as per the <a href="https://wiki.osmfoundation.org/wiki/Trademark_Policy">Trademark Policy §3.5</a>.</p>
-        <p>OSMFocus Reborn allows you to view map tiles from (but does not rely on) third-party and potentially non-free services.</p>
+        <p>OSMFocus Reborn allows you to view OpenStreetMap data. This data is <a
+            href="https://www.openstreetmap.org/copyright">© (Copyright) OpenStreetMap
+            contributors</a> and is available under the <a
+            href="https://opendatacommons.org/licenses/odbl/">Open Database License</a>.</p>
+        <p>OSMFocus Reborn uses (remixed) names and ideas from OSMFocus (MichaelVL) v0.1.1r1, which
+            is available under the <a
+                href="https://github.com/MichaelVL/osm-focus/blob/master/LICENSE">&quot;Apache
+                License 2.0&quot;</a>.</p>
+        <p>OSMFocus Reborn uses a remixed version of the OpenStreetMap logo, as per the <a
+            href="https://wiki.osmfoundation.org/wiki/Trademark_Policy">Trademark Policy §3.5</a>.
+        </p>
+        <p>OSMFocus Reborn allows you to view map tiles from (but does not rely on) third-party and
+            potentially non-free services.</p>
 
         <h2>Libraries</h2>
         <ul>
@@ -79,4 +91,7 @@
     <string name="issues_second_line">Found a bug or some missing functionality?</string>
     <string name="about_second_line">Issues, suggestions, notices…</string>
     <string name="about">About</string>
+    <string name="error_reporter_title">An error occurred</string>
+    <string name="error_reporter_body_pre">The app couldn\'t recover from the following error: </string>
+    <string name="error_reporter_body_post">You can help improve the application by reporting this on GitHub or via email.</string>
 </resources>

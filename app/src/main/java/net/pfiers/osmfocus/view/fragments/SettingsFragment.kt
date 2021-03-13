@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
-import net.pfiers.osmfocus.extensions.app
+import net.pfiers.osmfocus.view.support.app
 import net.pfiers.osmfocus.viewmodel.SettingsVM
 
 class SettingsFragment : Fragment() {

@@ -28,10 +28,10 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsBinding
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsItemBinding
-import net.pfiers.osmfocus.extensions.app
 import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.service.basemaps.*
 import net.pfiers.osmfocus.service.db.UserBaseMap
+import net.pfiers.osmfocus.view.support.app
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
 import net.pfiers.osmfocus.viewmodel.NavVM
 import kotlin.time.ExperimentalTime

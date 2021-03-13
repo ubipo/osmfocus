@@ -3,6 +3,7 @@
 package net.pfiers.osmfocus.viewmodel
 
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import androidx.annotation.Keep
 import androidx.databinding.ObservableField
@@ -17,6 +18,7 @@ import net.pfiers.osmfocus.service.MapApiDownloadManager
 import net.pfiers.osmfocus.service.db.Db
 import net.pfiers.osmfocus.service.db.UserBaseMap
 import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
+import net.pfiers.osmfocus.service.settings.DEFAULT_API_BASE_URL
 import org.locationtech.jts.geom.GeometryFactory
 import kotlin.time.ExperimentalTime
 
@@ -51,7 +53,7 @@ class MapVM(
         when (e.property) {
             downloadManager::state -> {
                 viewModelScope.launch {
-                    downloadState.value = e.newValue
+                    downloadState.value = (e.newValue)
                 }
             }
         }
@@ -75,7 +77,6 @@ class MapVM(
     }
 
     companion object {
-        val DEFAULT_API_BASE_URL = "https://api.openstreetmap.org/api/0.6"
         const val MAX_DOWNLOAD_QPS = 1.0 // Queries per second
         const val MAX_DOWNLOAD_AREA = 500.0 * 500 // m^2, 500 * 500 = tiny city block
         private val GEOMETRY_FAC = GeometryFactory()
