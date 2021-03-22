@@ -13,7 +13,7 @@ plugins {
 
 android {
     compileSdkVersion(30)
-    buildToolsVersion = "30.0.0"
+    buildToolsVersion = "30.0.3"
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
@@ -49,10 +49,22 @@ android {
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"))
         }
     }
-}
 
-sourceSets.forEach { ss ->
-    println(ss.name)
+    // Handles distribution channel differences (e.g. Google Play billing vs external payment flow for donations)
+    val distributionChannelDimension = "distributionChannel"
+    flavorDimensions(distributionChannelDimension)
+
+    productFlavors {
+        create("fdroid") {
+            dimension = distributionChannelDimension
+            versionNameSuffix = "-fdroid"
+        }
+
+        create("gplay") {
+            dimension = distributionChannelDimension
+            versionNameSuffix = "-gplay"
+        }
+    }
 }
 
 //sourceSets.getByName("main") {
@@ -93,35 +105,35 @@ dependencies {
     val implementation by configurations
 
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation(kotlin("stdlib", "1.4.21"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.4.31")
     implementation("com.android.support:multidex:1.0.3")
     implementation("androidx.core:core-ktx:1.3.2")
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("androidx.constraintlayout:constraintlayout:2.0.4")
     implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.2.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.2.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0")
     implementation("androidx.recyclerview:recyclerview:1.1.0")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.google.android.material:material:1.3.0")
     implementation("androidx.annotation:annotation:1.1.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.1")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
     // Uil
     implementation("com.google.guava:guava:30.0-android")
 
     // Spatial
-    val jtsVersion = "1.17.1"
+    val jtsVersion = "1.18.1"
     implementation("org.locationtech.jts:jts-core:$jtsVersion")
     implementation("org.locationtech.jts:jts-io:$jtsVersion")
     implementation("org.locationtech.jts.io:jts-io-common:$jtsVersion")
-    implementation("net.sf.geographiclib:GeographicLib-Java:1.50")
+    implementation("net.sf.geographiclib:GeographicLib-Java:1.51")
 
     // Map
-    implementation("org.osmdroid:osmdroid-android:6.1.8")
+    implementation("org.osmdroid:osmdroid-android:6.1.10")
 
     // HTTP
     val fuelVersion = "2.3.0"
@@ -135,12 +147,12 @@ dependencies {
     implementation("com.beust:klaxon:5.4")
 
     // Navigation
-    val navVersion = "2.3.2"
+    val navVersion = "2.3.4"
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
     implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.fragment:fragment-ktx:1.3.0-rc02")
+    implementation("androidx.fragment:fragment-ktx:1.3.1")
 
     // Room DB
     val roomVersion = "2.2.6"
@@ -149,10 +161,10 @@ dependencies {
 //    androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
     // Protobuf
-    implementation("com.google.protobuf:protobuf-lite:3.0.0")
+    implementation("com.google.protobuf:protobuf-lite:3.0.1")
 
     // Datastore
-    val datastoreVersion = "1.0.0-alpha06"
+    val datastoreVersion = "1.0.0-alpha08"
     implementation("androidx.datastore:datastore:$datastoreVersion")
     implementation("androidx.datastore:datastore-rxjava3:$datastoreVersion")
 

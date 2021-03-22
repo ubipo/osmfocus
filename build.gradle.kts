@@ -14,8 +14,8 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools:r8:2.1.75")
-        classpath("com.android.tools.build:gradle:4.1.2")
+        classpath("com.android.tools:r8:2.2.60")
+        classpath("com.android.tools.build:gradle:4.1.3")
         classpath(kotlin("gradle-plugin", version = project.extra["kotlin"] as String?))
         classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.14")
     }

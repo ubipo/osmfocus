@@ -194,7 +194,7 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="72dp"
-                    android:onClick="@{() -> vm.showDonationPage()}">
+                    android:onClick="@{() -> vm.showDonationOptions()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/coffeeIcon"

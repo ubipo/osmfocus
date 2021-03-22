@@ -1,13 +1,10 @@
 package net.pfiers.osmfocus.view
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -20,6 +17,8 @@ import net.pfiers.osmfocus.databinding.ActivityMainBinding
 import net.pfiers.osmfocus.extensions.div
 import net.pfiers.osmfocus.extensions.kotlin.subList
 import net.pfiers.osmfocus.view.fragments.ExceptionDialogFragment
+import net.pfiers.osmfocus.view.support.DistDonationHelper
+import net.pfiers.osmfocus.view.support.DonationHelper
 import net.pfiers.osmfocus.view.support.ExceptionHandler
 import net.pfiers.osmfocus.view.support.showWithDefaultTag
 import net.pfiers.osmfocus.viewmodel.*
@@ -31,7 +30,6 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.time.ExperimentalTime
 
-
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
 class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM.Navigator,
@@ -39,6 +37,7 @@ class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM
     private lateinit var binding: ActivityMainBinding
     private lateinit var navVM: NavVM
     private lateinit var navController: NavController
+    private val donationHelper: DonationHelper = DistDonationHelper(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,8 +83,8 @@ class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM
     override fun showAppInfo() = navController.navigate(R.id.moreInfoFragment)
 
     override fun showSourceCode() = openUri(SOURCE_CODE_URL)
-    override fun showDonationPage() = openUri(DONATION_URL)
     override fun showIssueTracker() = openUri(ISSUE_URL)
+    override fun showDonationOptions() = donationHelper.showDonationOptions()
 
     override fun openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
 
@@ -104,7 +103,7 @@ class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM
             file.writeBytes(content)
             FileProvider.getUriForFile(this, "$packageName.email_attachments_fileprovider", file)
         }
-        
+
         val emailIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
             type = "message/rfc822"
             putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
@@ -139,7 +138,6 @@ class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM
     companion object {
         val ISSUE_URL: Uri = Uri.parse("https://github.com/ubipo/osmfocus/issues")
         val SOURCE_CODE_URL: Uri = Uri.parse("https://github.com/ubipo/osmfocus")
-        val DONATION_URL: Uri = Uri.parse("https://www.buymeacoffee.com/pfiers")
         const val EMAIL_ATTACHMENTS_URI_BASE = "content://net.pfiers.osmfocus.email_attachments_fileprovider"
     }
 }

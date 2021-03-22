@@ -8,13 +8,13 @@ class AboutVM(private val navigator: Navigator) : ViewModel() {
     interface Navigator {
         fun showSourceCode()
         fun showAppInfo()
-        fun showDonationPage()
+        fun showDonationOptions()
         fun showIssueTracker()
     }
 
     fun showSourceCode() = navigator.showSourceCode()
     fun showAppInfo() = navigator.showAppInfo()
-    fun showDonationPage() = navigator.showDonationPage()
+    fun showDonationOptions() = navigator.showDonationOptions()
     fun showIssueTracker() = navigator.showIssueTracker()
 
     companion object {
