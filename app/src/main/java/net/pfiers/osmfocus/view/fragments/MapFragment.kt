@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
@@ -315,7 +316,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
     }
 
     private fun addTagBoxFragmentContainers() {
-        val layout = binding.tagBoxLayout
+        val constraintLayout = binding.tagBoxLayout
 
         // Add views to layout
         tagBoxContainers = tbLocations.map { tbLoc ->
@@ -327,17 +328,22 @@ class MapFragment : Fragment(), MapEventsReceiver {
                 lineOverlay.startPoint = startPoint
             }
             fragmentContainer.id = View.generateViewId()
-            layout.addView(fragmentContainer)
+            val matchConstraintsLp = ConstraintLayout.LayoutParams(0, 0)
+            fragmentContainer.layoutParams = matchConstraintsLp
+            constraintLayout.addView(fragmentContainer)
             tbLoc to fragmentContainer
         }.toLinkedMap()
 
-        // Constrain views within layout (all views need to have been added)
-        val set = ConstraintSet()
-        set.clone(layout)
+        // Constrain views within layout (all views need to have been added to parent before)
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(constraintLayout)
+        val oneThird = (1.0 / 3).toFloat()
         for ((tbLoc, container) in tagBoxContainers) {
-            tbLoc.applyConstraints(set, container.id, layout.id)
+            tbLoc.applyConstraints(constraintSet, constraintLayout.id, container.id)
+            constraintSet.constrainPercentHeight(container.id, oneThird)
+            constraintSet.constrainPercentWidth(container.id, oneThird)
         }
-        set.applyTo(layout)
+        constraintSet.applyTo(constraintLayout)
     }
 
     @ExperimentalTime
