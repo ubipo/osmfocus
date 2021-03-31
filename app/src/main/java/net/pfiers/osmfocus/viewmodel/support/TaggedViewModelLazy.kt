@@ -23,12 +23,7 @@ class TaggedViewModelLazy<VM : ViewModel>(
                 val factory = factoryProducer()
                 val store = storeProducer()
                 val tags = tagsProducer()
-                val canonicalName: String = viewModelClass.qualifiedName
-                    ?: throw IllegalArgumentException("Local and anonymous classes can not be ViewModels")
-                ViewModelProvider(store, factory).get(
-                    "$BASE_KEY:$canonicalName:${tags.joinToString(":")}",
-                    viewModelClass.java
-                ).also {
+                createTaggedViewModel(viewModelClass, tags, store, factory).also {
                     cached = it
                 }
             } else {
@@ -37,8 +32,4 @@ class TaggedViewModelLazy<VM : ViewModel>(
         }
 
     override fun isInitialized(): Boolean = cached != null
-
-    companion object {
-        private const val BASE_KEY = "net.pfiers.osmfocus.view.support.KeyedViewModelLazy"
-    }
 }

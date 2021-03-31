@@ -9,6 +9,22 @@ import androidx.lifecycle.ViewModelStoreOwner
 import kotlin.reflect.KClass
 
 
+private const val BASE_KEY = "net.pfiers.taggedViewModel"
+
+fun <VM : ViewModel> createTaggedViewModel(
+    viewModelClass: KClass<VM>,
+    tags: Iterable<String>,
+    store: ViewModelStore,
+    factory: ViewModelProvider.Factory
+): VM {
+    val canonicalName: String = viewModelClass.qualifiedName
+        ?: throw IllegalArgumentException("Local and anonymous classes can not be ViewModels")
+    return ViewModelProvider(store, factory).get(
+        "$BASE_KEY:$canonicalName:${tags.joinToString(":")}",
+        viewModelClass.java
+    )
+}
+
 /**
  * Adapted from androidx.fragment.app.FragmentViewModelLazy.viewModels
  */
