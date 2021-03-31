@@ -28,7 +28,6 @@ import com.github.kittinunf.result.onError
 import com.google.common.eventbus.Subscribe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.sync.Mutex
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.extensions.createVMFactory
@@ -67,8 +66,6 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
-import java.io.File
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
@@ -125,9 +122,10 @@ class MapFragment : Fragment(), MapEventsReceiver {
         fun onNewElements(e: MapApiDownloadManager.NewElementsEvent) {
             val centerPoint = map.mapCenter.toPoint(geometryFactory)
             val envelope = map.boundingBox.toEnvelope()
+            val zoomLevel = map.zoomLevelDouble
             // TODO: Fix background scope
             backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
-                updateHighlightedElements(centerPoint, envelope)
+                updateHighlightedElements(centerPoint, envelope, zoomLevel)
             }
         }
     }
@@ -346,7 +344,8 @@ class MapFragment : Fragment(), MapEventsReceiver {
     private fun mapScrollHandler() {
         val centerPoint = map.mapCenter.toPoint(geometryFactory)
         val envelope = map.boundingBox.toEnvelope()
-        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) { updateHighlightedElements(centerPoint, envelope) }
+        val zoomLevel = map.zoomLevelDouble
+        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) { updateHighlightedElements(centerPoint, envelope, zoomLevel) }
         backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
             val downloadJob = async {
                 mapVM.downloadManager.download {
@@ -378,7 +377,12 @@ class MapFragment : Fragment(), MapEventsReceiver {
             )
         }
 
-        val envelope = Result.of<Envelope, Exception> { map.boundingBox.toEnvelope() }.getOrElse {
+        val envelope = Result.of<Envelope, Exception> {
+            if (map.projection == null) {
+                Log.v("AAA", "Map Projection is null")
+            }
+            map.boundingBox.toEnvelope()
+        }.getOrElse {
             return Result.error(it)
         }
         envelope.expandBy(
@@ -399,52 +403,53 @@ class MapFragment : Fragment(), MapEventsReceiver {
         map.onPause()
     }
 
-    private val updateLineOverlaysContext = CoroutineScope(Dispatchers.Default)
-    private val updateHighlightedElementsLock = Mutex()
+    private val updateHighlightedElementsContext = CoroutineScope(Dispatchers.Default) + Job()
     private var lastUpdateHighlightedElementsJob: Job? = null
-    private val lastUpdateHighlightedElementsJobMutex = Mutex()
 
     @ExperimentalTime
-    private suspend fun updateHighlightedElements(centerPoint: Point, envelope: Envelope) {
-        lastUpdateHighlightedElementsJobMutex.lock()
-        lastUpdateHighlightedElementsJob?.cancel()
-        val job = updateLineOverlaysContext.launch {
-            val displayedElements = getElementsToDisplay(centerPoint, envelope)
-
-            ensureActive()
-
-            val tagBoxElementPairs = mapTbLocsToElements(displayedElements) { tbLoc ->
-                tbLoc.toEnvelopeCoordinate(envelope)
-            }
-
-            ensureActive()
-
-            updateHighlightedElementsLock.lock()
-            for (tbLoc in tbLocations) {
-                val elementToDisplay = tagBoxElementPairs[tbLoc]
-
-                val tagBoxFragment = tagBoxFragments[tbLoc] ?: error("")
-                val lineOverlay = lineOverlays[tbLoc] ?: error("")
-                val geometryOverlay = geometryOverlays[tbLoc] ?: error("")
-                val overlaysEnabled = elementToDisplay !== null
-
-                tagBoxFragment.element = elementToDisplay?.element
-                lineOverlay.isEnabled = overlaysEnabled
-                geometryOverlay.isEnabled = overlaysEnabled
-
-                if (elementToDisplay != null) {
-                    /* Setting lineOverlay.startPoint is handled by the
-                    layout change listener added in addTagBoxFragmentContainers. */
-                    lineOverlay.geoPoint = elementToDisplay.nearCenterCoordinate.toGeoPoint()
-                    geometryOverlay.geometry = elementToDisplay.geometry
+    private suspend fun updateHighlightedElements(centerPoint: Point, envelope: Envelope, zoomLevel: Double) {
+        synchronized(this) {
+            lastUpdateHighlightedElementsJob?.cancel()
+            val job = updateHighlightedElementsContext.launch {
+                val tagBoxElementPairs = if (zoomLevel < MIN_DISPLAY_ZOOM_LEVEL) {
+                    emptyMap() // Too zoomed out, don't display any elements
+                } else {
+                    val displayedElements = getElementsToDisplay(centerPoint, envelope)
+                    ensureActive()
+                    mapTbLocsToElements(displayedElements) { tbLoc ->
+                        tbLoc.toEnvelopeCoordinate(envelope)
+                    }
                 }
+                ensureActive()
+                updateHighlightedElementsFromPairs(tagBoxElementPairs)
             }
-            map.invalidate()
-            updateHighlightedElementsLock.unlock()
+            lastUpdateHighlightedElementsJob = job
+            job
+        }.join()
+    }
+
+    @Synchronized
+    private fun updateHighlightedElementsFromPairs(tagBoxElementPairs: Map<TbLoc, ElementToDisplayData>) {
+        for (tbLoc in tbLocations) {
+            val elementToDisplay = tagBoxElementPairs[tbLoc]
+
+            val tagBoxFragment = tagBoxFragments[tbLoc] ?: error("")
+            val lineOverlay = lineOverlays[tbLoc] ?: error("")
+            val geometryOverlay = geometryOverlays[tbLoc] ?: error("")
+            val overlaysEnabled = elementToDisplay !== null
+
+            tagBoxFragment.element = elementToDisplay?.element
+            lineOverlay.isEnabled = overlaysEnabled
+            geometryOverlay.isEnabled = overlaysEnabled
+
+            if (elementToDisplay != null) {
+                /* Setting lineOverlay.startPoint is handled by the
+                layout change listener added in addTagBoxFragmentContainers. */
+                lineOverlay.geoPoint = elementToDisplay.nearCenterCoordinate.toGeoPoint()
+                geometryOverlay.geometry = elementToDisplay.geometry
+            }
         }
-        lastUpdateHighlightedElementsJob = job
-        lastUpdateHighlightedElementsJobMutex.unlock()
-        job.join()
+        map.invalidate()
     }
 
     open class ElementToDisplayData(
@@ -521,6 +526,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
     companion object {
         const val ENVELOPE_BUFFER_FACTOR = 1.2
         const val MIN_DOWNLOAD_ZOOM_LEVEL = 19
+        const val MIN_DISPLAY_ZOOM_LEVEL = 18
         val PALETTE = PaletteId.PALETTE_VIBRANT
 
         private val geometryFactory = GeometryFactory()
