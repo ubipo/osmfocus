@@ -34,7 +34,6 @@ class MapVM(
     val overlayVisibility = ObservableInt(View.GONE)
     val overlayText = ObservableField<String>()
     val downloadState = MutableLiveData(downloadManager.state)
-    val allWords: LiveData<List<UserBaseMap>> = db.baseMapDefinitionDao().getAll().asLiveData()
 
     init {
         viewModelScope.launch {

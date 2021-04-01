@@ -7,7 +7,6 @@ import net.pfiers.osmfocus.extensions.centerY
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
 
-
 fun TbLoc.toEnvelopeCoordinate(envelope: Envelope) = Coordinate(
     when (x) {
         TbLoc.X.LEFT -> envelope.minX

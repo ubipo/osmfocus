@@ -1,33 +1,45 @@
 package net.pfiers.osmfocus.view.fragments
 
-import android.content.Intent
-import android.graphics.Color
+import android.graphics.Point
 import android.graphics.Rect
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
+import androidx.core.graphics.plus
 import androidx.fragment.app.Fragment
+import kotlinx.coroutines.channels.Channel
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
-import net.pfiers.osmfocus.extensions.androidUri
-import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.extensions.createVMFactory
+import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
+import net.pfiers.osmfocus.service.tagboxlocations.tagBoxLineStart
+import net.pfiers.osmfocus.viewmodel.TagBoxVM
+import net.pfiers.osmfocus.viewmodel.support.Event
+import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import kotlin.properties.Delegates
 
-
-class TagBoxFragment(
-    var onHitRectChange: ((rect: Rect) -> Unit)? = null
-) : Fragment() {
+@ExperimentalStdlibApi
+class TagBoxFragment : Fragment() {
+    // The Android gods probably don't like this method of inter-fragment communication...
+    class TagBoxHitRectChange(val hitRect: Rect)
+    val events = Channel<TagBoxHitRectChange>()
     private lateinit var binding: FragmentTagBoxBinding
-    private var _element: OsmElement? = null
+    private lateinit var tbLoc: TbLoc
     private var color by Delegates.notNull<Int>()
+    private val tagBoxVM: TagBoxVM by activityTaggedViewModels(
+        { listOf(tbLoc.toString()) },
+        {
+            createVMFactory { TagBoxVM(tbLoc, color) }
+        }
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             @Suppress("UNCHECKED_CAST")
-            element = it.getSerializable(ARG_ELEMENT) as OsmElement?
+            tbLoc = it.getParcelable(ARG_TBLOC)!!
             color = it.getInt(ARG_COLOR)
         }
     }
@@ -36,58 +48,33 @@ class TagBoxFragment(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentTagBoxBinding.inflate(inflater)
+        binding = FragmentTagBoxBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
 
-        val backgroundDrawable = GradientDrawable()
-        backgroundDrawable.setStroke(5, color)
-        backgroundDrawable.setColor(Color.WHITE)
-        binding.frameBackground = backgroundDrawable
+        binding.vm = tagBoxVM
 
-        elementChangeHandler(element)
+        binding.tagsWrapper.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
+            val (x, y) = IntArray(2).also { binding.tagsWrapper.getLocationOnScreen(it) }
+            val hitRect = Rect(0, 0, right - left, bottom - top)
+                .plus(Point(x, y))
+            Log.v("AAA", "TagBox hitRect: $tbLoc $hitRect ${hitRect.width()} ${hitRect.height()}")
+            events.offer(TagBoxHitRectChange(hitRect))
+        }
 
         return binding.root
     }
 
-    private fun elementChangeHandler(newElement: OsmElement?) {
-        if (newElement == null) {
-            binding.tagsText = ""
-            binding.frameVisibility = View.INVISIBLE
-            binding.tagsWrapper.setOnClickListener(null)
-            return
-        }
-
-        binding.tagsText = newElement.tags!!.entries.joinToString("\n") { (k, v) ->
-            "$k = $v"
-        }
-        binding.frameVisibility = View.VISIBLE
-        binding.tagsWrapper.setOnClickListener {
-            val browserIntent = Intent(Intent.ACTION_VIEW, newElement.url.androidUri)
-            startActivity(browserIntent)
-        }
-    }
-
-    var element
-        get() = _element
-        set(value) {
-            _element = value
-            if (value !== null) {
-                if (value.tags == null) throw NullPointerException("`element.tags` must not be null")
-            }
-            if (::binding.isInitialized) elementChangeHandler(value)
-        }
-
     companion object {
-        const val ARG_ELEMENT = "element"
+        const val ARG_TBLOC = "tbLoc"
         const val ARG_COLOR = "color"
 
         @JvmStatic
         fun newInstance(
             @ColorInt color: Int,
-            element: OsmElement? = null,
-            onHitRectChange: ((Rect) -> Unit)? = null
-        ) = TagBoxFragment(onHitRectChange).apply {
+            tbLoc: TbLoc
+        ) = TagBoxFragment().apply {
             arguments = Bundle().apply {
-                putSerializable(ARG_ELEMENT, element)
+                putParcelable(ARG_TBLOC, tbLoc)
                 putInt(ARG_COLOR, color)
             }
         }

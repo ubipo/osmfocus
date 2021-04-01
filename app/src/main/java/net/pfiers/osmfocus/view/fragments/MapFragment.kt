@@ -16,6 +16,8 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.PermissionChecker
+import androidx.core.graphics.minus
+import androidx.core.graphics.plus
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.viewModels
@@ -28,7 +30,9 @@ import com.github.kittinunf.result.getOrElse
 import com.github.kittinunf.result.onError
 import com.google.common.eventbus.Subscribe
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.extensions.createVMFactory
@@ -54,6 +58,7 @@ import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocations.*
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
+import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.operation.distance.DistanceOp
 import org.osmdroid.config.Configuration
@@ -74,9 +79,11 @@ import kotlin.time.seconds
 
 
 // TODO: Convert to MVVM
+@ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
 @ExperimentalTime
 class MapFragment : Fragment(), MapEventsReceiver {
+    private lateinit var mapLocationOnScreen: android.graphics.Point
     private lateinit var binding: FragmentMapBinding
     private val mapVM: MapVM by viewModels({ requireActivity() }) {
         createVMFactory { MapVM(app.db, app.settingsDataStore, activityAs()) }
@@ -96,8 +103,10 @@ class MapFragment : Fragment(), MapEventsReceiver {
         }
     }
     private lateinit var map: MapView
-    private lateinit var tagBoxContainers: LinkedHashMap<TbLoc, FragmentContainerView>
+    private lateinit var tagBoxFragmentContainers: LinkedHashMap<TbLoc, FragmentContainerView>
     private lateinit var tagBoxFragments: MutableMap<TbLoc, TagBoxFragment>
+    private lateinit var tagBoxHitRects: MutableMap<TbLoc, Rect>
+    private lateinit var tagBoxVms: MutableMap<TbLoc, TagBoxVM>
     private lateinit var lineOverlays: Map<TbLoc, TagBoxLineOverlay>
     private lateinit var geometryOverlays: Map<TbLoc, GeometryOverlay>
 
@@ -142,18 +151,34 @@ class MapFragment : Fragment(), MapEventsReceiver {
             .mapIndexed { index, tbLoc -> tbLoc to palette[index] }
             .toMap()
 
-        val lLineOverlays: MutableMap<TbLoc, TagBoxLineOverlay> = mutableMapOf()
-        val lGeometryOverlays: MutableMap<TbLoc, GeometryOverlay> = mutableMapOf()
-        val lTagBoxFragments: MutableMap<TbLoc, TagBoxFragment> = mutableMapOf()
+        val lLineOverlays = mutableMapOf<TbLoc, TagBoxLineOverlay>()
+        val lGeometryOverlays = mutableMapOf<TbLoc, GeometryOverlay>()
+        val lTagBoxVMs = mutableMapOf<TbLoc, TagBoxVM>()
+        val lTagBoxFragment = mutableMapOf<TbLoc, TagBoxFragment>()
+        val lTagBoxHitRects = mutableMapOf<TbLoc, Rect>()
         for (tbLoc in tbLocations) {
             val color = tbLocColors[tbLoc] ?: error("")
-            lLineOverlays[tbLoc] = TagBoxLineOverlay(color)
+            val lineOverlay = TagBoxLineOverlay(color)
+            lLineOverlays[tbLoc] = lineOverlay
             lGeometryOverlays[tbLoc] = GeometryOverlay(color, geometryFactory)
-            lTagBoxFragments[tbLoc] = TagBoxFragment.newInstance(color)
+            lTagBoxVMs[tbLoc] = createActivityTaggedViewModel(
+                listOf(tbLoc.toString()),
+                createVMFactory { TagBoxVM(tbLoc, color) }
+            )
+            val tagBoxFragment = TagBoxFragment.newInstance(color, tbLoc)
+            lifecycleScope.launch {
+                tagBoxFragment.events.receiveAsFlow().collect { tagBoxHitRectChange ->
+                    lTagBoxHitRects[tbLoc] = tagBoxHitRectChange.hitRect
+                    updateLineOverlayStartPoint(tbLoc)
+                }
+            }
+            lTagBoxFragment[tbLoc] = tagBoxFragment
         }
         lineOverlays = lLineOverlays
         geometryOverlays = lGeometryOverlays
-        tagBoxFragments = lTagBoxFragments
+        tagBoxVms = lTagBoxVMs
+        tagBoxFragments = lTagBoxFragment
+        tagBoxHitRects = lTagBoxHitRects
     }
 
     @Suppress("UnstableApiUsage")
@@ -194,6 +219,12 @@ class MapFragment : Fragment(), MapEventsReceiver {
         )
 
         map = binding.map
+
+        map.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val (x, y) = IntArray(2).also { binding.root.getLocationOnScreen(it) }
+            mapLocationOnScreen = android.graphics.Point(x, y)
+            tbLocations.forEach { tbLoc -> updateLineOverlayStartPoint(tbLoc) }
+        }
 
 //        val baseMapUid = runBlocking { app.settingsDataStore.data.first().baseMapUid.ifEmpty { null } }
 //        val baseMap = baseMapUid?.let { app.baseMapRepository.get(it) } ?: app.baseMapRepository.default
@@ -274,6 +305,15 @@ class MapFragment : Fragment(), MapEventsReceiver {
         return binding.root
     }
 
+    private fun updateLineOverlayStartPoint(tbLoc: TbLoc) {
+        val tagBoxHitRect = tagBoxHitRects[tbLoc] ?: return
+        if (!this::mapLocationOnScreen.isInitialized) return
+        val hitRectRelativeToMap = tagBoxHitRect.minus(mapLocationOnScreen)
+        val startPoint = tbLoc.tagBoxLineStart(hitRectRelativeToMap)
+        val lineOverlay = lineOverlays[tbLoc] ?: return
+        lineOverlay.startPoint = startPoint
+    }
+
     private fun moveToCurrentLocation(launchRequestIfDenied: Boolean) {
         val locationPermission = ContextCompat.checkSelfPermission(
             requireContext(),
@@ -296,7 +336,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
         mapVM.downloadManager.eventBus.register(downloadManagerEventHandler)
         val tran = parentFragmentManager.beginTransaction()
         for ((tbLoc, tagBoxFragment) in tagBoxFragments) {
-            val tagBoxContainer = tagBoxContainers[tbLoc]!!
+            val tagBoxContainer = tagBoxFragmentContainers[tbLoc]!!
             tran.add(tagBoxContainer.id, tagBoxFragment)
         }
         tran.commit()
@@ -319,14 +359,8 @@ class MapFragment : Fragment(), MapEventsReceiver {
         val constraintLayout = binding.tagBoxLayout
 
         // Add views to layout
-        tagBoxContainers = tbLocations.map { tbLoc ->
+        tagBoxFragmentContainers = tbLocations.map { tbLoc ->
             val fragmentContainer = FragmentContainerView(requireContext())
-            val lineOverlay = lineOverlays[tbLoc] ?: error("")
-            fragmentContainer.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
-                val hitRect = Rect(left, top, right, bottom)
-                val startPoint = tbLoc.tagBoxLineStart(hitRect)
-                lineOverlay.startPoint = startPoint
-            }
             fragmentContainer.id = View.generateViewId()
             val matchConstraintsLp = ConstraintLayout.LayoutParams(0, 0)
             fragmentContainer.layoutParams = matchConstraintsLp
@@ -338,7 +372,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
         val constraintSet = ConstraintSet()
         constraintSet.clone(constraintLayout)
         val oneThird = (1.0 / 3).toFloat()
-        for ((tbLoc, container) in tagBoxContainers) {
+        for ((tbLoc, container) in tagBoxFragmentContainers) {
             tbLoc.applyConstraints(constraintSet, constraintLayout.id, container.id)
             constraintSet.constrainPercentHeight(container.id, oneThird)
             constraintSet.constrainPercentWidth(container.id, oneThird)
@@ -435,16 +469,18 @@ class MapFragment : Fragment(), MapEventsReceiver {
     }
 
     @Synchronized
-    private fun updateHighlightedElementsFromPairs(tagBoxElementPairs: Map<TbLoc, ElementToDisplayData>) {
+    private suspend fun updateHighlightedElementsFromPairs(tagBoxElementPairs: Map<TbLoc, ElementToDisplayData>) {
         for (tbLoc in tbLocations) {
             val elementToDisplay = tagBoxElementPairs[tbLoc]
 
-            val tagBoxFragment = tagBoxFragments[tbLoc] ?: error("")
+            val tagBoxVM = tagBoxVms[tbLoc] ?: error("")
             val lineOverlay = lineOverlays[tbLoc] ?: error("")
             val geometryOverlay = geometryOverlays[tbLoc] ?: error("")
             val overlaysEnabled = elementToDisplay !== null
 
-            tagBoxFragment.element = elementToDisplay?.element
+            lifecycleScope.launch {
+                tagBoxVM.element.value = elementToDisplay?.element
+            }.join()
             lineOverlay.isEnabled = overlaysEnabled
             geometryOverlay.isEnabled = overlaysEnabled
 

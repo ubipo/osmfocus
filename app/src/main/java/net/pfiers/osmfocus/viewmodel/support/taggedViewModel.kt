@@ -25,6 +25,12 @@ fun <VM : ViewModel> createTaggedViewModel(
     )
 }
 
+@MainThread
+inline fun <reified VM : ViewModel> Fragment.createActivityTaggedViewModel(
+    tags: Iterable<String>,
+    factory: ViewModelProvider.Factory
+) = createTaggedViewModel(VM::class, tags, requireActivity().viewModelStore, factory)
+
 /**
  * Adapted from androidx.fragment.app.FragmentViewModelLazy.viewModels
  */

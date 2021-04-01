@@ -5,34 +5,39 @@
 
     <data>
 
-        <variable
-            name="frameBackground"
-            type="android.graphics.drawable.Drawable" />
+        <import type="android.graphics.Color" />
+        <import type="net.pfiers.osmfocus.view.support.viewFunctions" alias="vf" />
 
         <variable
-            name="tagsText"
-            type="String" />
-
-        <variable
-            name="frameVisibility"
-            type="int" />
+            name="vm"
+            type="net.pfiers.osmfocus.viewmodel.TagBoxVM" />
 
     </data>
 
-    <FrameLayout
-        android:id="@+id/tagsWrapper"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@{frameBackground}"
-        android:visibility="@{frameVisibility}" >
 
-        <TextView
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/tagsWrapper"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="1dp"
-            android:text="@{tagsText}"
-            android:textSize="10sp"
-            tools:text="keyname = longvalue" />
+            android:layout_gravity="@{vf.gravityFromTbLoc(vm.tbLoc)}"
+            android:background="@{vf.bgFromParams(5, vm.color, Color.WHITE)}"
+            android:visibility="@{vm.element != null}" >
+
+            <TextView
+                android:id="@+id/tags"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="1dp"
+                android:text="@{vm.tagsText}"
+                android:textSize="10sp"
+                android:ellipsize="end"
+                tools:text="keyname = longvalue" />
+
+        </FrameLayout>
 
     </FrameLayout>
 
