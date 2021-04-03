@@ -27,15 +27,11 @@
             android:background="@{vf.bgFromParams(5, vm.color, Color.WHITE)}"
             android:visibility="@{vm.element != null}" >
 
-            <TextView
+            <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/tags"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:layout_margin="1dp"
-                android:text="@{vm.tagsText}"
-                android:textSize="10sp"
-                android:ellipsize="end"
-                tools:text="keyname = longvalue" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
         </FrameLayout>
 

@@ -1,5 +1,5 @@
 
-package net.pfiers.osmfocus.view.adapters
+package net.pfiers.osmfocus.view.bindingadapters
 
 import android.view.View
 import androidx.databinding.BindingAdapter

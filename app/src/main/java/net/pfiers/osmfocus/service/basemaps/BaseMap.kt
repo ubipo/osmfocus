@@ -11,6 +11,5 @@ abstract class BaseMap {
 
     abstract fun areItemsTheSame(other: BaseMap): Boolean
 
-    fun areContentsTheSame(other: BaseMap, context: Context) =
-        urlTemplate == other.urlTemplate && getName(context) == other.getName(context)
+    abstract fun areContentsTheSame(other: BaseMap): Boolean
 }

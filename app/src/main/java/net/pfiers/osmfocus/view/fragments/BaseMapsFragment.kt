@@ -147,7 +147,7 @@ class BaseMapsFragment : Fragment() {
         private val repository: BaseMapRepository,
         private val selectedItemFlow: Flow<BaseMap?>,
         private val updateSelectedItem: (newBaseMap: BaseMap) -> Unit
-    ) : ListAdapter<T, BaseMapListAdapter.Holder>(BaseMapComparator<T>(context)) {
+    ) : ListAdapter<T, BaseMapListAdapter.Holder>(BaseMapComparator<T>()) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val binding = FragmentBaseMapsItemBinding.inflate(LayoutInflater.from(parent.context))
             // has implications: https://medium.com/@stephen.brewer/an-adventure-with-recyclerview-databinding-livedata-and-room-beaae4fc8116
@@ -218,14 +218,10 @@ class BaseMapsFragment : Fragment() {
             }
         }
 
-        class BaseMapComparator<T : BaseMap>(private val context: Context) :
+        class BaseMapComparator<T : BaseMap> :
             DiffUtil.ItemCallback<T>() {
             override fun areItemsTheSame(a: T, b: T): Boolean = a.areItemsTheSame(b)
-
-            override fun areContentsTheSame(a: T, b: T): Boolean = a.areContentsTheSame(
-                b,
-                context
-            )
+            override fun areContentsTheSame(a: T, b: T): Boolean = a.areContentsTheSame(b)
         }
     }
 

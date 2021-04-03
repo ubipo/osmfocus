@@ -1,4 +1,4 @@
-package net.pfiers.osmfocus.view.adapters
+package net.pfiers.osmfocus.view.bindingadapters
 
 import android.widget.EditText
 import androidx.core.widget.addTextChangedListener

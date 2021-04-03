@@ -1,12 +1,17 @@
 package net.pfiers.osmfocus.viewmodel
 
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.SubscriptSpan
 import android.util.Log
 import androidx.annotation.ColorInt
+import androidx.core.text.toSpanned
 import androidx.lifecycle.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.osm.OsmElement
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
+import net.pfiers.osmfocus.view.support.EllipsizeLineSpan
 
 @ExperimentalStdlibApi
 class TagBoxVM constructor(
@@ -14,12 +19,10 @@ class TagBoxVM constructor(
     @ColorInt val color: Int
 ) : ViewModel() {
     val element = MutableLiveData<OsmElement>(null)
-    val tagsText = Transformations.map(element) { newElement ->
+    val tags = Transformations.map(element) { newElement ->
         newElement?.let {
-            it.tags!!.entries.joinToString("\n") { (k, v) ->
-                "$k = $v"
-            }
-        } ?: ""
+            it.tags!!
+        } ?: emptyMap()
     }
 
     fun showCurrentElementDetails() {

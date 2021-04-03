@@ -11,4 +11,6 @@ data class BuiltinBaseMap(
 ) : BaseMap() {
     override fun getName(context: Context) = context.resources.getString(nameRes)
     override fun areItemsTheSame(other: BaseMap): Boolean = this == other
+    override fun areContentsTheSame(other: BaseMap): Boolean =
+        urlTemplate == other.urlTemplate && other is BuiltinBaseMap && nameRes == other.nameRes
 }
