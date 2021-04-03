@@ -3,7 +3,6 @@
 package net.pfiers.osmfocus.viewmodel
 
 import android.net.Uri
-import android.util.Log
 import android.view.View
 import androidx.annotation.Keep
 import androidx.databinding.ObservableField
@@ -12,28 +11,34 @@ import androidx.datastore.core.DataStore
 import androidx.lifecycle.*
 import com.google.common.eventbus.Subscribe
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.service.MapApiDownloadManager
 import net.pfiers.osmfocus.service.db.Db
-import net.pfiers.osmfocus.service.db.UserBaseMap
 import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
-import net.pfiers.osmfocus.service.settings.DEFAULT_API_BASE_URL
+import net.pfiers.osmfocus.service.settings.Defaults
 import org.locationtech.jts.geom.GeometryFactory
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 class MapVM(
     db: Db,
-    settingsDataStore: DataStore<Settings>,
+    private val settingsDataStore: DataStore<Settings>,
     private val navigator: Navigator
-): ViewModel() {
+) : ViewModel() {
     val downloadManager = MapApiDownloadManager(
-        createOsmApiConfig(DEFAULT_API_BASE_URL), MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, GEOMETRY_FAC
+        createOsmApiConfig(Defaults.apiBaseUrl), MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, GEOMETRY_FAC
     )
     val overlayVisibility = ObservableInt(View.GONE)
     val overlayText = ObservableField<String>()
     val downloadState = MutableLiveData(downloadManager.state)
+    val showRelations = settingsDataStore.data.map { settings ->
+        settings.showRelations
+    }.asLiveData()
+    val zoomLevel = settingsDataStore.data.map { settings ->
+        settings.lastZoomLevel
+    }.asLiveData()
 
     init {
         viewModelScope.launch {
@@ -69,6 +74,16 @@ class MapVM(
     lateinit var moveToCurrentLocationCallback: () -> Unit
     fun moveToCurrentLocation() {
         moveToCurrentLocationCallback()
+    }
+
+    fun setZoomLevel(newZoomLevel: Double) {
+        viewModelScope.launch {
+            settingsDataStore.updateData { currentSettings ->
+                currentSettings.toBuilder().apply {
+                    lastZoomLevel = newZoomLevel
+                }.build()
+            }
+        }
     }
 
     interface Navigator {

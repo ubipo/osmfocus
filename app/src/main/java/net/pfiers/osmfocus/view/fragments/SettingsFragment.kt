@@ -52,9 +52,11 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentSettingsBinding.inflate(inflater)
-        binding.lifecycleOwner = viewLifecycleOwner
+        val binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
+
         binding.vm = settingsVM
+
         return binding.root
     }
 

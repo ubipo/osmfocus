@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.HtmlCompat
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.ui.NavigationUI
 import net.pfiers.osmfocus.R
@@ -16,14 +17,14 @@ import net.pfiers.osmfocus.databinding.FragmentMoreInfoBinding
 import net.pfiers.osmfocus.viewmodel.NavVM
 
 class MoreInfoFragment : Fragment() {
-    private val navVM: NavVM by viewModels( { requireActivity() } )
+    private val navVM: NavVM by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         val binding = FragmentMoreInfoBinding.inflate(inflater)
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding.lifecycleOwner = this
 
         val activity = requireActivity() as AppCompatActivity
         activity.setSupportActionBar(binding.toolbar)

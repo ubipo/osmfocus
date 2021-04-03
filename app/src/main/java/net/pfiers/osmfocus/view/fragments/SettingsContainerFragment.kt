@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.ui.NavigationUI
 import net.pfiers.osmfocus.R
@@ -13,7 +14,7 @@ import net.pfiers.osmfocus.databinding.FragmentSettinsContainerBinding
 import net.pfiers.osmfocus.viewmodel.NavVM
 
 class SettingsContainerFragment : Fragment() {
-    private val navVM: NavVM by viewModels( { requireActivity() } )
+    private val navVM: NavVM by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

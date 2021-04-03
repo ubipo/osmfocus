@@ -50,8 +50,8 @@ class BaseMapsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentBaseMapsBinding.inflate(inflater)
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding = FragmentBaseMapsBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
 
         binding.vm = baseMapsVM
 

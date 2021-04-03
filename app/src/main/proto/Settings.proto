@@ -23,4 +23,8 @@ message Settings {
 
   TagboxLongLines tagboxLongLines = 4;
 
+  bool showRelations = 5;
+
+  double lastZoomLevel = 6;
+
 }

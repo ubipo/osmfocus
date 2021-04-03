@@ -28,8 +28,8 @@ class AddUserBaseMapFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentAddUserBaseMapBinding.inflate(inflater)
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding = FragmentAddUserBaseMapBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
 
         binding.vm = addUserBaseMapVM
 

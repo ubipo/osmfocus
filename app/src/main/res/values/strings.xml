@@ -98,4 +98,8 @@
     <string name="setting_tagbox_long_lines_ellipsize">Ellipsize</string>
     <string name="setting_tagbox_long_lines_wrap">Wrap</string>
     <string name="tagbox_long_lines_edit_dialog_title">Long lines in tagboxes</string>
+    <string name="map_relation_toggle_btn_description">Toggle OSM relations</string>
+    <string name="setting_show_relations">Show relations</string>
+    <string name="setting_show_relations_shown">Shown</string>
+    <string name="setting_show_relations_hidden">Hidden</string>
 </resources>

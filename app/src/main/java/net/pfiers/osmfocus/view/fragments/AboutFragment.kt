@@ -26,8 +26,8 @@ class AboutFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentAboutBinding.inflate(inflater)
-        binding.lifecycleOwner = viewLifecycleOwner
+        val binding = FragmentAboutBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
 
         binding.vm = aboutVM
 

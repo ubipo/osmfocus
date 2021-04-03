@@ -38,7 +38,7 @@ class ExceptionDialogFragment private constructor() : DialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         val binding = FragmentExceptionDialogBinding.inflate(inflater)
-        binding.lifecycleOwner = viewLifecycleOwner
+        binding.lifecycleOwner = this
         binding.vm = exceptionDialogVM
 
         lifecycleScope.launch {

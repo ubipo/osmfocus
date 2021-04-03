@@ -17,11 +17,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.PermissionChecker
 import androidx.core.graphics.minus
-import androidx.core.graphics.plus
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -53,6 +51,8 @@ import net.pfiers.osmfocus.service.ZoomLevelRecededException
 import net.pfiers.osmfocus.service.basemaps.BaseMap
 import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
 import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.service.osm.OsmRelation
+import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocations.*
@@ -85,11 +85,10 @@ import kotlin.time.seconds
 class MapFragment : Fragment(), MapEventsReceiver {
     private lateinit var mapLocationOnScreen: android.graphics.Point
     private lateinit var binding: FragmentMapBinding
-    private val mapVM: MapVM by viewModels({ requireActivity() }) {
+    private val mapVM: MapVM by activityViewModels {
         createVMFactory { MapVM(app.db, app.settingsDataStore, activityAs()) }
     }
-    private lateinit var navVM: NavVM
-    private lateinit var attributionVM: AttributionVM
+    private val attributionVM: AttributionVM by activityViewModels()
     private val exceptionHandler by lazy { activityAs<ExceptionHandler>() }
 
     private var moveToCurrentLocationOnLocationPermissionGranted = AtomicBoolean()
@@ -187,12 +186,12 @@ class MapFragment : Fragment(), MapEventsReceiver {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentMapBinding.inflate(inflater)
-        val vmProvider = ViewModelProvider(requireActivity())
-        navVM = vmProvider[NavVM::class.java]
-        attributionVM = vmProvider[AttributionVM::class.java]
+        binding = FragmentMapBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
 
         binding.vm = mapVM
+
+        mapVM.showRelations.observe(viewLifecycleOwner) { }
 
         mapVM.downloadState.observe(viewLifecycleOwner) { state ->
             val icon = when (state) {
@@ -239,7 +238,15 @@ class MapFragment : Fragment(), MapEventsReceiver {
             map.controller.setCenter(settings.lastLocation.toGeoPoint())
         }
 
-        map.controller.setZoom(14.0)
+        var initialZoomSet = false
+        mapVM.zoomLevel.observe(viewLifecycleOwner) { zoomLevel ->
+            if (!initialZoomSet) {
+                map.controller.setZoom(zoomLevel)
+                initialZoomSet = true
+            }
+        }
+
+        map.controller.setZoom(Defaults.zoomLevel)
         map.isVerticalMapRepetitionEnabled = false
         val ts = MapView.getTileSystem()
         map.setScrollableAreaLimitLatitude(
@@ -260,6 +267,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
 
         map.addMapListener(object : MapListener {
             var previousSaveLocationJob: Job? = null
+            var previousSaveZoomJob: Job? = null
 
             override fun onScroll(event: ScrollEvent?): Boolean {
                 mapScrollHandler()
@@ -280,6 +288,17 @@ class MapFragment : Fragment(), MapEventsReceiver {
             }
 
             override fun onZoom(event: ZoomEvent?): Boolean {
+                event?.let { e ->
+                    backgroundScope.launch {
+                        synchronized(this@MapFragment) {
+                            previousSaveZoomJob?.cancel()
+                            previousSaveZoomJob = backgroundScope.launch {
+                                delay((0.5).seconds)
+                                mapVM.setZoomLevel(e.zoomLevel)
+                            }
+                        }
+                    }
+                }
                 return false
             }
         })
@@ -385,7 +404,13 @@ class MapFragment : Fragment(), MapEventsReceiver {
         val centerPoint = map.mapCenter.toPoint(geometryFactory)
         val envelope = map.boundingBox.toEnvelope()
         val zoomLevel = map.zoomLevelDouble
-        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) { updateHighlightedElements(centerPoint, envelope, zoomLevel) }
+        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
+            updateHighlightedElements(
+                centerPoint,
+                envelope,
+                zoomLevel
+            )
+        }
         backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
             val downloadJob = async {
                 mapVM.downloadManager.download {
@@ -447,7 +472,11 @@ class MapFragment : Fragment(), MapEventsReceiver {
     private var lastUpdateHighlightedElementsJob: Job? = null
 
     @ExperimentalTime
-    private suspend fun updateHighlightedElements(centerPoint: Point, envelope: Envelope, zoomLevel: Double) {
+    private suspend fun updateHighlightedElements(
+        centerPoint: Point,
+        envelope: Envelope,
+        zoomLevel: Double
+    ) {
         synchronized(this) {
             lastUpdateHighlightedElementsJob?.cancel()
             val job = updateHighlightedElementsContext.launch {
@@ -505,21 +534,28 @@ class MapFragment : Fragment(), MapEventsReceiver {
     @ExperimentalTime
     private fun getElementsToDisplay(
         centerPoint: Point, envelope: Envelope
-    ): List<ElementToDisplayData> = mapVM.downloadManager.elements.keys.asSequence()
-        .filterNot { e -> e.tags.isNullOrEmpty() }
-        .mapNotNull { e ->
-            mapVM.downloadManager.getElementGeometry(e).takeIf { g ->
-                !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
-            }?.let { g ->
-                DistanceOp.nearestPoints(g, centerPoint)[0].takeIf { nearCenterCoordinate ->
-                    envelope.intersects(nearCenterCoordinate) // Robust check
-                }?.let { nearCenterCoordinate ->
-                    ElementToDisplayData(e, g, nearCenterCoordinate)
+    ): List<ElementToDisplayData> {
+        val elements = mapVM.downloadManager.elements.keys.asSequence()
+        val showRelations = mapVM.showRelations.value == true
+        val filteredOnType =
+            if (showRelations) elements
+            else elements.filterNot { e -> e is OsmRelation }
+        return filteredOnType
+            .filterNot { e -> e.tags.isNullOrEmpty() }
+            .mapNotNull { e ->
+                mapVM.downloadManager.getElementGeometry(e).takeIf { g ->
+                    !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
+                }?.let { g ->
+                    DistanceOp.nearestPoints(g, centerPoint)[0].takeIf { nearCenterCoordinate ->
+                        envelope.intersects(nearCenterCoordinate) // Robust check
+                    }?.let { nearCenterCoordinate ->
+                        ElementToDisplayData(e, g, nearCenterCoordinate)
+                    }
                 }
-            }
-        }.sortedBy { e ->
-            centerPoint.coordinate.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
-        }.toList().containedSubList(0, tbLocations.size)
+            }.sortedBy { e ->
+                centerPoint.coordinate.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
+            }.toList().containedSubList(0, tbLocations.size)
+    }
 
     /**
      * Optimally maps tag box locations to elements

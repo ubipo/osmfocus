@@ -13,10 +13,12 @@ import java.io.OutputStream
 
 class SettingsSerializer : Serializer<Settings> {
     override val defaultValue: Settings = Settings.newBuilder().apply {
-        apiBaseUrl = DEFAULT_API_BASE_URL
+        apiBaseUrl = Defaults.apiBaseUrl
         baseMapUid = BaseMapRepository.uidOfDefault
-        lastLocation = DEFAULT_LAST_LOCATION.toSettingsLocation()
-        tagboxLongLines = DEFAULT_TAG_BOX_LONG_LINES
+        lastLocation = Defaults.location.toSettingsLocation()
+        lastZoomLevel = Defaults.zoomLevel
+        tagboxLongLines = Defaults.tagBoxLongLines
+        showRelations = Defaults.showRelations
     }.build()
 
     override suspend fun readFrom(input: InputStream): Settings {

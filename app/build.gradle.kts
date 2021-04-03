@@ -111,15 +111,15 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("androidx.constraintlayout:constraintlayout:2.0.4")
     implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
     implementation("androidx.recyclerview:recyclerview:1.1.0")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.google.android.material:material:1.3.0")
-    implementation("androidx.annotation:annotation:1.1.0")
+    implementation("androidx.annotation:annotation:1.2.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
     // Uil
@@ -152,7 +152,7 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
     implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.fragment:fragment-ktx:1.3.1")
+    implementation("androidx.fragment:fragment-ktx:1.3.2")
 
     // Room DB
     val roomVersion = "2.2.6"
