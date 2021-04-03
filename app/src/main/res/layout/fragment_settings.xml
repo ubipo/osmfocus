@@ -6,6 +6,8 @@
 
     <data>
 
+        <import type="net.pfiers.osmfocus.Settings.TagboxLongLines" />
+
         <variable
             name="vm"
             type="net.pfiers.osmfocus.viewmodel.SettingsVM" />
@@ -82,6 +84,54 @@
                     app:layout_constraintTop_toTopOf="parent"
                     android:tint="#252525"
                     app:srcCompat="@drawable/ic_baseline_settings_24" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:onClick="@{() -> vm.editTagboxLongLines()}">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/tagBoxLongLinesIcon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="#E8E8E8"
+                    android:tint="@color/colorPrimary"
+                    app:contentPadding="5dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:shapeAppearanceOverlay="@style/CornerSize"
+                    app:srcCompat="@drawable/ic_wrap_text" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/tagBoxLongLinesIcon"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setting_title_tagbox_long_lines"
+                        android:textAppearance="?attr/textAppearanceListItem" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{vm.tagboxLongLines == TagboxLongLines.ELLIPSIZE ? @string/setting_tagbox_long_lines_ellipsize : @string/setting_tagbox_long_lines_wrap}"
+                        android:textAppearance="?attr/textAppearanceListItemSecondary" />
+
+                </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

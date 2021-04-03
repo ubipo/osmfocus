@@ -16,8 +16,4 @@ class AboutVM(private val navigator: Navigator) : ViewModel() {
     fun showAppInfo() = navigator.showAppInfo()
     fun showDonationOptions() = navigator.showDonationOptions()
     fun showIssueTracker() = navigator.showIssueTracker()
-
-    companion object {
-        fun createFactory(creator: () -> AboutVM) = createVMFactory(creator)
-    }
 }

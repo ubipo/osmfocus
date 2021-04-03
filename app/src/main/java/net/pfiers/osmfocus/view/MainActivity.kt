@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
@@ -23,6 +24,7 @@ import net.pfiers.osmfocus.view.support.ExceptionHandler
 import net.pfiers.osmfocus.view.support.showWithDefaultTag
 import net.pfiers.osmfocus.viewmodel.*
 import net.pfiers.osmfocus.viewmodel.support.EmailNavigator
+import net.pfiers.osmfocus.viewmodel.support.SettingsNavigator
 import net.pfiers.osmfocus.viewmodel.support.UriNavigator
 import java.io.File
 import java.time.Instant
@@ -32,8 +34,8 @@ import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
-class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM.Navigator,
-    MapVM.Navigator, AboutVM.Navigator, UriNavigator, EmailNavigator, ExceptionHandler {
+class MainActivity : AppCompatActivity(), AddUserBaseMapVM.Navigator,
+    MapVM.Navigator, AboutVM.Navigator, UriNavigator, EmailNavigator, SettingsNavigator, ExceptionHandler {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navVM: NavVM
     private lateinit var navController: NavController
@@ -78,7 +80,7 @@ class MainActivity : AppCompatActivity(), SettingsVM.Navigator, AddUserBaseMapVM
     }
 
     override fun gotoSettings() = navController.navigate(R.id.settingsContainerFragment)
-    override fun gotoBaseMaps() = navController.navigate(R.id.userBaseMapsFragment)
+    override fun editBaseMaps() = navController.navigate(R.id.userBaseMapsFragment)
     override fun showAbout() = navController.navigate(R.id.aboutFragment)
     override fun showAppInfo() = navController.navigate(R.id.moreInfoFragment)
 

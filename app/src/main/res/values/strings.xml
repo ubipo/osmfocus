@@ -94,4 +94,8 @@
     <string name="error_reporter_title">An error occurred</string>
     <string name="error_reporter_body_pre">The app couldn\'t recover from the following error: </string>
     <string name="error_reporter_body_post">You can help improve the application by reporting this on GitHub or via email.</string>
+    <string name="setting_title_tagbox_long_lines">Long lines in tagboxes</string>
+    <string name="setting_tagbox_long_lines_ellipsize">Ellipsize</string>
+    <string name="setting_tagbox_long_lines_wrap">Wrap</string>
+    <string name="tagbox_long_lines_edit_dialog_title">Long lines in tagboxes</string>
 </resources>

@@ -16,4 +16,11 @@ message Settings {
 
   string apiBaseUrl = 3;
 
+  enum TagboxLongLines {
+    ELLIPSIZE = 0;
+    WRAP = 1;
+  }
+
+  TagboxLongLines tagboxLongLines = 4;
+
 }

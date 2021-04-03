@@ -4,6 +4,8 @@
 
     <data>
 
+        <import type="net.pfiers.osmfocus.Settings.TagboxLongLines" />
+
         <variable
             name="key"
             type="String" />
@@ -11,6 +13,10 @@
         <variable
             name="value"
             type="String" />
+
+        <variable
+            name="longLinesHandling"
+            type="androidx.lifecycle.LiveData&lt;net.pfiers.osmfocus.Settings.TagboxLongLines>" />
 
     </data>
 
@@ -21,7 +27,7 @@
         android:text="@{key+` = `+value}"
         android:textSize="10sp"
         android:ellipsize="end"
-        android:maxLines="1"
+        android:maxLines="@{longLinesHandling == TagboxLongLines.ELLIPSIZE ? 1 : Integer.MAX_VALUE}"
         tools:text="keyname = longvalue" />
 
 </layout>

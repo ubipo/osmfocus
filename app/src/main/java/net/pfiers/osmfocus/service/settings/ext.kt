@@ -6,7 +6,7 @@ import org.locationtech.jts.geom.Coordinate
 import org.osmdroid.api.IGeoPoint
 import org.osmdroid.util.GeoPoint
 
-fun Coordinate.toSettingsLocation() = Settings.Location.newBuilder()
+fun Coordinate.toSettingsLocation(): Settings.Location = Settings.Location.newBuilder()
     .setLongitude(x)
     .setLatitude(y)
     .build()
@@ -14,4 +14,3 @@ fun Coordinate.toSettingsLocation() = Settings.Location.newBuilder()
 fun Settings.Location.toGeoPoint() = GeoPoint(latitude, longitude)
 
 fun IGeoPoint.toSettingsLocation(): Settings.Location = toCoordinate().toSettingsLocation()
-

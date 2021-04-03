@@ -1,43 +1,31 @@
 package net.pfiers.osmfocus.viewmodel
 
-import androidx.databinding.ObservableField
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import androidx.lifecycle.asLiveData
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.map
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.extensions.createVMFactory
-import net.pfiers.osmfocus.extensions.value
-import net.pfiers.osmfocus.service.basemaps.BaseMap
 import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import net.pfiers.osmfocus.viewmodel.support.Event
+import net.pfiers.osmfocus.viewmodel.support.EditBaseMapsEvent
+import net.pfiers.osmfocus.viewmodel.support.EditTagboxLongLinesEvent
+import net.pfiers.osmfocus.viewmodel.support.ShowAboutEvent
 
 class SettingsVM(
     private val settingsDataStore: DataStore<Settings>,
-    private val baseMapRepository: BaseMapRepository,
-    private val navigator: Navigator
+    private val baseMapRepository: BaseMapRepository
 ) : ViewModel() {
-    val baseMap = ObservableField<BaseMap>()
+    val events = Channel<Event>()
+    val baseMap = settingsDataStore.data.map { settings ->
+        settings.baseMapUid.ifEmpty { null }?.let { baseMapRepository.getOrDefault(it) }
+    }.asLiveData()
+    val tagboxLongLines = settingsDataStore.data.map {settings ->
+        settings.tagboxLongLines
+    }.asLiveData()
 
-    init {
-        viewModelScope.launch {
-            settingsDataStore.data.collect { settings ->
-                val baseMapUid = settings.baseMapUid.ifEmpty { null }
-                baseMap.value = baseMapUid?.let { baseMapRepository.getOrDefault(it) }
-            }
-        }
-    }
-
-    //https://github.com/android/architecture-samples/blob/todo-mvvm-databinding/todoapp/app/src/main/java/com/example/android/architecture/blueprints/todoapp/tasks/TasksNavigator.java
-    interface Navigator {
-        fun gotoBaseMaps()
-        fun showAbout()
-    }
-
-    fun editBaseMaps() = navigator.gotoBaseMaps()
-    fun showAbout() = navigator.showAbout()
-
-    companion object {
-        fun createFactory(creator: () -> SettingsVM) = createVMFactory(creator)
-    }
+    fun editBaseMaps() = events.offer(EditBaseMapsEvent())
+    fun editTagboxLongLines() = events.offer(EditTagboxLongLinesEvent())
+    fun showAbout() = events.offer(ShowAboutEvent())
 }

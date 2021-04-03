@@ -163,7 +163,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
             lGeometryOverlays[tbLoc] = GeometryOverlay(color, geometryFactory)
             lTagBoxVMs[tbLoc] = createActivityTaggedViewModel(
                 listOf(tbLoc.toString()),
-                createVMFactory { TagBoxVM(tbLoc, color) }
+                createVMFactory { TagBoxVM(app, tbLoc, color) }
             )
             val tagBoxFragment = TagBoxFragment.newInstance(color, tbLoc)
             lifecycleScope.launch {

@@ -12,11 +12,12 @@ import java.io.OutputStream
 
 
 class SettingsSerializer : Serializer<Settings> {
-    override val defaultValue: Settings = Settings.newBuilder()
-        .setApiBaseUrl(DEFAULT_API_BASE_URL)
-        .setBaseMapUid(BaseMapRepository.uidOfDefault)
-        .setLastLocation(DEFAULT_LAST_LOCATION.toSettingsLocation())
-        .build()
+    override val defaultValue: Settings = Settings.newBuilder().apply {
+        apiBaseUrl = DEFAULT_API_BASE_URL
+        baseMapUid = BaseMapRepository.uidOfDefault
+        lastLocation = DEFAULT_LAST_LOCATION.toSettingsLocation()
+        tagboxLongLines = DEFAULT_TAG_BOX_LONG_LINES
+    }.build()
 
     override suspend fun readFrom(input: InputStream): Settings {
         try {
@@ -31,7 +32,5 @@ class SettingsSerializer : Serializer<Settings> {
     override suspend fun writeTo(
         t: Settings,
         output: OutputStream
-    ) = t.writeTo(output)
-
-    companion object
+    ) = withContext(Dispatchers.IO) { t.writeTo(output) }
 }

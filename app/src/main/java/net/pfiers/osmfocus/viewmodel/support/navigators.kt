@@ -15,3 +15,8 @@ interface EmailNavigator {
         attachments: Map<String, ByteArray> = emptyMap()
     )
 }
+
+interface SettingsNavigator {
+    fun editBaseMaps()
+    fun showAbout()
+}

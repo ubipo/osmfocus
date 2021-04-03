@@ -18,6 +18,7 @@ import net.pfiers.osmfocus.databinding.RvItemTagBinding
 import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
+import net.pfiers.osmfocus.view.support.app
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import kotlin.properties.Delegates
@@ -34,7 +35,7 @@ class TagBoxFragment : Fragment() {
     private val tagBoxVM: TagBoxVM by activityTaggedViewModels(
         { listOf(tbLoc.toString()) },
         {
-            createVMFactory { TagBoxVM(tbLoc, color) }
+            createVMFactory { TagBoxVM(app, tbLoc, color) }
         }
     )
 
@@ -63,11 +64,12 @@ class TagBoxFragment : Fragment() {
         }
         val adapter = ViewBindingListAdapter<Pair<String, String>, RvItemTagBinding>(
             R.layout.rv_item_tag,
-            viewLifecycleOwner
+            this
         ) { tag, binding ->
             val (key, value) = tag
             binding.key = key
             binding.value = value
+            binding.longLinesHandling = tagBoxVM.longLinesHandling
         }
         binding.tags.adapter = adapter
         binding.tags.layoutManager = LinearLayoutManager(context)

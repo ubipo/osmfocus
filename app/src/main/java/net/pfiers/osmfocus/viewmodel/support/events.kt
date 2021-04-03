@@ -12,3 +12,6 @@ class SendEmailEvent(
     val body: String,
     val attachments: Map<String, ByteArray> = emptyMap()
 ) : Event()
+class EditBaseMapsEvent : Event()
+class EditTagboxLongLinesEvent : Event()
+class ShowAboutEvent : Event()
