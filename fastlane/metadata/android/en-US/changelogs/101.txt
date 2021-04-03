@@ -1,0 +1,9 @@
+<en-US>
+Add error reporting (through email or a GitHub issue)
+Add tagbox ellipsizing
+Add a setting to show or hide relations
+Add zoom level saving
+
+Fix overlapping tagboxes
+</en-US>
+
