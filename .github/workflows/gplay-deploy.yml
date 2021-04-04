@@ -1,0 +1,40 @@
+name: Google Play deploy
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure keystore
+        run: |
+          echo "$ANDROID_SIGNING_KEYSTORE_JKS_B64" > android-signing-keystore.jks.b64
+          base64 -id android-signing-keystore.jks.b64 > android-signing-keystore.jks
+        env:
+          ANDROID_SIGNING_KEYSTORE_JKS_B64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_JKS_B64 }}
+
+      - name: Configure Play store API credentials
+        run: |
+          echo "$PLAY_STORE_CREDENTIALS_JSON_B64" > play-store-credentials.json.b64
+          base64 -id play-store-credentials.json.b64 > play-store-credentials.json
+        env:
+          PLAY_STORE_CREDENTIALS_JSON_B64: ${{ secrets.PLAY_STORE_CREDENTIALS_JSON_B64 }}
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+          bundler-cache: true
+
+      - name: Fastlane deploy
+        run: bundle exec fastlane production
+        env:
+          SIGNING_KEYSTORE_FILE: android-signing-keystore.jks
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
