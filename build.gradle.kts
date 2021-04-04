@@ -31,3 +31,14 @@ allprojects {
 tasks.register<Delete>("clean").configure {
     delete(rootProject.buildDir)
 }
+
+val secretsPropertiesFile = rootProject.file("secrets.properties")
+val secretProperties by project.extra(java.util.Properties())
+if (secretsPropertiesFile.exists()) {
+    secretProperties.load(java.io.FileInputStream(secretsPropertiesFile))
+} else {
+    secretProperties.setProperty("signing_keystore_file", System.getenv("SIGNING_KEYSTORE_FILE"))
+    secretProperties.setProperty("signing_keystore_password", System.getenv("SIGNING_KEYSTORE_PASSWORD"))
+    secretProperties.setProperty("signing_key_alias", System.getenv("SIGNING_KEY_ALIAS"))
+    secretProperties.setProperty("signing_key_password", System.getenv("SIGNING_KEY_PASSWORD"))
+}

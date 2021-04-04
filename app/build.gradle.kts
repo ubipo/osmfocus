@@ -19,8 +19,8 @@ android {
         applicationId = "net.pfiers.osmfocus"
         minSdkVersion(21)
         targetSdkVersion(30)
-        versionCode = 101
-        versionName = "1.0.1"
+        versionCode = 102
+        versionName = "1.0.2"
 
         multiDexEnabled = true
 
@@ -39,6 +39,16 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
+    signingConfigs {
+        create("gplayRelease") {
+            val secretProperties = project.rootProject.extra["secretProperties"] as java.util.Properties
+            storeFile = file(secretProperties["signing_keystore_file"] as String)
+            storePassword = secretProperties["signing_keystore_password"] as String
+            keyAlias = secretProperties["signing_key_alias"] as String
+            keyPassword = secretProperties["signing_key_password"] as String
+        }
     }
 
     buildTypes {
@@ -63,6 +73,7 @@ android {
         create("gplay") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-gplay"
+            signingConfig = signingConfigs["gplayRelease"]
         }
     }
 }

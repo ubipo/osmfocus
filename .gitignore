@@ -13,7 +13,13 @@
 .externalNativeBuild
 .cxx
 
-scratch/
-app/release/
-app/gplay/
-app/fdroid/
+/scratch/
+/app/release/
+/app/gplay/
+/app/fdroid/
+/vendor/
+/android-signing-keystore.jks
+/play-store-credentials.json
+/secrets.properties
+/.bundle
+/fastlane/report.xml
