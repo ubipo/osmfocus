@@ -6,7 +6,7 @@ import androidx.databinding.BindingAdapter
 
 object TextWatcherAdapter {
     @JvmStatic
-    @BindingAdapter("app:onAfterTextChanged")
+    @BindingAdapter("onAfterTextChanged")
     fun setOnAfterTextChanged(view: EditText, callback: SetOnAfterTextChangedCallback) {
         view.addTextChangedListener({ _, _, _, _ -> }, { _, _, _, _ -> }, { callback.run(view) })
     }

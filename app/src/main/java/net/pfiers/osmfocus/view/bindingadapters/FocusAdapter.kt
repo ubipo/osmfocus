@@ -6,7 +6,7 @@ import androidx.databinding.BindingAdapter
 
 object FocusAdapter {
     @JvmStatic
-    @BindingAdapter("app:onFocus")
+    @BindingAdapter("onFocus")
     fun setOnFocus(view: View, callback: SetOnFocusCallback) {
         view.setOnFocusChangeListener { _, hasFocus -> callback.run(view, hasFocus) }
     }
