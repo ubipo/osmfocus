@@ -1,4 +1,2 @@
-<en-US>
 Add about & more info screens
 Prepare for f-droid publishing
-</en-US> 

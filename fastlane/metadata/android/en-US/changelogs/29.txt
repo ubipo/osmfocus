@@ -1,6 +1,4 @@
-<en-US>
 Add settings fragment with datastore+protobuf backend.
 Add basemap switcher fragment.
 Add user-basemap form with room backend.
 Improve download management.
-</en-US> 

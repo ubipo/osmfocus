@@ -9,7 +9,6 @@ https://github.com/ubipo/osmfocus
 
 Alternative names: OSM Focus Reborn / OpenStreetMap Focus Reborn
 
-
 Permissions:
 
 - "full network access": display background map, retrieve OSM data
@@ -18,10 +17,6 @@ Permissions:
 
 Notices:
 
-OSMFocus Reborn allows you to view OpenStreetMap data. This data is © (Copyright) OpenStreetMap contributors and is available under the Open Database License.
+OSMfocus allows you to view OpenStreetMap data. This data is © (Copyright) OpenStreetMap contributors and is available under the Open Database License. https://www.openstreetmap.org/copyright
 
-OSMFocus Reborn uses (remixed) names and ideas from OSMFocus (MichaelVL) v0.1.1r1, which is available under the "Apache License 2.0".
-
-OSMFocus Reborn uses a remixed version of the OpenStreetMap logo, as per the Trademark Policy §3.5.
-
-OSMFocus Reborn allows you to view map tiles from (but does not rely on) third-party and potentially non-free services.
+This app is a complete re-write of the now (07-11-2020) defunct OSMfocus by Network42 / MichaelVL ("Apache License 2.0" license.). https://play.google.com/store/apps/details?id=dk.network42.osmfocus https://github.com/MichaelVL/osm-focus
