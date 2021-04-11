@@ -19,6 +19,7 @@ class SettingsSerializer : Serializer<Settings> {
         lastZoomLevel = Defaults.zoomLevel
         tagboxLongLines = Defaults.tagBoxLongLines
         showRelations = Defaults.showRelations
+        zoomBeyondBaseMapMax = Defaults.zoomBeyondBaseMapMax
     }.build()
 
     override suspend fun readFrom(input: InputStream): Settings {

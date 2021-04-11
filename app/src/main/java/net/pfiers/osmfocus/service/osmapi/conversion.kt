@@ -4,44 +4,88 @@ import android.util.Log
 import net.pfiers.osmfocus.service.osm.*
 import org.locationtech.jts.geom.Coordinate
 
-
-fun OsmApiNode.toOsmNode(): OsmNode {
+/**
+ * Returns and adds this API node to `elements` if necessary.
+ *
+ * Necessary means the element did not exist in the existing elements
+ * *or* the existing element was a stub. If it was not necessary to
+ * add the new API node, null is returned.
+ */
+fun OsmApiNode.toOsmNodeAndAdd(elements: MutableOsmElements): OsmNode? {
     val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
-    return OsmNode(VersionedIdMeta(id, version), tagsOrEmpty, Coordinate(lon, lat))
+    val existingNode = elements.nodes[typedId]
+    return if (existingNode?.isStub == false) {
+        null // No need to update
+    } else {
+        val newNode = OsmNode(VersionedIdMeta(id, version), tagsOrEmpty, Coordinate(lon, lat))
+        elements.nodes[typedId] = newNode
+        newNode
+    }
 }
 
-
-fun OsmApiWay.toOsmWay(nodeDict: Set<OsmNode>): Pair<OsmWay, Set<OsmNode>> {
-    val stubElements = mutableSetOf<OsmNode>()
+/**
+ * Returns and adds this API way (and its stub nodes) to `elements` if necessary.
+ *
+ * Necessary means the element did not exist in the existing elements
+ * *or* the existing element was a stub. If it was not necessary to
+ * add the new API way, null is returned.
+ */
+fun OsmApiWay.toOsmWayAndAdd(elements: MutableOsmElements): Pair<OsmWay, HashMap<TypedId, OsmNode>>? {
+    val stubNodes = HashMap<TypedId, OsmNode>()
     val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
-    val way = OsmWay(VersionedIdMeta(id, version), tagsOrEmpty, nodes.map { nodeId ->
-        val nodeMeta = IdMeta(nodeId)
-        val find = { elem: OsmNode ->
-            elem.idMeta looseEquals nodeMeta
-        }
-        val node = nodeDict.firstOrNull(find) ?: stubElements.firstOrNull (find) ?: OsmNode(nodeId)
-        stubElements.add(node)
-        node
-    })
-    return Pair(way, stubElements)
-}
-
-fun OsmApiRelation.toOsmRelation(elementDict: Set<OsmElement>): Pair<OsmRelation, Set<OsmElement>> {
-    val stubElements = mutableSetOf<OsmElement>()
-    val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
-    val relation = OsmRelation(VersionedIdMeta(id, version), tagsOrEmpty, members.map { resMember ->
-        val memberCls = resMember.type.cls
-        val find = { elem: OsmElement ->
-            memberCls.isInstance(elem) && elem.idMeta.id == resMember.ref
-        }
-        val memberElem = elementDict.firstOrNull(find) ?: stubElements.firstOrNull(find) ?: resMember.type.stubElement(resMember.ref)
-        stubElements.add(memberElem)
-        OsmRelationMember(
-            memberElem,
-            resMember.role
+    val existingWay = elements.nodes[typedId]
+    return if (existingWay?.isStub == false) {
+        null // No need to update
+    } else {
+        Pair(
+            OsmWay(VersionedIdMeta(id, version), tagsOrEmpty, nodes.map { nodeId ->
+                val typedId = TypedId(ElementType.NODE, nodeId)
+                elements.nodes[typedId] // Already fetched node
+                    ?: stubNodes.getOrPut(typedId) {
+                        OsmNode(nodeId)
+                    }
+            }).also { elements.ways[typedId] = it },
+            stubNodes
         )
-    })
-    return Pair(relation, stubElements)
+    }
+}
+
+/**
+ * Returns and adds this API relation to `elements` if necessary.
+ *
+ * Necessary means the element did not exist in the existing elements
+ * *or* the existing element was a stub. If it was not necessary to
+ * add the new API relation, null is returned.
+ */
+fun OsmApiRelation.toOsmRelationAndAdd(elements: MutableOsmElements): Pair<OsmRelation, MutableOsmElements>? {
+    val stubElements = MutableOsmElements()
+    val tagsOrEmpty = tags ?: emptyMap() // TODO: Incorrect assumption for any Overpass query
+    val existingRelation = elements.nodes[typedId]
+    return if (existingRelation?.isStub == false) {
+        null // No need to update
+    } else {
+        Pair(
+            OsmRelation(VersionedIdMeta(id, version), tagsOrEmpty, members.map { resMember ->
+                val typedId = TypedId(resMember.type, resMember.ref)
+                val memberElem = when (resMember.type) {
+                    ElementType.NODE -> elements.nodes[typedId] // Already fetched node
+                        ?: stubElements.nodes.getOrPut(typedId) { // Stub node we saw here already (with a different for example)
+                            OsmNode(resMember.ref) // New stub node
+                        }
+                    ElementType.WAY -> elements.ways[typedId]
+                        ?: stubElements.ways.getOrPut(typedId) {
+                            OsmWay(resMember.ref)
+                        }
+                    ElementType.RELATION -> elements.relations[typedId]
+                        ?: stubElements.relations.getOrPut(typedId) {
+                            OsmRelation(resMember.ref)
+                        }
+                }
+                OsmRelationMember(memberElem, resMember.role)
+            }).also { elements.relations[typedId] = it },
+            stubElements
+        )
+    }
 }
 
 //fun ResElement.toOsmElement(elementDict: Set<OsmElement>) =
@@ -52,16 +96,17 @@ fun OsmApiRelation.toOsmRelation(elementDict: Set<OsmElement>): Pair<OsmRelation
 //        else -> error("Unknown ResElement \"${ResElement::class.simpleName}\"")
 //    }
 
-fun Iterable<OsmApiElement>.toOsmElements(
-//    elementDict: HashMap<OsmElementTypeAndId, OsmElement>
-): Set<OsmElement> {
-//    val newElementDict = HashMap(elementDict)
+data class OsmApiElements(
+    val nodes: Iterable<OsmApiNode>,
+    val ways: Iterable<OsmApiWay>,
+    val relations: Iterable<OsmApiRelation>
+)
 
+fun Iterable<OsmApiElement>.splitTypes(): OsmApiElements {
     val resNodes = ArrayList<OsmApiNode>()
     val resWays = ArrayList<OsmApiWay>()
     val resRelations = ArrayList<OsmApiRelation>()
 
-    // Essentially the same as calling .filterIsInstance three times
     for (resElement in this) {
         when(resElement) {
             is OsmApiNode -> resNodes.add(resElement)
@@ -70,34 +115,32 @@ fun Iterable<OsmApiElement>.toOsmElements(
         }
     }
 
-    Log.v("AAA", "> Nodes")
-    val newNodes = resNodes.map { it.toOsmNode() }.toMutableSet()
-    Log.v("AAA", "< Nodes")
-
-    Log.v("AAA", "> Ways")
-    val ways = resWays.map {
-        val (way, stubs) = it.toOsmWay(newNodes)
-        newNodes.addAll(stubs)
-        way
-    }
-    Log.v("AAA", "< Ways")
-
-    val elements = newNodes.union(ways).toMutableSet()
-
-    Log.v("AAA", "> Relations")
-    resRelations.forEach {
-        val (relation, stubs) = it.toOsmRelation(elements)
-        elements.add(relation)
-        elements.addAll(stubs)
-    }
-    Log.v("AAA", "< Relations")
-
-//
-//    val elementDict = mutableSetOf<OsmElement>()
-//    for (resElement in this) {
-//        val (newElement, newStubs) = resElement.toOsmElement(elementDict)
-//        elementDict.add(newElement)
-//        newStubs?.let { elementDict.addAll(it) }
-//    }
-    return elements
+    return OsmApiElements(resNodes, resWays, resRelations)
 }
+
+data class NewApiElements(
+    val newNodes: Iterable<OsmNode>,
+    val newWays: Iterable<OsmWay>,
+    val newRelations: Iterable<OsmRelation>
+)
+
+fun OsmApiElements.toOsmElementsAndAdd(
+    osmElements: MutableOsmElements,
+    returnNewElements: Boolean
+): NewApiElements? {
+    val lNodes = nodes.toList()
+    val newNodes = lNodes.mapNotNull { it.toOsmNodeAndAdd(osmElements) }
+    val lWays = ways.toList()
+    val (newWays, newWayStubNodes) = lWays.mapNotNull { it.toOsmWayAndAdd(osmElements) }.unzip()
+    val lRelations = relations.toList()
+    val (newRelations, newRelationStubs) = lRelations.mapNotNull { it.toOsmRelationAndAdd(osmElements) }.unzip()
+    return if (returnNewElements) {
+        val allNewNodes = newNodes + newWayStubNodes.flatMap { it.values } + newRelationStubs.flatMap { it.nodes.values }
+        val allNewWays = newWays + newRelationStubs.flatMap { it.ways.values }
+        val allNewRelations = newRelations + newRelationStubs.flatMap { it.relations.values }
+        NewApiElements(allNewNodes, allNewWays, allNewRelations)
+    } else null
+}
+
+fun OsmApiElements.toOsmElements(returnNewElements: Boolean) =
+    toOsmElementsAndAdd(MutableOsmElements(), returnNewElements)

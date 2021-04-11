@@ -4,7 +4,7 @@ import org.locationtech.jts.geom.Coordinate
 import java.io.Serializable
 import java.net.URL
 import java.util.*
-
+import kotlin.collections.HashMap
 
 typealias Tags = Map<String, String>
 
@@ -42,7 +42,7 @@ class VersionedIdMeta(
         Objects.hash(id, version)
 }
 
-data class OsmElementTypeAndId(val type: ElementType, val idMeta: IdMeta)
+data class TypedId(val type: ElementType, val id: Long)
 
 abstract class OsmElement(
     val idMeta: IdMeta,
@@ -55,13 +55,9 @@ abstract class OsmElement(
 
     abstract val isStub: Boolean
 
-    val type by lazy {
-        ElementType.fromCls(this::class)
-    }
+    val type by lazy { ElementType.fromCls(this::class) }
 
-    val typeAndId by lazy {
-        OsmElementTypeAndId(type, idMeta)
-    }
+    val typedId by lazy { TypedId(type, idMeta.id) }
 
     val url: URL
         get() = URL("https://osm.org/${type.lower}/${idMeta.id}")
@@ -142,3 +138,26 @@ fun ElementType.stubElement(id: Long) = when(this) {
     ElementType.WAY -> OsmWay(id)
     ElementType.RELATION -> OsmRelation(id)
 }
+
+/**
+ * Mutable store of OSM elements using hashmaps mapping
+ * element type + id's to elements.
+ **/
+open class OsmElements(
+    open val nodes: MutableMap<TypedId, OsmNode> = HashMap(), // TypedId for faster lookup when adding new elements
+    open val ways: MutableMap<TypedId, OsmWay> = HashMap(),
+    open val relations: MutableMap<TypedId, OsmRelation> = HashMap()
+) {
+    constructor(elements: OsmElements) : this(elements.nodes, elements.ways, elements.relations)
+}
+
+
+/**
+ * Mutable store of OSM elements using hashmaps mapping
+ * element type + id's to elements.
+ **/
+class MutableOsmElements(
+    override val nodes: MutableMap<TypedId, OsmNode> = HashMap(), // TypedId for faster lookup when adding new elements
+    override val ways: MutableMap<TypedId, OsmWay> = HashMap(),
+    override val relations: MutableMap<TypedId, OsmRelation> = HashMap()
+) : OsmElements()

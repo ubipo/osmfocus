@@ -74,7 +74,7 @@
             android:text="@{vm.overlayText}"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
-            android:visibility="@{vm.overlayVisibility}"
+            android:visibility="@{vm.overlayText != null}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/map"
             app:layout_constraintStart_toStartOf="@+id/map"

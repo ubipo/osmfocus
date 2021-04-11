@@ -15,3 +15,4 @@ class SendEmailEvent(
 class EditBaseMapsEvent : Event()
 class EditTagboxLongLinesEvent : Event()
 class ShowAboutEvent : Event()
+class ExceptionEvent(val exception: Throwable) : Event()

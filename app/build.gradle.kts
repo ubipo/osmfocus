@@ -116,7 +116,7 @@ dependencies {
     val implementation by configurations
 
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.4.31")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.4.32")
     implementation("com.android.support:multidex:1.0.3")
     implementation("androidx.core:core-ktx:1.3.2")
     implementation("androidx.appcompat:appcompat:1.2.0")
@@ -179,6 +179,8 @@ dependencies {
     implementation("androidx.datastore:datastore:$datastoreVersion")
     implementation("androidx.datastore:datastore-rxjava3:$datastoreVersion")
 
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
 //    testImplementation("junit:junit:4.13.1")
 //    androidTestImplementation("androidx.test.ext:junit:1.1.2")
 //    androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")

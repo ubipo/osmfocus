@@ -27,4 +27,6 @@ message Settings {
 
   double lastZoomLevel = 6;
 
+  bool zoomBeyondBaseMapMax = 7;
+
 }

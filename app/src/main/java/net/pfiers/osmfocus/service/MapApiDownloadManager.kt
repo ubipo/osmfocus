@@ -8,8 +8,8 @@ import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.onError
 import com.google.common.base.Stopwatch
-import com.google.common.eventbus.EventBus
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.pfiers.osmfocus.areaGeo
@@ -20,10 +20,10 @@ import net.pfiers.osmfocus.extensions.toPolygon
 import net.pfiers.osmfocus.observableProperty
 import net.pfiers.osmfocus.resultOfSuspend
 import net.pfiers.osmfocus.service.osm.OsmElement
-import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
-import net.pfiers.osmfocus.service.osmapi.OsmApiRes
-import net.pfiers.osmfocus.service.osmapi.osmApiMapReq
-import net.pfiers.osmfocus.service.osmapi.toOsmElements
+import net.pfiers.osmfocus.service.osm.MutableOsmElements
+import net.pfiers.osmfocus.service.osm.TypedId
+import net.pfiers.osmfocus.service.osmapi.*
+import net.pfiers.osmfocus.viewmodel.support.Event
 import net.sf.geographiclib.Geodesic
 import org.locationtech.jts.geom.Envelope
 import org.locationtech.jts.geom.Geometry
@@ -40,9 +40,9 @@ class MapApiDownloadManager(
     val maxArea: Double,
     private val geometryFactory: GeometryFactory
 ) {
-    val eventBus = EventBus()
+    val events = Channel<Event>(10)
 
-    private var _state: State by observableProperty(State.IDLE, eventBus, this::state)
+    private var _state: State by observableProperty(State.IDLE, events, this::state)
     val state get() = _state
 
     enum class State {
@@ -55,21 +55,19 @@ class MapApiDownloadManager(
         // back to idle if no request scheduled, otherwise immediately to State.CALLED
     }
 
-    private var _isProcessing: Boolean by observableProperty(false, eventBus, this::isProcessing)
+    private var _isProcessing: Boolean by observableProperty(false, events, this::isProcessing)
     val isProcessing get() = _isProcessing
 
-    var elements = mapOf<OsmElement, Geometry?>()
+    val elements = MutableOsmElements()
+    private val elementGeometries = HashMap<TypedId, Geometry>()
 
     private var downloadedArea: Geometry = geometryFactory.createGeometryCollection()
     private val minDurBetweenDownloads = (1.0 / maxQps).toDuration(TimeUnit.SECONDS)
 
-    fun getElementGeometry(element: OsmElement): Geometry {
-        if (!elements.contains(element))
-            throw NoSuchElementException(element.toString())
-        return elements.getOrElse(element) {
+    fun getElementGeometry(element: OsmElement): Geometry =
+        elementGeometries.getOrPut(element.typedId) {
             element.toGeometry(geometryFactory, skipStubMembers = true)
-        }!!
-    }
+        }
 
     private val scheduledDownloadScope = CoroutineScope(Job() + Dispatchers.Default)
     private val downloadLock = Mutex()
@@ -123,7 +121,7 @@ class MapApiDownloadManager(
             This way there's no intermediate state of
             "isDownloading = false" in-between the downloads. */
             if (lScheduledDownloadJob == null) {
-                eventBus.post(DownloadEndedEvent(result))
+                events.offer(DownloadEndedEvent(result))
                 _state = State.IDLE
             } else {
                 scheduledDownloadJob = null
@@ -160,8 +158,8 @@ class MapApiDownloadManager(
         val envelopeArea = envelope.areaGeo(Geodesic.WGS84)
         if (envelopeArea > maxArea) return Result.error(
             MaxDownloadAreaExceededException(
-            "Max download area exceeded ($envelopeArea > $maxArea)"
-        )
+                "Max download area exceeded ($envelopeArea > $maxArea)"
+            )
         )
 
         // 3. Fire download
@@ -172,29 +170,8 @@ class MapApiDownloadManager(
     }
 
     private fun processDownload(apiRes: OsmApiRes) {
-        val resElements = apiRes.elements.toOsmElements().filter { e ->
-            !e.isStub
-        }
-
-        for (e in resElements) {
-            if (e.tags != null)
-                continue
-            Log.v("AAA", "Res element without tags! $e")
-        }
-
-        val newElements = resElements.filter { newElement ->
-            val existingElement = elements.keys.find { element ->
-                newElement::class.isInstance(element)
-                        && element.idMeta.looseEquals(newElement.idMeta)
-            } ?: return@filter true
-            existingElement.isStub && !newElement.isStub
-        }
-
-        synchronized(elements) {
-            eventBus.post(NewElementsEvent(newElements))
-            // TODO: decide: mutable map or mutable var?
-            elements = elements.plus(newElements.map { it to null })
-        }
+        val newElements = apiRes.elements.splitTypes().toOsmElementsAndAdd(elements, true)!!
+        events.offer(NewElementsEvent(newElements))
     }
 
     private fun downloadEnvelopeToUnseenEnvelope(downloadEnvelope: Envelope): Envelope {
@@ -203,8 +180,8 @@ class MapApiDownloadManager(
         return unseenGeom.envelopeInternal
     }
 
-    class DownloadEndedEvent(val result: Result<Unit, Exception>)
-    class NewElementsEvent(val newElements: List<OsmElement>)
+    class DownloadEndedEvent(val result: Result<Unit, Exception>) : Event()
+    class NewElementsEvent(val newElements: NewApiElements) : Event()
 
     class FresherDownloadCe: CancellationException()
 }

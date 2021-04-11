@@ -3,6 +3,7 @@ package net.pfiers.osmfocus.service.osmapi
 import androidx.annotation.Keep
 import com.beust.klaxon.TypeFor
 import net.pfiers.osmfocus.service.osm.ElementType
+import net.pfiers.osmfocus.service.osm.TypedId
 
 class OsmApiRes(val elements: List<OsmApiElement>)
 
@@ -15,7 +16,9 @@ abstract class OsmApiElement(
     val changeset: Long,
     val uid: Int,
     val tags: Map<String, String>?
-)
+) {
+    val typedId by lazy { TypedId(type, id) }
+}
 
 @Keep
 class OsmApiNode(

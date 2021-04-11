@@ -10,7 +10,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.Keep
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
@@ -26,7 +25,7 @@ import androidx.preference.PreferenceManager
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.getOrElse
 import com.github.kittinunf.result.onError
-import com.google.common.eventbus.Subscribe
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -34,9 +33,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.extensions.createVMFactory
-import net.pfiers.osmfocus.extensions.kotlin.cartesianProduct
-import net.pfiers.osmfocus.extensions.kotlin.containedSubList
-import net.pfiers.osmfocus.extensions.kotlin.noIndividualValueReuse
 import net.pfiers.osmfocus.extensions.kotlin.toLinkedMap
 import net.pfiers.osmfocus.extensions.value
 import net.pfiers.osmfocus.osmdroid.overlays.CrosshairOverlay
@@ -50,8 +46,7 @@ import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
 import net.pfiers.osmfocus.service.ZoomLevelRecededException
 import net.pfiers.osmfocus.service.basemaps.BaseMap
 import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
-import net.pfiers.osmfocus.service.osm.OsmElement
-import net.pfiers.osmfocus.service.osm.OsmRelation
+import net.pfiers.osmfocus.service.osmapi.OsmApiConnectionException
 import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
@@ -60,7 +55,6 @@ import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
 import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
-import org.locationtech.jts.operation.distance.DistanceOp
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.events.MapListener
@@ -72,6 +66,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
+import java.lang.Double.max
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
@@ -110,34 +105,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
     private lateinit var geometryOverlays: Map<TbLoc, GeometryOverlay>
 
     private lateinit var palette: List<Int>
-
-    @Suppress("UnstableApiUsage")
-    private val downloadManagerEventHandler = object {
-        @Subscribe
-        @Keep
-        fun onDownloadEnd(e: MapApiDownloadManager.DownloadEndedEvent) {
-            e.result.onError { ex ->
-                when (ex) {
-                    is ZoomLevelRecededException, is MaxDownloadAreaExceededException -> {
-                        mapVM.overlayVisibility.set(View.VISIBLE)
-                        mapVM.overlayText.set("Zoom in to show data")
-                    }
-                }
-            }
-        }
-
-        @Subscribe
-        @Keep
-        fun onNewElements(e: MapApiDownloadManager.NewElementsEvent) {
-            val centerPoint = map.mapCenter.toPoint(geometryFactory)
-            val envelope = map.boundingBox.toEnvelope()
-            val zoomLevel = map.zoomLevelDouble
-            // TODO: Fix background scope
-            backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
-                updateHighlightedElements(centerPoint, envelope, zoomLevel)
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -208,7 +175,11 @@ class MapFragment : Fragment(), MapEventsReceiver {
             }
         }
 
-        mapVM.downloadManager.eventBus.register(this)
+        mapVM.highlightedElements.observe(viewLifecycleOwner) { highlightedElements ->
+            lifecycleScope.launch {
+                updateHighlightedElements(highlightedElements)
+            }
+        }
 
         addTagBoxFragmentContainers()
 
@@ -239,7 +210,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
         }
 
         var initialZoomSet = false
-        mapVM.zoomLevel.observe(viewLifecycleOwner) { zoomLevel ->
+        mapVM.savedZoomLevel.observe(viewLifecycleOwner) { zoomLevel ->
             if (!initialZoomSet) {
                 map.controller.setZoom(zoomLevel)
                 initialZoomSet = true
@@ -312,11 +283,14 @@ class MapFragment : Fragment(), MapEventsReceiver {
         app.settingsDataStore.data.asLiveData().observe(viewLifecycleOwner) { settings ->
             baseMapGetterScope.launch {
                 val baseMapUid = settings.baseMapUid
+                val zoomBeyondBaseMapMax = settings.zoomBeyondBaseMapMax
                 val baseMap = baseMapRepository.getOrDefault(baseMapUid)
                 val tileSource = tileSourceFromBaseMap(baseMap)
                 lifecycleScope.launch {
                     attributionVM.tileAttributionText.value = baseMap.attribution
                     map.setTileSource(tileSource)
+                    val maxZoomLevel = if (zoomBeyondBaseMapMax) MAX_ZOOM_LEVEL_BEYOND_BASE_MAP else tileSource.maximumZoomLevel.toDouble()
+                    map.setMaxZoomLevel(max(maxZoomLevel, MIN_MAX_ZOOM_LEVEL))
                 }
             }
         }
@@ -352,7 +326,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
     }
 
     override fun onStart() {
-        mapVM.downloadManager.eventBus.register(downloadManagerEventHandler)
         val tran = parentFragmentManager.beginTransaction()
         for ((tbLoc, tagBoxFragment) in tagBoxFragments) {
             val tagBoxContainer = tagBoxFragmentContainers[tbLoc]!!
@@ -365,7 +338,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
     @Suppress("UnstableApiUsage")
     @ExperimentalTime
     override fun onStop() {
-        mapVM.downloadManager.eventBus.unregister(downloadManagerEventHandler)
         val tran = parentFragmentManager.beginTransaction()
         for (tagBoxFragment in tagBoxFragments.values) {
             tran.remove(tagBoxFragment)
@@ -401,16 +373,10 @@ class MapFragment : Fragment(), MapEventsReceiver {
 
     @ExperimentalTime
     private fun mapScrollHandler() {
-        val centerPoint = map.mapCenter.toPoint(geometryFactory)
+        val center = map.mapCenter.toPoint(geometryFactory)
         val envelope = map.boundingBox.toEnvelope()
         val zoomLevel = map.zoomLevelDouble
-        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
-            updateHighlightedElements(
-                centerPoint,
-                envelope,
-                zoomLevel
-            )
-        }
+        mapVM.mapState = MapVM.MapState(center, envelope, zoomLevel)
         backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
             val downloadJob = async {
                 mapVM.downloadManager.download {
@@ -418,17 +384,23 @@ class MapFragment : Fragment(), MapEventsReceiver {
                 }
             }
             downloadJob.await().onError { ex ->
-                if (ex is ZoomLevelRecededException || ex is MaxDownloadAreaExceededException) {
-//                    mapViewModel.overlayVisibility.set(View.VISIBLE)
-//                    mapViewModel.overlayText.set("Zoom in to download data")
-                } else if (ex is MapApiDownloadManager.FresherDownloadCe) {
-                    return@launch // Ignore
-                } else {
-                    exceptionHandler.coroutineExceptionHandler.handleException(coroutineContext, ex)
+                when (ex) {
+                    is ZoomLevelRecededException,
+                    is MaxDownloadAreaExceededException,
+                    is MapApiDownloadManager.FresherDownloadCe
+                        -> { return@onError } // Ignore
+                    is OsmApiConnectionException -> {
+                        val message = ex.message
+                        if (message != null) {
+                            lifecycleScope.launch {
+                                Snackbar.make(binding.map, message, Snackbar.LENGTH_LONG).show()
+                            }
+                            return@onError
+                        }
+                    }
                 }
-                return@launch
+                exceptionHandler.coroutineExceptionHandler.handleException(coroutineContext, ex)
             }
-//            mapViewModel.overlayVisibility.set(View.GONE)
         }
     }
 
@@ -468,37 +440,8 @@ class MapFragment : Fragment(), MapEventsReceiver {
         map.onPause()
     }
 
-    private val updateHighlightedElementsContext = CoroutineScope(Dispatchers.Default) + Job()
-    private var lastUpdateHighlightedElementsJob: Job? = null
-
-    @ExperimentalTime
-    private suspend fun updateHighlightedElements(
-        centerPoint: Point,
-        envelope: Envelope,
-        zoomLevel: Double
-    ) {
-        synchronized(this) {
-            lastUpdateHighlightedElementsJob?.cancel()
-            val job = updateHighlightedElementsContext.launch {
-                val tagBoxElementPairs = if (zoomLevel < MIN_DISPLAY_ZOOM_LEVEL) {
-                    emptyMap() // Too zoomed out, don't display any elements
-                } else {
-                    val displayedElements = getElementsToDisplay(centerPoint, envelope)
-                    ensureActive()
-                    mapTbLocsToElements(displayedElements) { tbLoc ->
-                        tbLoc.toEnvelopeCoordinate(envelope)
-                    }
-                }
-                ensureActive()
-                updateHighlightedElementsFromPairs(tagBoxElementPairs)
-            }
-            lastUpdateHighlightedElementsJob = job
-            job
-        }.join()
-    }
-
     @Synchronized
-    private suspend fun updateHighlightedElementsFromPairs(tagBoxElementPairs: Map<TbLoc, ElementToDisplayData>) {
+    private suspend fun updateHighlightedElements(tagBoxElementPairs: Map<TbLoc, MapVM.ElementToDisplayData>) {
         for (tbLoc in tbLocations) {
             val elementToDisplay = tagBoxElementPairs[tbLoc]
 
@@ -522,60 +465,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
         }
         map.invalidate()
     }
-
-    open class ElementToDisplayData(
-        val element: OsmElement, val geometry: Geometry, val nearCenterCoordinate: Coordinate
-    )
-
-    /**
-     * Returns a list of the closest {@code n} (or less)
-     * elements to {@code centerPoint} and within {@code envelope}.
-     */
-    @ExperimentalTime
-    private fun getElementsToDisplay(
-        centerPoint: Point, envelope: Envelope
-    ): List<ElementToDisplayData> {
-        val elements = mapVM.downloadManager.elements.keys.asSequence()
-        val showRelations = mapVM.showRelations.value == true
-        val filteredOnType =
-            if (showRelations) elements
-            else elements.filterNot { e -> e is OsmRelation }
-        return filteredOnType
-            .filterNot { e -> e.tags.isNullOrEmpty() }
-            .mapNotNull { e ->
-                mapVM.downloadManager.getElementGeometry(e).takeIf { g ->
-                    !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
-                }?.let { g ->
-                    DistanceOp.nearestPoints(g, centerPoint)[0].takeIf { nearCenterCoordinate ->
-                        envelope.intersects(nearCenterCoordinate) // Robust check
-                    }?.let { nearCenterCoordinate ->
-                        ElementToDisplayData(e, g, nearCenterCoordinate)
-                    }
-                }
-            }.sortedBy { e ->
-                centerPoint.coordinate.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
-            }.toList().containedSubList(0, tbLocations.size)
-    }
-
-    /**
-     * Optimally maps tag box locations to elements
-     * displayed on the map.
-     * An element top-left of the map center should
-     * for example ideally be paired with the top-left
-     * tagbox (to minimize line crossings and make the
-     * connection between element-on-screen and tagbox
-     * as clear as possible).
-     */
-    private fun mapTbLocsToElements(
-        displayedElements: List<ElementToDisplayData>,
-        tbLocToCoordinate: (tbLoc: TbLoc) -> Coordinate
-    ): Map<TbLoc, ElementToDisplayData> = tbLocations
-        .cartesianProduct(displayedElements)
-        .sortedBy { (tbLoc, elementData) ->
-            tbLocToCoordinate(tbLoc).distance(elementData.nearCenterCoordinate)
-        }
-        .noIndividualValueReuse()
-        .toMap()
 
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
 
@@ -603,8 +492,9 @@ class MapFragment : Fragment(), MapEventsReceiver {
 
     companion object {
         const val ENVELOPE_BUFFER_FACTOR = 1.2
-        const val MIN_DOWNLOAD_ZOOM_LEVEL = 19
-        const val MIN_DISPLAY_ZOOM_LEVEL = 18
+        const val MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
+        const val MAX_ZOOM_LEVEL_BEYOND_BASE_MAP = 24.0
+        const val MIN_MAX_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL + 2
         val PALETTE = PaletteId.PALETTE_VIBRANT
 
         private val geometryFactory = GeometryFactory()

@@ -102,4 +102,8 @@
     <string name="setting_show_relations">Show relations</string>
     <string name="setting_show_relations_shown">Shown</string>
     <string name="setting_show_relations_hidden">Hidden</string>
+    <string name="too_zoomed_out">Zoom in to view data</string>
+    <string name="setting_zoom_beyond_base_map_max_enabled">Enabled</string>
+    <string name="setting_zoom_beyond_base_map_max_disabled">Disabled</string>
+    <string name="setting_zoom_beyond_base_map_max">Zoom beyond basemap max</string>
 </resources>
