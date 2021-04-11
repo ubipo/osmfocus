@@ -1,4 +1,4 @@
-OSMfocus Reborn is an open source tool for examining OpenStreetMap (OSM) elements by moving around on a map. Also known as: OSM Focus Reborn or OpenStreetMap Focus Reborn.
+OSMfocus Reborn is an open source tool for examining OpenStreetMap (OSM) elements by moving around on a map. Also known as OSM Focus Reborn or OpenStreetMap Focus Reborn.
 
 Move the crosshair in the middle of the map over a building or road to view its keys and values. A line will be drawn connecting the element with a box on the side of the screen. This box contains every tag of the element in OpenStreetMap. Use this information to find bugs or to investigate an area closer. Click on one of the boxes if you want even more detailed information.
 
@@ -6,8 +6,6 @@ Change the basemap (background layer) or add your own by going to the settings s
 
 Source, issue tracking and more info:
 https://github.com/ubipo/osmfocus
-
-Alternative names: OSM Focus Reborn / OpenStreetMap Focus Reborn
 
 Permissions:
 
