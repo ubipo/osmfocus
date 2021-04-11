@@ -494,7 +494,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
         const val ENVELOPE_BUFFER_FACTOR = 1.2
         const val MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
         const val MAX_ZOOM_LEVEL_BEYOND_BASE_MAP = 24.0
-        const val MIN_MAX_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL + 2
+        const val MIN_MAX_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL + 2.5
         val PALETTE = PaletteId.PALETTE_VIBRANT
 
         private val geometryFactory = GeometryFactory()
