@@ -34,7 +34,7 @@ jobs:
       - name: Fastlane deploy
         run: bundle exec fastlane production
         env:
-          SIGNING_KEYSTORE_FILE: android-signing-keystore.jks
+          SIGNING_KEYSTORE_FILE: ../android-signing-keystore.jks
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
