@@ -19,8 +19,8 @@ android {
         applicationId = "net.pfiers.osmfocus"
         minSdkVersion(21)
         targetSdkVersion(30)
-        versionCode = 103
-        versionName = "1.0.3"
+        versionCode = 110
+        versionName = "1.1.0"
 
         multiDexEnabled = true
 

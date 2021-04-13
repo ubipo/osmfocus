@@ -1,0 +1,2 @@
+Added element details screen
+Various bugfixes
