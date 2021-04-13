@@ -25,7 +25,15 @@ class SettingsSerializer : Serializer<Settings> {
     override suspend fun readFrom(input: InputStream): Settings {
         try {
             return withContext(Dispatchers.IO) {
-                Settings.parseFrom(input)
+                val settingsBuilder = Settings.parseFrom(input).toBuilder()
+                // Set defaults after upgrade (protobuf string default is the empty string)
+                if (settingsBuilder.apiBaseUrl.isBlank()) {
+                    settingsBuilder.apiBaseUrl = Defaults.apiBaseUrl
+                }
+                if (settingsBuilder.baseMapUid.isBlank()) {
+                    settingsBuilder.baseMapUid = BaseMapRepository.uidOfDefault
+                }
+                settingsBuilder.build()
             }
         } catch (exception: InvalidProtocolBufferException) {
             throw CorruptionException("Cannot read proto.", exception)

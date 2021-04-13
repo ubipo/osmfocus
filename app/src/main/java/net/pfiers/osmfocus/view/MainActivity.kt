@@ -1,41 +1,44 @@
 package net.pfiers.osmfocus.view
 
-import android.content.ComponentName
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineExceptionHandler
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.ActivityMainBinding
 import net.pfiers.osmfocus.extensions.div
 import net.pfiers.osmfocus.extensions.kotlin.subList
+import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.view.fragments.ElementDetailsContainerFragment
 import net.pfiers.osmfocus.view.fragments.ExceptionDialogFragment
 import net.pfiers.osmfocus.view.support.DistDonationHelper
 import net.pfiers.osmfocus.view.support.DonationHelper
 import net.pfiers.osmfocus.view.support.ExceptionHandler
 import net.pfiers.osmfocus.view.support.showWithDefaultTag
-import net.pfiers.osmfocus.viewmodel.*
-import net.pfiers.osmfocus.viewmodel.support.EmailNavigator
-import net.pfiers.osmfocus.viewmodel.support.SettingsNavigator
-import net.pfiers.osmfocus.viewmodel.support.UriNavigator
+import net.pfiers.osmfocus.viewmodel.AboutVM
+import net.pfiers.osmfocus.viewmodel.AddUserBaseMapVM
+import net.pfiers.osmfocus.viewmodel.NavVM
+import net.pfiers.osmfocus.viewmodel.support.*
 import java.io.File
 import java.time.Instant
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.time.ExperimentalTime
 
+
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
 class MainActivity : AppCompatActivity(), AddUserBaseMapVM.Navigator,
-    MapVM.Navigator, AboutVM.Navigator, UriNavigator, EmailNavigator, SettingsNavigator, ExceptionHandler {
+    AboutVM.Navigator, UriNavigator, EmailNavigator, SettingsNavigator, ExceptionHandler,
+    ElementDetailsNavigator, ClipboardNavigator {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navVM: NavVM
     private lateinit var navController: NavController
@@ -43,6 +46,12 @@ class MainActivity : AppCompatActivity(), AddUserBaseMapVM.Navigator,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
+            handleException(ex)
+            defaultHandler?.uncaughtException(thread, ex)
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         navVM = ViewModelProvider(this)[NavVM::class.java]
@@ -79,16 +88,33 @@ class MainActivity : AppCompatActivity(), AddUserBaseMapVM.Navigator,
         navController.navigateUp()
     }
 
-    override fun gotoSettings() = navController.navigate(R.id.settingsContainerFragment)
+    override fun showSettings() = navController.navigate(R.id.settingsContainerFragment)
     override fun editBaseMaps() = navController.navigate(R.id.userBaseMapsFragment)
     override fun showAbout() = navController.navigate(R.id.aboutFragment)
     override fun showAppInfo() = navController.navigate(R.id.moreInfoFragment)
+    override fun showElementDetails(element: OsmElement) = navController.navigate(
+        R.id.elementDetailContainerFragment,
+        Bundle().apply {
+            putSerializable(ElementDetailsContainerFragment.ARG_ELEMENT, element)
+        }
+    )
 
     override fun showSourceCode() = openUri(SOURCE_CODE_URL)
     override fun showIssueTracker() = openUri(ISSUE_URL)
     override fun showDonationOptions() = donationHelper.showDonationOptions()
 
     override fun openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
+
+    override fun copy(label: String, text: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText(label, text)
+        clipboard.setPrimaryClip(clip)
+        Snackbar.make(
+            binding.navHostFragment,
+            resources.getString(R.string.something_copied, label),
+            Snackbar.LENGTH_SHORT
+        ).show()
+    }
 
     override fun sendEmail(
         address: String,
@@ -125,14 +151,19 @@ class MainActivity : AppCompatActivity(), AddUserBaseMapVM.Navigator,
         )
         if (queryIntentActivities.isEmpty()) return intent
 
-        val emailAppIntents = queryIntentActivities.map { res -> Intent(intent).apply {
+        val emailAppIntents = queryIntentActivities.map { res ->
+            Intent(intent).apply {
                 val actInfo = res.activityInfo
                 component = ComponentName(actInfo.packageName, actInfo.name)
                 `package` = actInfo.packageName
-        } }
+            }
+        }
 
         val chooserIntent = Intent.createChooser(emailAppIntents[0], "")
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, emailAppIntents.subList(1).toTypedArray())
+        chooserIntent.putExtra(
+            Intent.EXTRA_INITIAL_INTENTS,
+            emailAppIntents.subList(1).toTypedArray()
+        )
         chooserIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         return chooserIntent
     }
@@ -140,6 +171,7 @@ class MainActivity : AppCompatActivity(), AddUserBaseMapVM.Navigator,
     companion object {
         val ISSUE_URL: Uri = Uri.parse("https://github.com/ubipo/osmfocus/issues")
         val SOURCE_CODE_URL: Uri = Uri.parse("https://github.com/ubipo/osmfocus")
-        const val EMAIL_ATTACHMENTS_URI_BASE = "content://net.pfiers.osmfocus.email_attachments_fileprovider"
+        const val EMAIL_ATTACHMENTS_URI_BASE =
+            "content://net.pfiers.osmfocus.email_attachments_fileprovider"
     }
 }

@@ -18,6 +18,8 @@ enum class ElementType {
         }
 
     val lower get() = name.toLowerCase(Locale.ROOT)
+    val capitalized get() = lower.capitalize(Locale.ROOT)
+    val oneLetter get() = name[0]
 
     companion object {
         fun valueOfCaseInsensitive(value: String): ElementType =

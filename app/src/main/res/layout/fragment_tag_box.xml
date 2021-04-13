@@ -25,10 +25,13 @@
             android:layout_height="wrap_content"
             android:layout_gravity="@{vf.gravityFromTbLoc(vm.tbLoc)}"
             android:background="@{vf.bgFromParams(5, vm.color, Color.WHITE)}"
-            android:visibility="@{vm.element != null}" >
+            android:visibility="@{vm.element != null}"
+            android:clickable="true"
+            android:focusable="true">
 
-            <androidx.recyclerview.widget.RecyclerView
+            <net.pfiers.osmfocus.view.support.ClickableRecyclerView
                 android:id="@+id/tags"
+                android:onClick="@{() -> vm.showCurrentElementDetails()}"
                 android:layout_margin="1dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />

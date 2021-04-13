@@ -11,7 +11,7 @@ import net.pfiers.osmfocus.viewmodel.support.*
 
 class ExceptionDialogVM(private val exception: Throwable) : ViewModel() {
     val events = Channel<Event>()
-    val errorMessage = ObservableField<String>(exception.message)
+    val errorMessage = ObservableField<String>(exception.message ?: exception::class.qualifiedName)
 
     fun createGitHubIssue() {
         val uri = createGitHubIssueUrl(

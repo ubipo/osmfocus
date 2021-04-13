@@ -5,10 +5,13 @@ import androidx.databinding.Observable
 import androidx.databinding.ObservableField
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import java.net.URI
 import java.net.URL
 
 
-val URL.androidUri: Uri get() = Uri.parse(toExternalForm())
+fun URL.toAndroidUri() = Uri.parse(toExternalForm())
+
+fun URI.toAndroidUri() = Uri.parse(toString())
 
 //val View.hitRect: Rect get() {
 //    val rect = Rect()

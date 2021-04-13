@@ -1,12 +1,17 @@
 package net.pfiers.osmfocus.service.osm
 
+import net.pfiers.osmfocus.jts.toGeometry
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.Point
 import java.io.Serializable
 import java.net.URL
 import java.util.*
-import kotlin.collections.HashMap
+import java.util.concurrent.ConcurrentHashMap
 
 typealias Tags = Map<String, String>
+
+private val GET_CENTER_GEOMETRY_FAC = GeometryFactory()
 
 open class IdMeta(
     val id: Long
@@ -42,7 +47,7 @@ class VersionedIdMeta(
         Objects.hash(id, version)
 }
 
-data class TypedId(val type: ElementType, val id: Long)
+data class TypedId(val type: ElementType, val id: Long) : Serializable
 
 abstract class OsmElement(
     val idMeta: IdMeta,
@@ -55,12 +60,13 @@ abstract class OsmElement(
 
     abstract val isStub: Boolean
 
+    val centroid: Point? by lazy {
+        this.toGeometry(GET_CENTER_GEOMETRY_FAC, skipStubMembers = true).centroid
+    }
+
     val type by lazy { ElementType.fromCls(this::class) }
-
     val typedId by lazy { TypedId(type, idMeta.id) }
-
-    val url: URL
-        get() = URL("https://osm.org/${type.lower}/${idMeta.id}")
+    val url by lazy { URL("https://osm.org/${type.lower}/${idMeta.id}") }
 }
 
 class Coordinate(
@@ -139,25 +145,18 @@ fun ElementType.stubElement(id: Long) = when(this) {
     ElementType.RELATION -> OsmRelation(id)
 }
 
-/**
- * Mutable store of OSM elements using hashmaps mapping
- * element type + id's to elements.
- **/
 open class OsmElements(
-    open val nodes: MutableMap<TypedId, OsmNode> = HashMap(), // TypedId for faster lookup when adding new elements
-    open val ways: MutableMap<TypedId, OsmWay> = HashMap(),
-    open val relations: MutableMap<TypedId, OsmRelation> = HashMap()
-) {
-    constructor(elements: OsmElements) : this(elements.nodes, elements.ways, elements.relations)
-}
-
+    open val nodes: Map<TypedId, OsmNode> = emptyMap(), // TypedId for faster lookup when adding new elements
+    open val ways: Map<TypedId, OsmWay> = emptyMap(),
+    open val relations: Map<TypedId, OsmRelation> = emptyMap()
+)
 
 /**
  * Mutable store of OSM elements using hashmaps mapping
  * element type + id's to elements.
  **/
 class MutableOsmElements(
-    override val nodes: MutableMap<TypedId, OsmNode> = HashMap(), // TypedId for faster lookup when adding new elements
-    override val ways: MutableMap<TypedId, OsmWay> = HashMap(),
-    override val relations: MutableMap<TypedId, OsmRelation> = HashMap()
+    override val nodes: MutableMap<TypedId, OsmNode> = ConcurrentHashMap(), // TypedId for faster lookup when adding new elements
+    override val ways: MutableMap<TypedId, OsmWay> = ConcurrentHashMap(),
+    override val relations: MutableMap<TypedId, OsmRelation> = ConcurrentHashMap()
 ) : OsmElements()

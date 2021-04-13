@@ -143,7 +143,7 @@
                 android:layout_marginBottom="16dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:onClick="@{() -> vm.gotoSettings()}"
+                android:onClick="@{() -> vm.showSettings()}"
                 android:src="@drawable/ic_baseline_settings_24"
                 android:contentDescription="@string/map_settings_btn_description"
                 app:layout_constraintBottom_toBottomOf="parent"

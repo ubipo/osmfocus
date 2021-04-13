@@ -3,23 +3,31 @@ package net.pfiers.osmfocus.view.fragments
 import android.graphics.Point
 import android.graphics.Rect
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.core.graphics.plus
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
-import net.pfiers.osmfocus.databinding.RvItemTagBinding
+import net.pfiers.osmfocus.databinding.RvItemTagTagboxBinding
 import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
+import net.pfiers.osmfocus.view.support.ExceptionHandler
+import net.pfiers.osmfocus.view.support.activityAs
 import net.pfiers.osmfocus.view.support.app
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
+import net.pfiers.osmfocus.viewmodel.support.ElementDetailsNavigator
+import net.pfiers.osmfocus.viewmodel.support.ShowElementDetailsEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import kotlin.properties.Delegates
 
@@ -46,6 +54,16 @@ class TagBoxFragment : Fragment() {
             tbLoc = it.getParcelable(ARG_TBLOC)!!
             color = it.getInt(ARG_COLOR)
         }
+
+        lifecycleScope.launch(activityAs<ExceptionHandler>().coroutineExceptionHandler) {
+            tagBoxVM.events.receiveAsFlow().collect { event ->
+                when (event) {
+                    is ShowElementDetailsEvent -> activityAs<ElementDetailsNavigator>().showElementDetails(
+                        event.element
+                    )
+                }
+            }
+        }
     }
 
     override fun onCreateView(
@@ -62,8 +80,9 @@ class TagBoxFragment : Fragment() {
                 .plus(Point(x, y))
             events.offer(TagBoxHitRectChange(hitRect))
         }
-        val adapter = ViewBindingListAdapter<Pair<String, String>, RvItemTagBinding>(
-            R.layout.rv_item_tag,
+
+        val adapter = ViewBindingListAdapter<Pair<String, String>, RvItemTagTagboxBinding>(
+            R.layout.rv_item_tag_tagbox,
             this
         ) { tag, binding ->
             val (key, value) = tag

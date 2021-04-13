@@ -53,6 +53,7 @@ import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocations.*
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
+import net.pfiers.osmfocus.viewmodel.MapVM.Companion.MIN_DOWNLOAD_ZOOM_LEVEL
 import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
 import org.osmdroid.config.Configuration
@@ -72,8 +73,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
-
-// TODO: Convert to MVVM
 @ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
 @ExperimentalTime
@@ -81,7 +80,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
     private lateinit var mapLocationOnScreen: android.graphics.Point
     private lateinit var binding: FragmentMapBinding
     private val mapVM: MapVM by activityViewModels {
-        createVMFactory { MapVM(app.db, app.settingsDataStore, activityAs()) }
+        createVMFactory { MapVM(app.settingsDataStore) }
     }
     private val attributionVM: AttributionVM by activityViewModels()
     private val exceptionHandler by lazy { activityAs<ExceptionHandler>() }
@@ -145,6 +144,33 @@ class MapFragment : Fragment(), MapEventsReceiver {
         tagBoxVms = lTagBoxVMs
         tagBoxFragments = lTagBoxFragment
         tagBoxHitRects = lTagBoxHitRects
+
+        lifecycleScope.launch {
+            mapVM.events.receiveAsFlow().collect { event ->
+                when(event) {
+                    is ExceptionEvent -> {
+                        when(event.exception) {
+                            is OsmApiConnectionException -> {
+                                Snackbar.make(
+                                    binding.map,
+                                    event.exception.message ?: "OSM API Connection Exception",
+                                    Snackbar.LENGTH_LONG
+                                ).show()
+                            }
+                            else -> {
+                                activityAs<ExceptionHandler>().handleException(event.exception)
+                            }
+                        }
+                    }
+                    is ShowSettingsEvent -> {
+                        activityAs<SettingsNavigator>().showSettings()
+                    }
+                    is MoveToCurrentLocationEvent -> {
+                        moveToCurrentLocation(launchRequestIfDenied = true)
+                    }
+                }
+            }
+        }
     }
 
     @Suppress("UnstableApiUsage")
@@ -274,10 +300,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
             }
         })
 
-        mapVM.moveToCurrentLocationCallback = {
-            moveToCurrentLocation(launchRequestIfDenied = true)
-        }
-
         val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
         val baseMapRepository = app.baseMapRepository
         app.settingsDataStore.data.asLiveData().observe(viewLifecycleOwner) { settings ->
@@ -377,57 +399,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
         val envelope = map.boundingBox.toEnvelope()
         val zoomLevel = map.zoomLevelDouble
         mapVM.mapState = MapVM.MapState(center, envelope, zoomLevel)
-        backgroundScope.launch(exceptionHandler.coroutineExceptionHandler) {
-            val downloadJob = async {
-                mapVM.downloadManager.download {
-                    getMapEnvelope()
-                }
-            }
-            downloadJob.await().onError { ex ->
-                when (ex) {
-                    is ZoomLevelRecededException,
-                    is MaxDownloadAreaExceededException,
-                    is MapApiDownloadManager.FresherDownloadCe
-                        -> { return@onError } // Ignore
-                    is OsmApiConnectionException -> {
-                        val message = ex.message
-                        if (message != null) {
-                            lifecycleScope.launch {
-                                Snackbar.make(binding.map, message, Snackbar.LENGTH_LONG).show()
-                            }
-                            return@onError
-                        }
-                    }
-                }
-                exceptionHandler.coroutineExceptionHandler.handleException(coroutineContext, ex)
-            }
-        }
-    }
-
-    private fun getMapEnvelope(): Result<Envelope, Exception> {
-        val zoomLevel = map.zoomLevelDouble
-        if (zoomLevel < MIN_DOWNLOAD_ZOOM_LEVEL) {
-            return Result.error(
-                ZoomLevelRecededException(
-                    "Zoom level receded below min ($zoomLevel < $MIN_DOWNLOAD_ZOOM_LEVEL)"
-                )
-            )
-        }
-
-        val envelope = Result.of<Envelope, Exception> {
-            if (map.projection == null) {
-                Log.v("AAA", "Map Projection is null")
-            }
-            map.boundingBox.toEnvelope()
-        }.getOrElse {
-            return Result.error(it)
-        }
-        envelope.expandBy(
-            envelope.width * ENVELOPE_BUFFER_FACTOR,
-            envelope.height * ENVELOPE_BUFFER_FACTOR
-        )
-
-        return Result.success(envelope)
     }
 
     override fun onResume() {
@@ -491,8 +462,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
     }
 
     companion object {
-        const val ENVELOPE_BUFFER_FACTOR = 1.2
-        const val MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
         const val MAX_ZOOM_LEVEL_BEYOND_BASE_MAP = 24.0
         const val MIN_MAX_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL + 2.5
         val PALETTE = PaletteId.PALETTE_VIBRANT

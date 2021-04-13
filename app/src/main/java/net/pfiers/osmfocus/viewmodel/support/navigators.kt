@@ -1,6 +1,7 @@
 package net.pfiers.osmfocus.viewmodel.support
 
 import android.net.Uri
+import net.pfiers.osmfocus.service.osm.OsmElement
 
 
 interface UriNavigator {
@@ -17,6 +18,16 @@ interface EmailNavigator {
 }
 
 interface SettingsNavigator {
+    fun showSettings()
     fun editBaseMaps()
     fun showAbout()
+}
+
+interface ElementDetailsNavigator {
+    fun showElementDetails(element: OsmElement)
+}
+
+/** Not even a Navigator, oh well... */
+interface ClipboardNavigator {
+    fun copy(label: String, text: String)
 }

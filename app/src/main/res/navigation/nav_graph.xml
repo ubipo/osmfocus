@@ -13,6 +13,9 @@
         <action
             android:id="@+id/action_mapFragment_to_settingsContainerFragment"
             app:destination="@id/settingsContainerFragment" />
+        <action
+            android:id="@+id/action_mapFragment_to_elementDetailContainerFragment"
+            app:destination="@id/elementDetailContainerFragment" />
     </fragment>
 
     <fragment
@@ -54,5 +57,10 @@
             android:id="@+id/action_aboutFragment_to_moreInfoFragment"
             app:destination="@id/moreInfoFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/elementDetailContainerFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.ElementDetailsContainerFragment"
+        android:label="Element details"
+        tools:layout="@layout/fragment_element_details_container" />
 
 </navigation>
