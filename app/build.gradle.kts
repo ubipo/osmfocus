@@ -42,12 +42,20 @@ android {
     }
 
     signingConfigs {
-        create("gplayRelease") {
-            val secretProperties = project.rootProject.extra["secretProperties"] as java.util.Properties
-            storeFile = file(secretProperties["signing_keystore_file"] as String)
-            storePassword = secretProperties["signing_keystore_password"] as String
-            keyAlias = secretProperties["signing_key_alias"] as String
-            keyPassword = secretProperties["signing_key_password"] as String
+        val secretProperties = project.rootProject.extra["secretProperties"] as java.util.Properties
+        val gplayStoreFile =
+            (secretProperties["signing_keystore_file"] as String?)?.let { file(it) }
+        val gplayStorePassword = secretProperties["signing_keystore_password"] as String?
+        val gplayKeyAlias = secretProperties["signing_key_alias"] as String?
+        val gplayKeyPassword = secretProperties["signing_key_password"] as String?
+
+        if (gplayStoreFile != null && gplayStorePassword != null && gplayKeyAlias != null && gplayKeyPassword != null) {
+            create("gplayRelease") {
+                storeFile = gplayStoreFile
+                storePassword = gplayStorePassword
+                keyAlias = gplayKeyAlias
+                keyPassword = gplayKeyPassword
+            }
         }
     }
 
@@ -56,7 +64,12 @@ android {
 //            isDebuggable = true
             isMinifyEnabled = true
 
-            setProguardFiles(listOf(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"))
+            setProguardFiles(
+                listOf(
+                    getDefaultProguardFile("proguard-android.txt"),
+                    "proguard-rules.pro"
+                )
+            )
         }
     }
 
@@ -73,7 +86,7 @@ android {
         create("gplay") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-gplay"
-            signingConfig = signingConfigs["gplayRelease"]
+            signingConfigs.asMap["gplayRelease"]?. let { signingConfig = it }
         }
     }
 }
