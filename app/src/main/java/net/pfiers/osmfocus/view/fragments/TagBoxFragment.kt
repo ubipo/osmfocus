@@ -90,6 +90,7 @@ class TagBoxFragment : Fragment() {
             binding.value = value
             binding.longLinesHandling = tagBoxVM.longLinesHandling
         }
+        binding.tags.itemAnimator = null
         binding.tags.adapter = adapter
         binding.tags.layoutManager = LinearLayoutManager(context)
         tagBoxVM.tags.observe(viewLifecycleOwner) { tags ->

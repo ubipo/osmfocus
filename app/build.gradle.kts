@@ -140,14 +140,11 @@ dependencies {
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
-    implementation("androidx.recyclerview:recyclerview:1.1.0")
+    implementation("androidx.recyclerview:recyclerview:1.2.0")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.google.android.material:material:1.3.0")
     implementation("androidx.annotation:annotation:1.2.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
-
-    // Uil
-    implementation("com.google.guava:guava:30.0-android")
 
     // Spatial
     val jtsVersion = "1.18.1"
@@ -192,7 +189,10 @@ dependencies {
     implementation("androidx.datastore:datastore:$datastoreVersion")
     implementation("androidx.datastore:datastore-rxjava3:$datastoreVersion")
 
+    // Datetime
+    implementation("org.ocpsoft.prettytime:prettytime:5.0.0.Final")
 
+    // Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
 //    testImplementation("junit:junit:4.13.1")
 //    androidTestImplementation("androidx.test.ext:junit:1.1.2")

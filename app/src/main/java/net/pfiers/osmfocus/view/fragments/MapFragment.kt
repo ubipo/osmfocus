@@ -422,7 +422,9 @@ class MapFragment : Fragment(), MapEventsReceiver {
             val overlaysEnabled = elementToDisplay !== null
 
             lifecycleScope.launch {
-                tagBoxVM.element.value = elementToDisplay?.element
+                val prevElem = tagBoxVM.element.value
+                if (prevElem != elementToDisplay?.element)
+                    tagBoxVM.element.value = elementToDisplay?.element
             }.join()
             lineOverlay.isEnabled = overlaysEnabled
             geometryOverlay.isEnabled = overlaysEnabled

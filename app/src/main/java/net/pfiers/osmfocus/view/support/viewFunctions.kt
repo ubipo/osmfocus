@@ -4,10 +4,14 @@ import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import androidx.annotation.ColorInt
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
+import org.ocpsoft.prettytime.PrettyTime
+import java.time.Instant
 
 @ExperimentalStdlibApi
-class viewFunctions {
+class ViewFunctions {
     companion object {
+        val prettyTime = PrettyTime()
+
         @JvmStatic
         fun gravityFromTbLoc(tbLoc: TbLoc): Int {
             val gravityRow = when (tbLoc.y) {
@@ -29,5 +33,8 @@ class viewFunctions {
                 setStroke(strokeWidth, strokeColor)
                 setColor(bgColor)
             }
+
+        @JvmStatic
+        fun prettyTime(instant: Instant): String = prettyTime.format(instant)
     }
 }

@@ -1,6 +1,7 @@
 package net.pfiers.osmfocus.service.osmapi
 
 import android.net.Uri
+import android.util.Log
 import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
@@ -8,8 +9,9 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.mapError
-import com.google.common.net.HttpHeaders
-import com.google.common.net.MediaType
+import net.pfiers.osmfocus.service.basemaps.HTTP_ACCEPT
+import net.pfiers.osmfocus.service.basemaps.HTTP_USER_AGENT
+import net.pfiers.osmfocus.service.basemaps.MIME_JSON_UTF8
 import org.locationtech.jts.geom.Envelope
 import java.net.UnknownHostException
 
@@ -24,7 +26,7 @@ data class OsmApiConfig(
     val userAgent: String
 )
 
-private val klaxon = Klaxon().converter(ElementTypeConverter())
+private val klaxon = Klaxon().converter(ElementTypeConverter()).converter(InstantConverter())
 
 /** Indicates any connection exception related to an osm API
  * request that doesn't warrant retrying (without user
@@ -45,8 +47,8 @@ private suspend fun OsmApiConfig.osmApiReq(
 
     return (url.build().toString()
         .httpGet()
-        .header(HttpHeaders.USER_AGENT, userAgent)
-        .header(HttpHeaders.ACCEPT, MediaType.JSON_UTF_8)
+        .header(HTTP_USER_AGENT, userAgent)
+        .header(HTTP_ACCEPT, MIME_JSON_UTF8)
         .awaitStringResponseResult().third as Result<String, Exception>)
         .map {
             klaxon.parse<OsmApiRes>(it) ?: throw Exception("Empty JSON response")
@@ -64,5 +66,5 @@ private suspend fun OsmApiConfig.osmApiReq(
 }
 
 suspend fun OsmApiConfig.osmApiMapReq(envelope: Envelope) = osmApiReq(OSM_API_EP_MAP) {
-        appendQueryParameter(OSM_API_PARAM_BBOX, envelope.toApiBboxStr())
-    }
+    appendQueryParameter(OSM_API_PARAM_BBOX, envelope.toApiBboxStr())
+}

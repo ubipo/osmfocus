@@ -1,27 +1,46 @@
 package net.pfiers.osmfocus.view.fragments
 
+import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.method.LinkMovementMethod
+import android.text.style.URLSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.kittinunf.fuel.core.awaitResponse
+import com.github.kittinunf.fuel.core.awaitResponseResult
+import com.github.kittinunf.fuel.core.isSuccessful
+import com.github.kittinunf.fuel.coroutines.awaitResponse
+import com.github.kittinunf.fuel.coroutines.awaitResponseResult
+import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
+import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.httpHead
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentElementDetailsBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTableBinding
 import net.pfiers.osmfocus.extensions.createVMFactory
-import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.extensions.toAndroidUri
+import net.pfiers.osmfocus.service.osm.*
+import net.pfiers.osmfocus.view.rvadapters.HeaderAdapter
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
 import net.pfiers.osmfocus.view.support.ExceptionHandler
 import net.pfiers.osmfocus.view.support.activityAs
 import net.pfiers.osmfocus.viewmodel.ElementDetailsVM
 import net.pfiers.osmfocus.viewmodel.support.*
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 class ElementDetailsFragment : Fragment() {
@@ -48,6 +67,8 @@ class ElementDetailsFragment : Fragment() {
         }
     }
 
+    val wikiPageHeadScope = CoroutineScope(Dispatchers.Default + Job())
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -57,15 +78,38 @@ class ElementDetailsFragment : Fragment() {
 
         binding.vm = elementDetailsVM
 
-        val adapter = ViewBindingListAdapter<Pair<String, String>, RvItemTagTableBinding>(
+        val headerAdapter = HeaderAdapter<RvItemTagTableBinding>(R.layout.rv_item_tag_table_header, this)
+        val adapter = ViewBindingListAdapter<Tag, RvItemTagTableBinding>(
             R.layout.rv_item_tag_table,
             this
         ) { tag, tagBinding ->
             val (key, value) = tag
-            tagBinding.key = key
-            tagBinding.value = value
+            val keyStr = SpannableString(key)
+            tagBinding.key = keyStr
+            tagBinding.keyText.movementMethod = LinkMovementMethod.getInstance()
+
+            val valueStr = SpannableString(value)
+            tagBinding.value = valueStr
+            tagBinding.valueText.movementMethod = LinkMovementMethod.getInstance()
+
+            wikiPageHeadScope.launch {
+                val keyWikiPageUrl = tag.toKeyWikiPage()
+                val keyHttpHead = keyWikiPageUrl.toExternalForm().httpHead()
+                val valueWikiPageUrl = tag.toTagWikiPage()
+                val tagHttpHead = valueWikiPageUrl.toExternalForm().httpHead()
+
+                if (keyHttpHead.awaitStringResponseResult().second.isSuccessful)
+                    keyStr.setSpan(URLSpan(keyWikiPageUrl.toExternalForm()), 0, keyStr.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                tagBinding.key = keyStr
+
+                if (tagHttpHead.awaitStringResponseResult().second.isSuccessful)
+                    valueStr.setSpan(URLSpan(tag.toTagWikiPage().toExternalForm()), 0, valueStr.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                tagBinding.value = valueStr
+            }
         }
-        binding.tags.adapter = adapter
+        binding.tags.adapter = ConcatAdapter(headerAdapter, adapter)
         val orientation = RecyclerView.VERTICAL
         binding.tags.layoutManager = LinearLayoutManager(context, orientation, false)
         adapter.submitList(element.tags?.toList())

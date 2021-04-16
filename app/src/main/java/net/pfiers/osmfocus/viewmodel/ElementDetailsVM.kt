@@ -6,6 +6,7 @@ import net.pfiers.osmfocus.extensions.toDecimalDegrees
 import net.pfiers.osmfocus.extensions.toGeoUri
 import net.pfiers.osmfocus.extensions.toOsmAndUrl
 import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.service.osm.UserVersionedMeta
 import net.pfiers.osmfocus.viewmodel.support.CopyEvent
 import net.pfiers.osmfocus.viewmodel.support.OpenUriEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
@@ -17,8 +18,11 @@ class ElementDetailsVM(val element: OsmElement) : ViewModel() {
             if (point.isEmpty) return@let null else point.coordinate
         }
     }
+    val userVersionedMeta by lazy {
+        if (element.meta is UserVersionedMeta) element.meta else null
+    }
 
-    fun showOnOpenstreetmap() = events.offer(OpenUriEvent(element.url.toAndroidUri()))
+    fun showOnOpenstreetmap() = events.offer(OpenUriEvent(element.toOsmUrl().toAndroidUri()))
     fun openInOsmAnd() = centroid?.let { coordinate ->
         events.offer(OpenUriEvent(coordinate.toOsmAndUrl().toAndroidUri()))
     }

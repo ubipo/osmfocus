@@ -6,12 +6,24 @@ import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.Point
 import java.io.Serializable
 import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-typealias Tags = Map<String, String>
-
+private const val WIKI_BASE_URL = "https://wiki.openstreetmap.org/wiki"
 private val GET_CENTER_GEOMETRY_FAC = GeometryFactory()
+
+private fun urlEncode(s: String) = URLEncoder.encode(s, StandardCharsets.UTF_8.toString())
+
+typealias Tag = Pair<String, String>
+val Tag.key get() = first
+val Tag.value get() = second
+fun Tag.toKeyWikiPage() = URL("$WIKI_BASE_URL/Key:${urlEncode(key)}")
+fun Tag.toTagWikiPage() = URL("$WIKI_BASE_URL/Tag:${urlEncode("$key=$value")}")
+
+typealias Tags = Map<String, String>
 
 open class IdMeta(
     val id: Long
@@ -32,13 +44,17 @@ open class IdMeta(
         id.hashCode()
 }
 
-class VersionedIdMeta(
+open class VersionedMeta(
     id: Long,
-    val version: Int
+    val version: Int,
+    val changeset: Long,
+    val lastEditTimestamp: Instant
 ) : IdMeta(id) {
+    fun toChangesetUrl() = URL("https://www.openstreetmap.org/changeset/$changeset")
+
     override fun equals(other: Any?): Boolean =
         this === other || (
-            other is VersionedIdMeta
+            other is VersionedMeta
             && id == other.id
             && version == other.version
         )
@@ -47,10 +63,36 @@ class VersionedIdMeta(
         Objects.hash(id, version)
 }
 
+class UserVersionedMeta(
+    id: Long,
+    version: Int,
+    changeset: Long,
+    lastEditTimestamp: Instant,
+    val uid: Int,
+    /**
+     * Warning: username is not a permanent user identifier!
+     * Elements with equal uids but different usernames are considered equal
+     */
+    val username: String
+) : VersionedMeta(id, version, changeset, lastEditTimestamp) {
+    fun toUserProfileUrl() = URL("https://www.openstreetmap.org/user/$username")
+
+    override fun equals(other: Any?): Boolean =
+        this === other || (
+            other is UserVersionedMeta
+            && id == other.id
+            && version == other.version
+            && uid == other.uid
+        )
+
+    override fun hashCode(): Int =
+        Objects.hash(id, version, uid)
+}
+
 data class TypedId(val type: ElementType, val id: Long) : Serializable
 
 abstract class OsmElement(
-    val idMeta: IdMeta,
+    val meta: IdMeta,
     val tags: Tags? = null
 ) : Serializable {
     /**
@@ -63,10 +105,10 @@ abstract class OsmElement(
     val centroid: Point? by lazy {
         this.toGeometry(GET_CENTER_GEOMETRY_FAC, skipStubMembers = true).centroid
     }
-
     val type by lazy { ElementType.fromCls(this::class) }
-    val typedId by lazy { TypedId(type, idMeta.id) }
-    val url by lazy { URL("https://osm.org/${type.lower}/${idMeta.id}") }
+    val typedId by lazy { TypedId(type, meta.id) }
+
+    fun toOsmUrl() = URL("https://osm.org/${type.lower}/${meta.id}")
 }
 
 class Coordinate(
@@ -87,11 +129,11 @@ class OsmNode(
     override fun equals(other: Any?): Boolean =
         this === other || (
             other is OsmNode
-            && idMeta == other.idMeta
+            && meta == other.meta
         )
 
     override fun hashCode(): Int =
-        idMeta.hashCode()
+        meta.hashCode()
 }
 
 class OsmWay(
@@ -107,11 +149,11 @@ class OsmWay(
     override fun equals(other: Any?): Boolean =
         this === other || (
             other is OsmWay
-            && idMeta == other.idMeta
+            && meta == other.meta
         )
 
     override fun hashCode(): Int =
-        idMeta.hashCode()
+        meta.hashCode()
 }
 
 class OsmRelationMember(
@@ -132,11 +174,11 @@ class OsmRelation(
     override fun equals(other: Any?): Boolean =
         this === other || (
             other is OsmRelation
-            && idMeta == other.idMeta
+            && meta == other.meta
         )
 
     override fun hashCode(): Int =
-        idMeta.hashCode()
+        meta.hashCode()
 }
 
 fun ElementType.stubElement(id: Long) = when(this) {

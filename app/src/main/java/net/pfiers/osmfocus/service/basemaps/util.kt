@@ -10,8 +10,6 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.mapError
-import com.google.common.net.HttpHeaders
-import com.google.common.net.MediaType
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
@@ -21,6 +19,10 @@ fun resolveAbcSubdomains(baseUrl: String) =
         Uri.parse(baseUrl.replace("{s}", letter.toString()))
     }
 
+const val HTTP_ACCEPT = "Accept"
+const val HTTP_USER_AGENT = "User-Agent"
+const val MIME_PNG = "image/png"
+const val MIME_JSON_UTF8 = "application/json; charset=utf-8"
 private const val PREVIEW_TILE_XYZ = "15/16807/10989.png" // SW of Leuven
 
 class TileFetchException(override val message: String) : Exception()
@@ -38,7 +40,7 @@ suspend fun BaseMap.fetchPreviewTile(): Result<Bitmap, Exception> {
 
     return url.toString()
         .httpGet()
-        .header(HttpHeaders.ACCEPT, MediaType.PNG)
+        .header(HTTP_ACCEPT, MIME_PNG)
         .awaitByteArrayResponseResult().third
         .map { data ->
             BitmapFactory.decodeByteArray(data, 0, data.size)
@@ -48,7 +50,7 @@ suspend fun BaseMap.fetchPreviewTile(): Result<Bitmap, Exception> {
             if (cause is FuelError) {
                 // TODO: Move error handling to view layer
                 return@mapError when (val fuelCause = cause.cause) {
-                    is HttpException ->  TileFetchException("${fuelCause.message} for ${it.response.url}")
+                    is HttpException -> TileFetchException("${fuelCause.message} for ${it.response.url}")
                     is UnknownHostException -> TileFetchException("${fuelCause.message}") // Unable to resolve host ...: No address associated
                     is SocketException, is ConnectException -> TileFetchException("Connection exception")
                     else -> Exception(cause)

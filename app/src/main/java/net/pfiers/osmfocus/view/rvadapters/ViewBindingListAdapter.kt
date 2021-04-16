@@ -14,8 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 class ViewBindingListAdapter<T, B: ViewDataBinding>(
     @LayoutRes private val itemLayout: Int,
     private val lifecycleOwner: LifecycleOwner,
-    private val bind: (item: T, binding: B) -> Unit
-) : ListAdapter<T, ViewBindingListAdapter.ViewHolder<T, B>>(ItemCallback()) {
+    itemCallback: DiffUtil.ItemCallback<T> = EqualsItemCallback(),
+    private val bind: (item: T, binding: B) -> Unit,
+) : ListAdapter<T, ViewBindingListAdapter.ViewHolder<T, B>>(itemCallback) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<T, B> {
         val binding = DataBindingUtil.inflate<B>(LayoutInflater.from(parent.context), itemLayout, parent, false)
         binding.lifecycleOwner = lifecycleOwner
@@ -26,10 +27,16 @@ class ViewBindingListAdapter<T, B: ViewDataBinding>(
         holder.bind(getItem(position))
     }
 
-    private class ItemCallback<T> : DiffUtil.ItemCallback<T>() {
-        override fun areItemsTheSame(a: T, b: T): Boolean = a === b
-        @SuppressLint("DiffUtilEquals")
-        override fun areContentsTheSame(a: T, b: T): Boolean = a == b
+    /**
+     * Not suitable for e.g. database entries. OK for dataclasses.
+     */
+    private class EqualsItemCallback<T> : DiffUtil.ItemCallback<T>() {
+        override fun areItemsTheSame(a: T, b: T): Boolean = a == b
+
+        /**
+         * Only called when areItemsTheSame() returns true => a == b => contents must be equal
+         */
+        override fun areContentsTheSame(a: T, b: T): Boolean = true
     }
 
     class ViewHolder<T, B : ViewDataBinding>(private val binding: B, val bind: (item: T, binding: B) -> Unit) :

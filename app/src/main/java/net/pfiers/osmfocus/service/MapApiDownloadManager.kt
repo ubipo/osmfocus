@@ -2,25 +2,21 @@
 
 package net.pfiers.osmfocus.service
 
-import android.util.Log
 import androidx.annotation.Keep
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.onError
-import com.google.common.base.Stopwatch
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.pfiers.osmfocus.areaGeo
-import net.pfiers.osmfocus.extensions.elapsed
-import net.pfiers.osmfocus.extensions.restart
-import net.pfiers.osmfocus.jts.toGeometry
 import net.pfiers.osmfocus.extensions.toPolygon
+import net.pfiers.osmfocus.jts.toGeometry
 import net.pfiers.osmfocus.observableProperty
 import net.pfiers.osmfocus.resultOfSuspend
-import net.pfiers.osmfocus.service.osm.OsmElement
 import net.pfiers.osmfocus.service.osm.MutableOsmElements
+import net.pfiers.osmfocus.service.osm.OsmElement
 import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.*
 import net.pfiers.osmfocus.viewmodel.support.Event
@@ -87,7 +83,8 @@ class MapApiDownloadManager(
         if (!downloadLock.tryLock()) {
             // Download in progress (or waiting for timeout): schedule a new one
             scheduledJobLock.withLock {
-                val newScheduledDownloadJob: CompletableDeferred<Result<Unit, Exception>> = CompletableDeferred()
+                val newScheduledDownloadJob: CompletableDeferred<Result<Unit, Exception>> =
+                    CompletableDeferred()
                 scheduledDownloadJob?.cancel(FresherDownloadCe())
                 scheduledDownloadJob = newScheduledDownloadJob
                 newScheduledDownloadJob
@@ -136,17 +133,19 @@ class MapApiDownloadManager(
     }
 
     private val processingScope = CoroutineScope(Dispatchers.Default)
-    private val lastReqStopwatch: Stopwatch = Stopwatch.createUnstarted()
+    private var lastReqTime: Long? = null
 
     private suspend fun protectedDownload(
         envelopeProvider: () -> Result<Envelope, Exception>
     ): Result<Pair<Envelope, OsmApiRes>?, Exception> {
         // 1. Check for timeout (to not overload the API)
-        val elapsed = lastReqStopwatch.elapsed
-        if (lastReqStopwatch.isRunning && elapsed < minDurBetweenDownloads) {
-            _state = State.TIMEOUT
-            val timeUntilNext = minDurBetweenDownloads - elapsed
-            delay(timeUntilNext)
+        lastReqTime?.let { lastReqTime ->
+            val elapsed = (System.currentTimeMillis() - lastReqTime).toDuration(TimeUnit.MILLISECONDS)
+            if (elapsed < minDurBetweenDownloads) {
+                _state = State.TIMEOUT
+                val timeUntilNext = minDurBetweenDownloads - elapsed
+                delay(timeUntilNext)
+            }
         }
 
         // 2. Get latest envelope (as late as possible, after the timeout)
@@ -165,7 +164,7 @@ class MapApiDownloadManager(
         // 3. Fire download
         _state = State.REQUEST
         val reqResult = apiConfig.osmApiMapReq(envelope)
-        lastReqStopwatch.restart()
+        lastReqTime = System.currentTimeMillis()
         return reqResult.map { apiRes -> Pair(envelope, apiRes) }
     }
 
@@ -183,5 +182,5 @@ class MapApiDownloadManager(
     class DownloadEndedEvent(val result: Result<Unit, Exception>) : Event()
     class NewElementsEvent(val newElements: NewApiElements) : Event()
 
-    class FresherDownloadCe: CancellationException()
+    class FresherDownloadCe : CancellationException()
 }

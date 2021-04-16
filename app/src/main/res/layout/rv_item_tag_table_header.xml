@@ -3,18 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <data>
-
-        <variable
-            name="key"
-            type="android.text.SpannableString" />
-
-        <variable
-            name="value"
-            type="android.text.SpannableString" />
-
-    </data>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -23,29 +11,21 @@
             android:id="@+id/keyText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="@{key}"
-            android:textIsSelectable="true"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@string/tag_table_header_key"
+            android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/valueText"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="keyname" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/valueText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="@{value}"
-            android:textIsSelectable="true"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@string/tag_table_header_value"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/keyText"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="longvalue" />
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

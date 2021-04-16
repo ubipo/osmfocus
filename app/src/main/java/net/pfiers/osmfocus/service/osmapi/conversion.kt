@@ -1,6 +1,5 @@
 package net.pfiers.osmfocus.service.osmapi
 
-import android.util.Log
 import net.pfiers.osmfocus.service.osm.*
 import org.locationtech.jts.geom.Coordinate
 
@@ -17,7 +16,7 @@ fun OsmApiNode.toOsmNodeAndAdd(elements: MutableOsmElements): OsmNode? {
     return if (existingNode?.isStub == false) {
         null // No need to update
     } else {
-        val newNode = OsmNode(VersionedIdMeta(id, version), tagsOrEmpty, Coordinate(lon, lat))
+        val newNode = OsmNode(UserVersionedMeta(id, version, changeset, timestamp, uid, user), tagsOrEmpty, Coordinate(lon, lat))
         elements.nodes[typedId] = newNode
         newNode
     }
@@ -38,7 +37,7 @@ fun OsmApiWay.toOsmWayAndAdd(elements: MutableOsmElements): Pair<OsmWay, HashMap
         null // No need to update
     } else {
         Pair(
-            OsmWay(VersionedIdMeta(id, version), tagsOrEmpty, nodes.map { nodeId ->
+            OsmWay(UserVersionedMeta(id, version, changeset, timestamp, uid, user), tagsOrEmpty, nodes.map { nodeId ->
                 val typedId = TypedId(ElementType.NODE, nodeId)
                 elements.nodes[typedId] // Already fetched node
                     ?: stubNodes.getOrPut(typedId) {
@@ -65,7 +64,7 @@ fun OsmApiRelation.toOsmRelationAndAdd(elements: MutableOsmElements): Pair<OsmRe
         null // No need to update
     } else {
         Pair(
-            OsmRelation(VersionedIdMeta(id, version), tagsOrEmpty, members.map { resMember ->
+            OsmRelation(UserVersionedMeta(id, version, changeset, timestamp, uid, user), tagsOrEmpty, members.map { resMember ->
                 val typedId = TypedId(resMember.type, resMember.ref)
                 val memberElem = when (resMember.type) {
                     ElementType.NODE -> elements.nodes[typedId] // Already fetched node

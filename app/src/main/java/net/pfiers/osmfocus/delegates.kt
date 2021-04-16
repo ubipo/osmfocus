@@ -1,8 +1,5 @@
-@file:Suppress("UnstableApiUsage")
-
 package net.pfiers.osmfocus
 
-import com.google.common.eventbus.EventBus
 import kotlinx.coroutines.channels.Channel
 import net.pfiers.osmfocus.viewmodel.support.Event
 import kotlin.properties.ReadWriteProperty

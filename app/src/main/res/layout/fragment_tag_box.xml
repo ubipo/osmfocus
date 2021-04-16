@@ -6,7 +6,7 @@
     <data>
 
         <import type="android.graphics.Color" />
-        <import type="net.pfiers.osmfocus.view.support.viewFunctions" alias="vf" />
+        <import type="net.pfiers.osmfocus.view.support.ViewFunctions" alias="vf" />
 
         <variable
             name="vm"
