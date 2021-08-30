@@ -43,7 +43,7 @@
                 <!-- TODO: Extract this into fragment or something -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
+                    android:layout_height="wrap_content"
                     android:onClick="@{() -> vm.showAppInfo()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
@@ -63,26 +63,28 @@
                         app:srcCompat="@drawable/ic_baseline_info_24" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginBottom="8dp"
                         android:orientation="vertical"
+                        android:layout_marginEnd="16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/moreInfoIcon"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:id="@+id/moreInfo"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/more_info"
                             android:textAppearance="?attr/textAppearanceListItem" />
 
                         <TextView
                             android:id="@+id/moreInfoSecond"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/more_info_second_line"
                             android:textAppearance="?attr/textAppearanceListItemSecondary" />
@@ -93,7 +95,7 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
+                    android:layout_height="wrap_content"
                     android:onClick="@{() -> vm.showIssueTracker()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
@@ -113,26 +115,28 @@
                         app:srcCompat="@drawable/ic_baseline_bug_report_24" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginBottom="8dp"
                         android:orientation="vertical"
+                        android:layout_marginEnd="16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/issueIcon"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:id="@+id/issue"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/issues"
                             android:textAppearance="?attr/textAppearanceListItem" />
 
                         <TextView
                             android:id="@+id/issueSecond"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/issues_second_line"
                             android:textAppearance="?attr/textAppearanceListItemSecondary" />
@@ -143,7 +147,7 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
+                    android:layout_height="wrap_content"
                     android:onClick="@{() -> vm.showSourceCode()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
@@ -163,26 +167,28 @@
                         app:srcCompat="@drawable/ic_git_icon" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginBottom="8dp"
                         android:orientation="vertical"
+                        android:layout_marginEnd="16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/sourceCodeIcon"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:id="@+id/sourceCode"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/source_code"
                             android:textAppearance="?attr/textAppearanceListItem" />
 
                         <TextView
                             android:id="@+id/sourceCodeSecond"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/source_code_second_line"
                             android:textAppearance="?attr/textAppearanceListItemSecondary" />
@@ -193,7 +199,7 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
+                    android:layout_height="wrap_content"
                     android:onClick="@{() -> vm.showDonationOptions()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
@@ -213,8 +219,10 @@
                         app:srcCompat="@drawable/ic_bmc_simplified" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
                         android:layout_marginBottom="8dp"
@@ -225,14 +233,14 @@
 
                         <TextView
                             android:id="@+id/coffee"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/coffee"
                             android:textAppearance="?attr/textAppearanceListItem" />
 
                         <TextView
                             android:id="@+id/coffeeSecond"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/coffee_second_line"
                             android:textAppearance="?attr/textAppearanceListItemSecondary" />
