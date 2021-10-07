@@ -33,7 +33,7 @@ class ViewFunctions {
         }
 
         @JvmStatic
-        fun bgFromParams(strokeWidthDp: Float, @ColorInt strokeColor: Int, @ColorInt bgColor: Int) =
+        fun createStrokeFrameBg(strokeWidthDp: Float, @ColorInt strokeColor: Int, @ColorInt bgColor: Int) =
             GradientDrawable().apply {
                 setStroke(dpToPx(strokeWidthDp), strokeColor)
                 setColor(bgColor)
