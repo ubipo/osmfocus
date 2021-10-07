@@ -1,6 +1,8 @@
 package net.pfiers.osmfocus.view.support
 
+import android.content.res.Resources
 import android.graphics.drawable.GradientDrawable
+import android.util.TypedValue
 import android.view.Gravity
 import androidx.annotation.ColorInt
 import net.pfiers.osmfocus.service.extensions.toDecimalDegrees
@@ -8,6 +10,7 @@ import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import org.locationtech.jts.geom.Coordinate
 import org.ocpsoft.prettytime.PrettyTime
 import java.time.Instant
+import kotlin.math.roundToInt
 
 @ExperimentalStdlibApi
 class ViewFunctions {
@@ -30,11 +33,21 @@ class ViewFunctions {
         }
 
         @JvmStatic
-        fun bgFromParams(strokeWidth: Int, @ColorInt strokeColor: Int, @ColorInt bgColor: Int) =
+        fun bgFromParams(strokeWidthDp: Float, @ColorInt strokeColor: Int, @ColorInt bgColor: Int) =
             GradientDrawable().apply {
-                setStroke(strokeWidth, strokeColor)
+                setStroke(dpToPx(strokeWidthDp), strokeColor)
                 setColor(bgColor)
             }
+
+        private val pxToDpCache = HashMap<Float, Int>()
+        @JvmStatic
+        fun dpToPx(dp: Float): Int = pxToDpCache.getOrPut(dp) {
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                Resources.getSystem().displayMetrics
+            ).toInt()
+        }
 
         @JvmStatic
         fun prettyTime(instant: Instant): String = prettyTime.format(instant)
