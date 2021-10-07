@@ -29,6 +29,11 @@
 -keepattributes RuntimeVisibleAnnotations
 -keep class kotlin.Metadata { *; }
 
+# for prettytime (see https://github.com/ubipo/osmfocus/issues/17#issuecomment-831836548)
+-keep class com.ocpsoft.pretty.time.i18n.**
+-keep class org.ocpsoft.prettytime.i18n.**
+-keepnames class ** implements org.ocpsoft.prettytime.TimeUnit
+
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
