@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#F45B69</color>
-    <color name="colorPrimaryLight">#FFEBEE</color>
-    <color name="colorPrimaryDark">#F02D3D</color>
+    <color name="colorPrimary">#FFC107</color>
+    <color name="colorPrimaryLight">#FFE082</color>
+    <color name="colorPrimaryDark">#F57F17</color>
     <color name="colorAccent">#028090</color>
     <color name="colorSecondary">#29335C</color>
+    <color name="colorOnSecondary">#fff</color>
     <color name="listSelectionBackground">#BBDEFB</color>
     <color name="tagBox">#FFFFFF</color>
+    <color name="overlayBackground">#77000000</color>
+    <color name="greyIcon">#757575</color>
 </resources>

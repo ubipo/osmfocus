@@ -1,35 +1,31 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
-import net.pfiers.osmfocus.extensions.toAndroidUri
-import net.pfiers.osmfocus.extensions.toDecimalDegrees
-import net.pfiers.osmfocus.extensions.toGeoUri
-import net.pfiers.osmfocus.extensions.toOsmAndUrl
-import net.pfiers.osmfocus.service.osm.OsmElement
-import net.pfiers.osmfocus.service.osm.UserVersionedMeta
+import net.pfiers.osmfocus.service.extensions.*
+import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.service.osm.*
+import net.pfiers.osmfocus.service.toAndroidUri
 import net.pfiers.osmfocus.viewmodel.support.CopyEvent
 import net.pfiers.osmfocus.viewmodel.support.OpenUriEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 
-class ElementDetailsVM(val element: OsmElement) : ViewModel() {
+class ElementDetailsVM(
+    elementCentroidAndId: AnyElementCentroidAndId,
+) : ViewModel() {
     val events = createEventChannel()
-    val centroid by lazy {
-        element.centroid?.let { point ->
-            if (point.isEmpty) return@let null else point.coordinate
-        }
-    }
-    val userVersionedMeta by lazy {
-        if (element.meta is UserVersionedMeta) element.meta else null
-    }
 
-    fun showOnOpenstreetmap() = events.offer(OpenUriEvent(element.toOsmUrl().toAndroidUri()))
-    fun openInOsmAnd() = centroid?.let { coordinate ->
-        events.offer(OpenUriEvent(coordinate.toOsmAndUrl().toAndroidUri()))
+    val element = elementCentroidAndId.element
+    val typedId = elementCentroidAndId.typedId
+    private val centroid = elementCentroidAndId.centroid
+
+    fun showOnOpenstreetmap() = events.trySend(OpenUriEvent(typedId.url.toAndroidUri())).discard()
+    fun openInOsmAnd() = centroid.let { coordinate ->
+        events.trySend(OpenUriEvent(coordinate.toOsmAndUrl().toAndroidUri())).discard()
     }
-    fun openGeoLink() = centroid?.let { coordinate ->
-        events.offer(OpenUriEvent(coordinate.toGeoUri().toAndroidUri()))
+    fun openGeoLink() = centroid.let { coordinate ->
+        events.trySend(OpenUriEvent(coordinate.toGeoUri().toAndroidUri())).discard()
     }
-    fun copyCoordinates() = centroid?.let { coordinate ->
-        events.offer(CopyEvent("Coordinates", coordinate.toDecimalDegrees()))
+    fun copyCoordinates() = centroid.let { coordinate ->
+        events.trySend(CopyEvent("Coordinates", coordinate.toDecimalDegrees())).discard()
     }
 }

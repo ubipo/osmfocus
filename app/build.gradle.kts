@@ -1,24 +1,22 @@
 import com.google.protobuf.gradle.*
 import org.gradle.kotlin.dsl.protobuf
 
-
 plugins {
     id("com.android.application")
     kotlin("android")
-    kotlin("kapt")
-    kotlin("android.extensions")
+    id("kotlin-kapt")
     id("com.google.protobuf")
     id("kotlin-android")
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdk = 30
     buildToolsVersion = "30.0.3"
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
-        minSdkVersion(21)
-        targetSdkVersion(30)
+        minSdk = 21
+        targetSdk = 30
         versionCode = 111
         versionName = "1.1.1"
 
@@ -75,7 +73,7 @@ android {
 
     // Handles distribution channel differences (e.g. Google Play billing vs external payment flow for donations)
     val distributionChannelDimension = "distributionChannel"
-    flavorDimensions(distributionChannelDimension)
+    flavorDimensionList.add(distributionChannelDimension)
 
     productFlavors {
         create("fdroid") {
@@ -88,6 +86,22 @@ android {
             versionNameSuffix = "-gplay"
             signingConfigs.asMap["gplayRelease"]?. let { signingConfig = it }
         }
+    }
+
+    packagingOptions {
+        resources.excludes.addAll(listOf(
+            "META-INF/DEPENDENCIES",
+            "META-INF/LICENSE",
+            "META-INF/LICENSE.txt",
+            "META-INF/license.txt",
+            "META-INF/NOTICE",
+            "META-INF/NOTICE.txt",
+            "META-INF/notice.txt",
+            "META-INF/ASL2.0",
+            "META-INF/*.kotlin_module",
+            "org/apache/http/version.properties",
+            "org/apache/http/client/version.properties"
+        ))
     }
 }
 
@@ -122,27 +136,30 @@ protobuf {
 configurations {
     all {
         exclude(group = "junit", module = "junit")
+        exclude(group = "commons-logging", module = "commons-logging")
+        exclude(group = "org.apache.httpcomponents")
     }
 }
 
 dependencies {
     val implementation by configurations
 
+    val kotlinVersion = rootProject.extra["kotlin"] as String?
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.4.32")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("com.android.support:multidex:1.0.3")
-    implementation("androidx.core:core-ktx:1.3.2")
-    implementation("androidx.appcompat:appcompat:1.2.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.0.4")
+    implementation("androidx.core:core-ktx:1.6.0")
+    implementation("androidx.appcompat:appcompat:1.3.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.1")
     implementation("androidx.preference:preference-ktx:1.1.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
-    implementation("androidx.recyclerview:recyclerview:1.2.0")
+    implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
-    implementation("com.google.android.material:material:1.3.0")
+    implementation("com.google.android.material:material:1.4.0")
     implementation("androidx.annotation:annotation:1.2.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
@@ -157,12 +174,12 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.10")
 
     // HTTP
-    val fuelVersion = "2.3.0"
+    val fuelVersion = "2.3.1"
     implementation("com.github.kittinunf.fuel:fuel:$fuelVersion")
     implementation("com.github.kittinunf.fuel:fuel-coroutines:$fuelVersion")
 
     // Result
-    implementation("com.github.kittinunf.result:result-coroutines:3.1.0")
+    implementation("com.github.kittinunf.result:result-coroutines:4.0.0")
 
     // JSON
     implementation("com.beust:klaxon:5.4")
@@ -173,10 +190,12 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
     implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.fragment:fragment-ktx:1.3.2")
+    implementation("androidx.fragment:fragment-ktx:1.3.6")
 
     // Room DB
-    val roomVersion = "2.2.6"
+    val roomVersion = "2.3.0"
+    implementation("androidx.room:room-runtime:$roomVersion")
+
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
 //    androidTestImplementation("androidx.room:room-testing:$roomVersion")
@@ -191,6 +210,12 @@ dependencies {
 
     // Datetime
     implementation("org.ocpsoft.prettytime:prettytime:5.0.0.Final")
+
+    // Logging
+    implementation("com.jakewharton.timber:timber:4.7.1")
+
+    // Auth
+    implementation("com.google.oauth-client:google-oauth-client:1.32.1")
 
     // Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

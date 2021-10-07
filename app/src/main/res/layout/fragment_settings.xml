@@ -16,8 +16,6 @@
     </data>
 
     <ScrollView
-        android:layout_marginTop="@dimen/fragment_vertical_margin"
-        android:layout_marginBottom="@dimen/fragment_vertical_margin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -40,13 +38,12 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"
-                    android:background="#E8E8E8"
-                    android:tint="@color/colorPrimary"
+                    android:background="@color/colorSecondary"
                     app:contentPadding="5dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearanceOverlay="@style/CornerSize"
+                    app:shapeAppearanceOverlay="@style/SettingsListItemIconOverlay"
                     app:srcCompat="@drawable/ic_map_24" />
 
                 <LinearLayout
@@ -99,18 +96,10 @@
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/tagBoxLongLinesIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="#E8E8E8"
-                    android:tint="@color/colorPrimary"
-                    app:contentPadding="5dp"
+                    style="@style/SettingsListItemIcon"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearanceOverlay="@style/CornerSize"
                     app:srcCompat="@drawable/ic_wrap_text" />
 
                 <LinearLayout
@@ -149,18 +138,10 @@
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/showRelationsIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="#E8E8E8"
-                    android:tint="@color/colorPrimary"
-                    app:contentPadding="5dp"
+                    style="@style/SettingsListItemIcon"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearanceOverlay="@style/CornerSize"
                     app:srcCompat="@drawable/ic_relation" />
 
                 <LinearLayout
@@ -210,18 +191,10 @@
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/zoomBeyondBaseMapMaxIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="#E8E8E8"
-                    android:tint="@color/colorPrimary"
-                    app:contentPadding="5dp"
+                    style="@style/SettingsListItemIcon"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearanceOverlay="@style/CornerSize"
                     app:srcCompat="@drawable/ic_baseline_zoom_in_24" />
 
                 <LinearLayout
@@ -274,18 +247,10 @@
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/aboutIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="#E8E8E8"
-                    android:tint="@color/colorPrimary"
-                    app:contentPadding="5dp"
+                    style="@style/SettingsListItemIcon"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearanceOverlay="@style/CornerSize"
                     app:srcCompat="@drawable/ic_baseline_info_24" />
 
                 <LinearLayout

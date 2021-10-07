@@ -9,19 +9,21 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.ui.NavigationUI
 import net.pfiers.osmfocus.databinding.FragmentElementDetailsContainerBinding
-import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.viewmodel.NavVM
+import org.locationtech.jts.geom.Coordinate
 
 class ElementDetailsContainerFragment : Fragment() {
     private lateinit var binding: FragmentElementDetailsContainerBinding
-    lateinit var element: OsmElement
-    lateinit var elementDetailFragment: ElementDetailsFragment
+    lateinit var elementCentroidAndId: AnyElementCentroidAndId
+    private lateinit var elementDetailFragment: ElementDetailsFragment
     private val navVM: NavVM by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            element = it.getSerializable(ARG_ELEMENT) as OsmElement
+            elementCentroidAndId =
+                it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
         }
     }
 
@@ -32,7 +34,7 @@ class ElementDetailsContainerFragment : Fragment() {
         binding = FragmentElementDetailsContainerBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = this
 
-        elementDetailFragment = ElementDetailsFragment.newInstance(element)
+        elementDetailFragment = ElementDetailsFragment.newInstance(elementCentroidAndId)
         childFragmentManager.beginTransaction()
             .add(
                 binding.elementDetailFragment.id,
@@ -60,13 +62,13 @@ class ElementDetailsContainerFragment : Fragment() {
     }
 
     companion object {
-        const val ARG_ELEMENT = "element"
+        const val ARG_ELEMENT_CENTROID_AND_ID = "elementInfo"
 
         @JvmStatic
-        fun newInstance(element: OsmElement) =
+        fun newInstance(elementAndId: AnyElementCentroidAndId) =
             ElementDetailsContainerFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(ARG_ELEMENT, element)
+                    putSerializable(ARG_ELEMENT_CENTROID_AND_ID, elementAndId)
                 }
             }
     }

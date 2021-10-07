@@ -21,7 +21,7 @@ fun <T> observableProperty(
         override fun getValue(thisRef: Any?, property: KProperty<*>): T = curValue
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
             val prop = notificationProperty ?: property
-            events.offer(PropertyChangedEvent(prop, curValue, value))
+            events.trySend(PropertyChangedEvent(prop, curValue, value))
             curValue = value
         }
     }

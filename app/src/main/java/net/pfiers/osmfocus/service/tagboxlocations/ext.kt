@@ -2,8 +2,8 @@ package net.pfiers.osmfocus.service.tagboxlocations
 
 import android.graphics.Point
 import android.graphics.Rect
-import net.pfiers.osmfocus.extensions.centerX
-import net.pfiers.osmfocus.extensions.centerY
+import net.pfiers.osmfocus.service.extensions.centerX
+import net.pfiers.osmfocus.service.extensions.centerY
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
 

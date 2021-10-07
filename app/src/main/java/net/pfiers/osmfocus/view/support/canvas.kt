@@ -2,7 +2,7 @@ package net.pfiers.osmfocus
 
 import android.graphics.Path
 import android.graphics.Point
-import net.pfiers.osmfocus.extensions.kotlin.subList
+import net.pfiers.osmfocus.service.subList
 
 
 fun List<Point>.toPath(): Path {

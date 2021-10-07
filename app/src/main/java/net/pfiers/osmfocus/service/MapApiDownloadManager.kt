@@ -10,13 +10,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.pfiers.osmfocus.areaGeo
-import net.pfiers.osmfocus.extensions.toPolygon
-import net.pfiers.osmfocus.jts.toGeometry
+import net.pfiers.osmfocus.service.extensions.toPolygon
 import net.pfiers.osmfocus.observableProperty
-import net.pfiers.osmfocus.resultOfSuspend
-import net.pfiers.osmfocus.service.osm.MutableOsmElements
-import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.service.osm.Elements
 import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.*
 import net.pfiers.osmfocus.viewmodel.support.Event
@@ -24,8 +20,10 @@ import net.sf.geographiclib.Geodesic
 import org.locationtech.jts.geom.Envelope
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 import kotlin.time.toDuration
 
 @ExperimentalTime
@@ -54,17 +52,21 @@ class MapApiDownloadManager(
     private var _isProcessing: Boolean by observableProperty(false, events, this::isProcessing)
     val isProcessing get() = _isProcessing
 
-    val elements = MutableOsmElements()
+    var elements = Elements()
     private val elementGeometries = HashMap<TypedId, Geometry>()
 
     private var downloadedArea: Geometry = geometryFactory.createGeometryCollection()
     private val minDurBetweenDownloads = (1.0 / maxQps).toDuration(TimeUnit.SECONDS)
 
-    fun getElementGeometry(element: OsmElement): Geometry =
-        elementGeometries.getOrPut(element.typedId) {
-            element.toGeometry(geometryFactory, skipStubMembers = true)
+    fun getGeometry(typedId: TypedId): Geometry? {
+        return elementGeometries[typedId]?: run {
+            val geometry = elements.toGeometry(typedId, geometryFactory)
+            if (geometry != null) {
+                elementGeometries[typedId] = geometry
+            }
+            geometry
         }
-
+    }
     private val scheduledDownloadScope = CoroutineScope(Job() + Dispatchers.Default)
     private val downloadLock = Mutex()
     private val scheduledJobLock = Mutex()
@@ -79,6 +81,7 @@ class MapApiDownloadManager(
      * @throws FresherDownloadCe if a fresher download was started
      */
     suspend fun download(envelopeProvider: () -> Result<Envelope, Exception>): Result<Unit, Exception> {
+        val wholeThingStart = TimeSource.Monotonic.markNow()
         // 1. Check for existing download
         if (!downloadLock.tryLock()) {
             // Download in progress (or waiting for timeout): schedule a new one
@@ -106,6 +109,7 @@ class MapApiDownloadManager(
             processingScope.launch {
                 processDownload(apiRes)
                 _isProcessing = false
+                Timber.d("Whole thing took: ${wholeThingStart.elapsedNow().inWholeMilliseconds}")
             }
 
             // 4. Update seen area
@@ -118,7 +122,7 @@ class MapApiDownloadManager(
             This way there's no intermediate state of
             "isDownloading = false" in-between the downloads. */
             if (lScheduledDownloadJob == null) {
-                events.offer(DownloadEndedEvent(result))
+                events.trySend(DownloadEndedEvent(result))
                 _state = State.IDLE
             } else {
                 scheduledDownloadJob = null
@@ -137,7 +141,7 @@ class MapApiDownloadManager(
 
     private suspend fun protectedDownload(
         envelopeProvider: () -> Result<Envelope, Exception>
-    ): Result<Pair<Envelope, OsmApiRes>?, Exception> {
+    ): Result<Pair<Envelope, String>?, Exception> {
         // 1. Check for timeout (to not overload the API)
         lastReqTime?.let { lastReqTime ->
             val elapsed = (System.currentTimeMillis() - lastReqTime).toDuration(TimeUnit.MILLISECONDS)
@@ -163,14 +167,15 @@ class MapApiDownloadManager(
 
         // 3. Fire download
         _state = State.REQUEST
-        val reqResult = apiConfig.osmApiMapReq(envelope)
+        val reqResult = apiConfig.map(envelope)
         lastReqTime = System.currentTimeMillis()
         return reqResult.map { apiRes -> Pair(envelope, apiRes) }
     }
 
-    private fun processDownload(apiRes: OsmApiRes) {
-        val newElements = apiRes.elements.splitTypes().toOsmElementsAndAdd(elements, true)!!
-        events.offer(NewElementsEvent(newElements))
+    private fun processDownload(apiRes: String) {
+        val (mergedElements, newElements) = jsonToElements(apiRes, elements)
+        elements = mergedElements
+        events.trySend(NewElementsEvent(newElements))
     }
 
     private fun downloadEnvelopeToUnseenEnvelope(downloadEnvelope: Envelope): Envelope {
@@ -180,7 +185,7 @@ class MapApiDownloadManager(
     }
 
     class DownloadEndedEvent(val result: Result<Unit, Exception>) : Event()
-    class NewElementsEvent(val newElements: NewApiElements) : Event()
+    class NewElementsEvent(val newElements: Elements) : Event()
 
     class FresherDownloadCe : CancellationException()
 }

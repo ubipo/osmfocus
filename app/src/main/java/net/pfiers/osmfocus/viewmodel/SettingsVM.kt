@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.Settings
+import net.pfiers.osmfocus.service.discard
 import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
 import net.pfiers.osmfocus.viewmodel.support.EditBaseMapsEvent
 import net.pfiers.osmfocus.viewmodel.support.EditTagboxLongLinesEvent
@@ -26,9 +27,9 @@ class SettingsVM(
     val relationsShown = settingsLd { settings -> settings.showRelations }
     val zoomBeyondBaseMapMax = settingsLd { settings -> settings.zoomBeyondBaseMapMax }
 
-    fun editBaseMaps() = events.offer(EditBaseMapsEvent())
-    fun editTagboxLongLines() = events.offer(EditTagboxLongLinesEvent())
-    fun showAbout() = events.offer(ShowAboutEvent())
+    fun editBaseMaps() = events.trySend(EditBaseMapsEvent()).discard()
+    fun editTagboxLongLines() = events.trySend(EditTagboxLongLinesEvent()).discard()
+    fun showAbout() = events.trySend(ShowAboutEvent()).discard()
 
     fun toggleShowRelations() {
         viewModelScope.launch {

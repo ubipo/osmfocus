@@ -105,7 +105,7 @@
                 android:layout_gravity="start"
                 android:layout_marginEnd="16dp"
                 android:text="@string/add_base_map_cancel"
-                android:onClick="@{() -> vm.cancel()}"
+                android:onClick="@{() -> vm.done()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/addBtn" />

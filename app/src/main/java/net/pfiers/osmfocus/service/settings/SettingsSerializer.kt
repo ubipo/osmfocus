@@ -36,7 +36,7 @@ class SettingsSerializer : Serializer<Settings> {
                 settingsBuilder.build()
             }
         } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Cannot read proto.", exception)
+            throw CorruptionException("Cannot read Settings proto", exception)
         }
     }
 

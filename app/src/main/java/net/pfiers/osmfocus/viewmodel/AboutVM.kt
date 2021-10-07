@@ -1,19 +1,22 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
-import net.pfiers.osmfocus.extensions.createVMFactory
+import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.viewmodel.support.*
+import timber.log.Timber
 
-class AboutVM(private val navigator: Navigator) : ViewModel() {
-    //https://github.com/android/architecture-samples/blob/todo-mvvm-databinding/todoapp/app/src/main/java/com/example/android/architecture/blueprints/todoapp/tasks/TasksNavigator.java
-    interface Navigator {
-        fun showSourceCode()
-        fun showAppInfo()
-        fun showDonationOptions()
-        fun showIssueTracker()
+class AboutVM : ViewModel() {
+    val events = createEventChannel()
+
+    val test = "teest"
+
+    val a = object {
+        fun yep() = Timber.d("d")
     }
 
-    fun showSourceCode() = navigator.showSourceCode()
-    fun showAppInfo() = navigator.showAppInfo()
-    fun showDonationOptions() = navigator.showDonationOptions()
-    fun showIssueTracker() = navigator.showIssueTracker()
+    fun showSourceCode() = events.trySend(ShowSourceCodeEvent()).discard()
+    fun showMoreInfo() = events.trySend(ShowMoreInfoEvent()).discard()
+    fun showVersionInfo() = events.trySend(ShowVersionInfoEvent()).discard()
+    fun showDonationOptions() = events.trySend(ShowDonationOptionsEvent()).discard()
+    fun showIssueTracker() = events.trySend(ShowIssueTrackerEvent()).discard()
 }

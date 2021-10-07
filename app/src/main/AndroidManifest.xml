@@ -2,14 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.pfiers.osmfocus">
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"  />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <queries>
         <intent>
             <action android:name="android.intent.action.SENDTO" />
-<!--            <data android:="image/jpeg" />-->
+            <!-- <data android:="image/jpeg" /> -->
         </intent>
     </queries>
 
@@ -25,29 +25,36 @@
 
         <activity
             android:name=".view.MainActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            android:theme="@style/AppTheme">
 
             <intent-filter>
-
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
+            <intent-filter android:label="@string/intent_oauth_callback">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="osmfocus" />
             </intent-filter>
 
         </activity>
 
+        <activity
+            android:name=".view.ExceptionActivity"
+            android:theme="@style/ExceptionDialogTheme"
+            android:excludeFromRecents="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="net.pfiers.osmfocus.email_attachments_fileprovider"
-            android:grantUriPermissions="true"
-            android:exported="false">
-
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/email_attachments_filepaths" />
-
         </provider>
-
     </application>
 
 </manifest>

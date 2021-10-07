@@ -7,10 +7,13 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.ui.NavigationUI
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.databinding.FragmentAddUserBaseMapBinding
-import net.pfiers.osmfocus.extensions.createVMFactory
-import net.pfiers.osmfocus.view.support.app
+import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.AddUserBaseMapVM
 import net.pfiers.osmfocus.viewmodel.NavVM
 
@@ -18,9 +21,16 @@ class AddUserBaseMapFragment : Fragment() {
     private lateinit var binding: FragmentAddUserBaseMapBinding
     private val navVM: NavVM by viewModels({ requireActivity() })
     private val addUserBaseMapVM: AddUserBaseMapVM by viewModels {
-        val activity = requireActivity()
-        if (activity !is AddUserBaseMapVM.Navigator) error("AddUserBaseMapFragment containing activity must be AddUserBaseMapVM.Navigator")
-        createVMFactory { AddUserBaseMapVM(app.baseMapRepository, activity) }
+        createVMFactory { AddUserBaseMapVM(app.baseMapRepository) }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+            addUserBaseMapVM.events.receiveAsFlow()
+                .collect { activityAs<EventReceiver>().handleEvent(it) }
+        }
     }
 
     override fun onCreateView(

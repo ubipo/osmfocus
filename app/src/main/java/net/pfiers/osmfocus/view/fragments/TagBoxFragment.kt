@@ -3,7 +3,6 @@ package net.pfiers.osmfocus.view.fragments
 import android.graphics.Point
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,15 +18,10 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTagboxBinding
-import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
-import net.pfiers.osmfocus.view.support.ExceptionHandler
-import net.pfiers.osmfocus.view.support.activityAs
-import net.pfiers.osmfocus.view.support.app
+import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
-import net.pfiers.osmfocus.viewmodel.support.ElementDetailsNavigator
-import net.pfiers.osmfocus.viewmodel.support.ShowElementDetailsEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import kotlin.properties.Delegates
 
@@ -55,14 +49,8 @@ class TagBoxFragment : Fragment() {
             color = it.getInt(ARG_COLOR)
         }
 
-        lifecycleScope.launch(activityAs<ExceptionHandler>().coroutineExceptionHandler) {
-            tagBoxVM.events.receiveAsFlow().collect { event ->
-                when (event) {
-                    is ShowElementDetailsEvent -> activityAs<ElementDetailsNavigator>().showElementDetails(
-                        event.element
-                    )
-                }
-            }
+        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+            tagBoxVM.events.receiveAsFlow().collect { activityAs<EventReceiver>().handleEvent(it) }
         }
     }
 
@@ -78,7 +66,7 @@ class TagBoxFragment : Fragment() {
             val (x, y) = IntArray(2).also { binding.tagsWrapper.getLocationOnScreen(it) }
             val hitRect = Rect(0, 0, right - left, bottom - top)
                 .plus(Point(x, y))
-            events.offer(TagBoxHitRectChange(hitRect))
+            events.trySend(TagBoxHitRectChange(hitRect))
         }
 
         val adapter = ViewBindingListAdapter<Pair<String, String>, RvItemTagTagboxBinding>(
@@ -93,9 +81,9 @@ class TagBoxFragment : Fragment() {
         binding.tags.itemAnimator = null
         binding.tags.adapter = adapter
         binding.tags.layoutManager = LinearLayoutManager(context)
-        tagBoxVM.tags.observe(viewLifecycleOwner) { tags ->
+        tagBoxVM.tags.observe(viewLifecycleOwner) { tags -> tags?.let {
             adapter.submitList(tags.toList())
-        }
+        } }
 
         return binding.root
     }

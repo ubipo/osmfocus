@@ -8,14 +8,6 @@
         <variable
             name="baseMap"
             type="net.pfiers.osmfocus.service.basemaps.BaseMap" />
-        
-        <variable
-            name="isSelected"
-            type="androidx.lifecycle.LiveData&lt;Boolean&gt;" />
-
-        <import type="android.graphics.Color" />
-
-        <import type="net.pfiers.osmfocus.R" />
 
     </data>
 
@@ -24,6 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="72dp"
         android:minHeight="72dp"
+        android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:background="@drawable/base_maps_item_background">
 

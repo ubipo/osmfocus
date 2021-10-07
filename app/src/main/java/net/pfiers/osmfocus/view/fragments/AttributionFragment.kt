@@ -6,9 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import net.pfiers.osmfocus.databinding.FragmentAttributionBinding
-import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.viewmodel.AttributionVM
 
 class AttributionFragment : Fragment() {

@@ -1,204 +1,190 @@
 package net.pfiers.osmfocus.service.osm
 
-import net.pfiers.osmfocus.jts.toGeometry
-import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.Point
 import java.io.Serializable
 import java.net.URL
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.time.Instant
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
-private const val WIKI_BASE_URL = "https://wiki.openstreetmap.org/wiki"
-private val GET_CENTER_GEOMETRY_FAC = GeometryFactory()
+data class TypedId(val id: Long, val type: ElementType): Serializable {
+    constructor(id: Long, element: Element): this(id, ElementType.fromClass(element::class))
 
-private fun urlEncode(s: String) = URLEncoder.encode(s, StandardCharsets.UTF_8.toString())
+    val url get() = URL("https://osm.org/${type.lower}/$id")
+}
 
-typealias Tag = Pair<String, String>
-val Tag.key get() = first
-val Tag.value get() = second
-fun Tag.toKeyWikiPage() = URL("$WIKI_BASE_URL/Key:${urlEncode(key)}")
-fun Tag.toTagWikiPage() = URL("$WIKI_BASE_URL/Tag:${urlEncode("$key=$value")}")
+data class Coordinate(val lat: Double, val lon: Double)
 
 typealias Tags = Map<String, String>
+typealias Tag = Map.Entry<String, String>
 
-open class IdMeta(
-    val id: Long
-) : Serializable {
-    infix fun looseEquals(other: IdMeta): Boolean =
-        this === other
-        || id == other.id
+class ElementMergeException(override val message: String): RuntimeException(message)
+class NoSuchElementException: RuntimeException()
+class ContainsStubElementsException: RuntimeException()
 
-    /**
-     * We can't be certain that these are
-     * the "same" element (no version) => always
-     * return false unless strictly equal.
-     */
-    override fun equals(other: Any?): Boolean =
-        this === other
-
-    override fun hashCode(): Int =
-        id.hashCode()
-}
-
-open class VersionedMeta(
-    id: Long,
-    val version: Int,
-    val changeset: Long,
-    val lastEditTimestamp: Instant
-) : IdMeta(id) {
-    fun toChangesetUrl() = URL("https://www.openstreetmap.org/changeset/$changeset")
-
-    override fun equals(other: Any?): Boolean =
-        this === other || (
-            other is VersionedMeta
-            && id == other.id
-            && version == other.version
-        )
-
-    override fun hashCode(): Int =
-        Objects.hash(id, version)
-}
-
-class UserVersionedMeta(
-    id: Long,
-    version: Int,
-    changeset: Long,
-    lastEditTimestamp: Instant,
-    val uid: Int,
-    /**
-     * Warning: username is not a permanent user identifier!
-     * Elements with equal uids but different usernames are considered equal
-     */
-    val username: String
-) : VersionedMeta(id, version, changeset, lastEditTimestamp) {
-    fun toUserProfileUrl() = URL("https://www.openstreetmap.org/user/$username")
-
-    override fun equals(other: Any?): Boolean =
-        this === other || (
-            other is UserVersionedMeta
-            && id == other.id
-            && version == other.version
-            && uid == other.uid
-        )
-
-    override fun hashCode(): Int =
-        Objects.hash(id, version, uid)
-}
-
-data class TypedId(val type: ElementType, val id: Long) : Serializable
-
-abstract class OsmElement(
-    val meta: IdMeta,
-    val tags: Tags? = null
-) : Serializable {
-    /**
-     * Stub element (e.g. relation member without geom/tags)
-     */
-    constructor(id: Long) : this(IdMeta(id))
-
-    abstract val isStub: Boolean
-
-    val centroid: Point? by lazy {
-        this.toGeometry(GET_CENTER_GEOMETRY_FAC, skipStubMembers = true).centroid
+open class Elements(
+    open val nodes: Map<Long, Node> = emptyMap(),
+    open val ways: Map<Long, Way> = emptyMap(),
+    open val relations: Map<Long, Relation> = emptyMap()
+) {
+    operator fun get(typedId: TypedId) = when (typedId.type) {
+        ElementType.NODE -> nodes[typedId.id]
+        ElementType.WAY -> ways[typedId.id]
+        ElementType.RELATION -> relations[typedId.id]
     }
-    val type by lazy { ElementType.fromCls(this::class) }
-    val typedId by lazy { TypedId(type, meta.id) }
 
-    fun toOsmUrl() = URL("https://osm.org/${type.lower}/${meta.id}")
+    fun toGeometry(
+        typedId: TypedId,
+        geometryFactory: GeometryFactory,
+        skipStubMembers: Boolean = false
+    ) = when (typedId.type) {
+        ElementType.NODE -> nodes
+            .getOrElse(typedId.id, { throw NoSuchElementException() })
+            .toGeometry(this, geometryFactory, skipStubMembers)
+        ElementType.WAY -> ways
+            .getOrElse(typedId.id, { throw NoSuchElementException() })
+            .toGeometry(this, geometryFactory, skipStubMembers)
+        ElementType.RELATION -> relations
+            .getOrElse(typedId.id, { throw NoSuchElementException() })
+            .toGeometry(this, geometryFactory, skipStubMembers)
+    }
 }
 
-class Coordinate(
-    val lat: Double,
-    val lon: Double
-)
+class ElementsMutable(elements: Elements = Elements()): Elements() {
+    override val nodes: HashMap<Long, Node> = HashMap(elements.nodes)
+    override val ways: HashMap<Long, Way> = HashMap(elements.ways)
+    override val relations: HashMap<Long, Relation> = HashMap(elements.relations)
 
-class OsmNode(
-    meta: IdMeta,
+    operator fun set(id: Long, element: Element) {
+        when (element) {
+            is Node -> nodes[id] = element
+            is Way -> ways[id] = element
+            is Relation -> relations[id] = element
+            else -> throw UnknownElementTypeException("ElementType for element class ${element::class}")
+        }
+    }
+
+    fun setMerging(id: Long, newElement: Element) {
+        val type = ElementType.fromClass(newElement::class)
+        val oldElement = this[TypedId(id, type)]
+        if (oldElement != null) {
+            // Try to merge elements
+            if (oldElement.version == null || newElement.version == null) {
+                throw ElementMergeException("Cannot merge elements without versions")
+            }
+            if (oldElement.version > newElement.version) {
+                return // Old is newer; no action needed
+            }
+        }
+        this[id] = newElement
+    }
+}
+
+open class ElementAndId<T: Element>(
+    val id: Long,
+    val element: T
+): Serializable {
+    val e = element
+    val typedId = TypedId(id, element)
+}
+
+typealias AnyElementAndId = ElementAndId<*>
+
+class ElementCentroidAndId<T: Element>(
+    id: Long,
+    element: T,
+    val centroid: org.locationtech.jts.geom.Coordinate
+): ElementAndId<T>(id, element)
+
+typealias AnyElementCentroidAndId = ElementCentroidAndId<*>
+
+abstract class Element constructor(
+    val version: Int? = null,
+    val tags: Tags? = null,
+    val changeset: Long? = null,
+    val lastEditTimestamp: Instant? = null,
+    val username: String? = null,
+) : Serializable {
+    abstract fun toGeometry(
+        universe: Elements,
+        geometryFactory: GeometryFactory,
+        skipStubMembers: Boolean = false
+    ): Geometry?
+
+    val userProfileUrl get() = username?.let { URL("https://www.openstreetmap.org/user/$username") }
+    val changesetUrl get() = changeset?.let { URL("https://www.openstreetmap.org/changeset/$changeset") }
+}
+
+class Node constructor(
+    version: Int? = null,
     tags: Tags? = null,
-    val coordinate: Coordinate? = null
-): OsmElement(meta, tags) {
-    constructor(id: Long) : this(IdMeta(id))
+    val coordinate: Coordinate? = null,
+    changeset: Long? = null,
+    lastEditTimestamp: Instant? = null,
+    username: String? = null
+) : Element(version, tags, changeset, lastEditTimestamp, username) {
+    val jtsCoordinate = coordinate?.let {
+        org.locationtech.jts.geom.Coordinate(coordinate.lon, coordinate.lat)
+    }
 
-    override val isStub: Boolean
-        get() = coordinate == null && tags == null
-
-    override fun equals(other: Any?): Boolean =
-        this === other || (
-            other is OsmNode
-            && meta == other.meta
-        )
-
-    override fun hashCode(): Int =
-        meta.hashCode()
+    override fun toGeometry(
+        universe: Elements,
+        geometryFactory: GeometryFactory,
+        skipStubMembers: Boolean
+    ) = coordinate?.let { coordinate ->
+        geometryFactory.createPoint(org.locationtech.jts.geom.Coordinate(
+            coordinate.lon,
+            coordinate.lat
+        ))
+    }
 }
 
-class OsmWay(
-    meta: IdMeta,
+class Way constructor(
+    version: Int? = null,
     tags: Tags? = null,
-    val nodes: List<OsmNode>? = null
-): OsmElement(meta, tags) {
-    constructor(id: Long) : this(IdMeta(id))
-
-    override val isStub: Boolean
-        get() = nodes == null && tags == null
-
-    override fun equals(other: Any?): Boolean =
-        this === other || (
-            other is OsmWay
-            && meta == other.meta
-        )
-
-    override fun hashCode(): Int =
-        meta.hashCode()
+    val nodeIds: List<Long>? = null,
+    changeset: Long? = null,
+    lastEditTimestamp: Instant? = null,
+    username: String? = null
+) : Element(version, tags, changeset, lastEditTimestamp, username) {
+    override fun toGeometry(
+        universe: Elements,
+        geometryFactory: GeometryFactory,
+        skipStubMembers: Boolean
+    ): Geometry? = nodeIds?.let { nodeIds ->
+        val coordinates = nodeIds.mapNotNull { nodeId ->
+            universe.nodes[nodeId]?.jtsCoordinate
+                ?: if (!skipStubMembers) {
+                    throw ContainsStubElementsException()
+                } else null
+        }
+        geometryFactory.createLineString(coordinates.toTypedArray())
+    }
 }
 
-class OsmRelationMember(
-    val element: OsmElement,
+class RelationMember constructor(
+    val typedId: TypedId,
     val role: String
-) : Serializable
-
-class OsmRelation(
-    meta: IdMeta,
-    tags: Tags? = null,
-    val members: List<OsmRelationMember>? = null
-): OsmElement(meta, tags) {
-    constructor(id: Long) : this(IdMeta(id))
-
-    override val isStub: Boolean
-        get() = members == null && tags == null
-
-    override fun equals(other: Any?): Boolean =
-        this === other || (
-            other is OsmRelation
-            && meta == other.meta
-        )
-
-    override fun hashCode(): Int =
-        meta.hashCode()
-}
-
-fun ElementType.stubElement(id: Long) = when(this) {
-    ElementType.NODE -> OsmNode(id)
-    ElementType.WAY -> OsmWay(id)
-    ElementType.RELATION -> OsmRelation(id)
-}
-
-open class OsmElements(
-    open val nodes: Map<TypedId, OsmNode> = emptyMap(), // TypedId for faster lookup when adding new elements
-    open val ways: Map<TypedId, OsmWay> = emptyMap(),
-    open val relations: Map<TypedId, OsmRelation> = emptyMap()
 )
 
-/**
- * Mutable store of OSM elements using hashmaps mapping
- * element type + id's to elements.
- **/
-class MutableOsmElements(
-    override val nodes: MutableMap<TypedId, OsmNode> = ConcurrentHashMap(), // TypedId for faster lookup when adding new elements
-    override val ways: MutableMap<TypedId, OsmWay> = ConcurrentHashMap(),
-    override val relations: MutableMap<TypedId, OsmRelation> = ConcurrentHashMap()
-) : OsmElements()
+class Relation constructor(
+    version: Int? = null,
+    tags: Tags? = null,
+    val members: List<RelationMember>? = null,
+    changeset: Long? = null,
+    lastEditTimestamp: Instant? = null,
+    username: String? = null
+) : Element(version, tags, changeset, lastEditTimestamp, username) {
+    override fun toGeometry(
+        universe: Elements,
+        geometryFactory: GeometryFactory,
+        skipStubMembers: Boolean
+    ): Geometry? = members?.let { members ->
+        val collectionMembers = members.mapNotNull { member ->
+            val elem = universe[member.typedId]?: if (!skipStubMembers) {
+                throw ContainsStubElementsException()
+            } else return@mapNotNull null
+            elem.toGeometry(universe, geometryFactory, skipStubMembers)
+        }
+        geometryFactory.createGeometryCollection(collectionMembers.toTypedArray())
+    }
+}

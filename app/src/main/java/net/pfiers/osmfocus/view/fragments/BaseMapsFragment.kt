@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,14 +27,16 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsBinding
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsItemBinding
-import net.pfiers.osmfocus.extensions.createVMFactory
 import net.pfiers.osmfocus.service.basemaps.*
 import net.pfiers.osmfocus.service.db.UserBaseMap
 import net.pfiers.osmfocus.view.support.app
+import net.pfiers.osmfocus.view.support.createVMFactory
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
 import net.pfiers.osmfocus.viewmodel.NavVM
+import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class BaseMapsFragment : Fragment() {
     private val baseMapsVM: BaseMapsVM by viewModels {
         createVMFactory { BaseMapsVM(app.db) }
@@ -45,7 +46,6 @@ class BaseMapsFragment : Fragment() {
     private lateinit var builtinBaseMapAdapter: BaseMapListAdapter<BuiltinBaseMap>
     private lateinit var userBaseMapAdapter: BaseMapListAdapter<UserBaseMap>
 
-    @ExperimentalTime
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -62,15 +62,6 @@ class BaseMapsFragment : Fragment() {
 
         binding.userList.isNestedScrollingEnabled = false
         binding.buildInList.isNestedScrollingEnabled = false
-
-//        val (attribution, urlTemplate) = if (buildInBaseMap != null) {
-//            Pair(buildInBaseMap.attribution, buildInBaseMap.urlTemplate)
-//        } else {
-//            val userBaseMapId = userBaseMapIdFromValue(value)
-//                ?: error("Base map pref value is neither a build in base map, nor a user base map")
-//            val userBaseMap = requireApp.db.baseMapDefinitionDao().getOnce(userBaseMapId)
-//            Pair(userBaseMap.attribution, userBaseMap.urlTemplate)
-//        }
 
         val repository = app.baseMapRepository
 
@@ -97,7 +88,6 @@ class BaseMapsFragment : Fragment() {
             lifecycleScope,
             backgroundScope,
             viewLifecycleOwner,
-            requireContext(),
             binding.coordinator,
             app.baseMapRepository,
             selectedItemFlow,
@@ -112,7 +102,6 @@ class BaseMapsFragment : Fragment() {
             lifecycleScope,
             backgroundScope,
             viewLifecycleOwner,
-            requireContext(),
             binding.coordinator,
             app.baseMapRepository,
             selectedItemFlow,
@@ -142,7 +131,6 @@ class BaseMapsFragment : Fragment() {
         private val uiScope: CoroutineScope,
         private val backgroundScope: CoroutineScope,
         private val lifecycleOwner: LifecycleOwner,
-        context: Context,
         private val snackbarView: View,
         private val repository: BaseMapRepository,
         private val selectedItemFlow: Flow<BaseMap?>,
@@ -181,7 +169,6 @@ class BaseMapsFragment : Fragment() {
             fun bind(baseMap: BaseMap) {
                 this.baseMap = baseMap
                 binding.baseMap = baseMap
-//                binding.root.isActivated = isSelected
                 uiScope.launch {
                     selectedItemFlow.map { selectedItem ->
                         selectedItem == baseMap
@@ -202,7 +189,7 @@ class BaseMapsFragment : Fragment() {
                                 val snackMsg = when (ex) {
                                     is TileFetchException -> ex.message
                                     else -> {
-                                        Log.e("AAA", ex.stackTraceToString())
+                                        Timber.e(ex.stackTraceToString())
                                         "An unknown error occurred while fetching " +
                                                 "the preview tile. See log for more details."
                                     }
@@ -242,7 +229,7 @@ class BaseMapsFragment : Fragment() {
         ): Boolean = false
 
         override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-            val a = adapter.currentList[viewHolder.adapterPosition]
+            val a = adapter.currentList[viewHolder.bindingAdapterPosition]
             adapter.currentList
             onDelete(a)
         }

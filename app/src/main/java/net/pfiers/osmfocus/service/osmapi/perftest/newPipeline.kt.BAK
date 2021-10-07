@@ -1,0 +1,622 @@
+package net.pfiers.osmfocus.service.osmapi.perftest
+
+import com.beust.klaxon.*
+import net.pfiers.osmfocus.service.klaxon.InstantConverter
+import net.pfiers.osmfocus.service.osm.MutableOsmElements
+import net.pfiers.osmfocus.service.osm.Tags
+import net.pfiers.osmfocus.service.osmapi.ElementsRes
+import net.pfiers.osmfocus.service.osmapi.splitTypes
+import net.pfiers.osmfocus.service.osmapi.toOsmElementsAndAdd
+import org.locationtech.jts.geom.Coordinate
+import timber.log.Timber
+import java.io.Serializable
+import java.io.StringReader
+import java.net.URL
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.reflect.KClass
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+class ElementTypeConverter: Converter {
+    override fun canConvert(cls: Class<*>): Boolean =
+        cls == ElementType::class.java
+
+    override fun fromJson(jv: JsonValue): Any =
+        ElementType.valueOfCaseInsensitive(
+            jv.string
+                ?: throw error("Can only convert JSON strings to ElementType")
+        )
+
+    override fun toJson(value: Any): String {
+        TODO("Not yet implemented")
+    }
+}
+
+fun reproducingPipeline(json: String): MutableOsmElements {
+    val klaxon = Klaxon()
+        .converter(ElementTypeConverter())
+        .converter(InstantConverter())
+        .fieldRenamer(object : FieldRenamer {
+            override fun toJson(fieldName: String) = FieldRenamer.camelToUnderscores(fieldName)
+            override fun fromJson(fieldName: String) = FieldRenamer.underscoreToCamel(fieldName)
+        })
+    val res = klaxon.parse<ElementsRes>(json)
+    val elems = MutableOsmElements()
+    res!!.elements.splitTypes().toOsmElementsAndAdd(elems, false)
+
+    val waysList = elems.ways.values.toList()
+    val coordsUsage = waysList.map { w ->
+        w.nodes!!.map { n ->
+            n.coordinate!!
+        }
+    }
+    println("${waysList.last().typedId.id}: ${coordsUsage.last().size}")
+    println("n: ${elems.nodes.size}, w: ${elems.ways.size}, r: ${elems.relations.size}")
+
+    return elems
+}
+
+class JsonElementTypeAdapter: TypeAdapter<JsonElement> {
+    override fun classFor(type: Any): KClass<out JsonElement> = when(type as String) {
+        "node" -> JsonNode::class
+        "way" -> JsonWay::class
+        "relation" -> JsonRelation::class
+        else -> throw IllegalArgumentException("Unknown type: $type")
+    }
+}
+
+@TypeFor(field = "type", adapter = JsonElementTypeAdapter::class)
+abstract class JsonElement(
+    val type: String,
+    val id: Long,
+    val version: Int,
+    val changeset: Long,
+    val timestamp: String,
+    val uid: Int,
+    val user: String,
+    val tags: Map<String, String>? = HashMap()
+)
+
+class JsonNode(
+    type: String,
+    id: Long,
+    version: Int,
+    changeset: Long,
+    timestamp: String,
+    uid: Int,
+    user: String,
+    val lat: Double,
+    val lon: Double,
+    tags: Map<String, String>? = null
+): JsonElement(type, id, version, changeset, timestamp, uid, user, tags)
+
+class JsonWay(
+    type: String,
+    id: Long,
+    version: Int,
+    changeset: Long,
+    timestamp: String,
+    uid: Int,
+    user: String,
+    val nodes: List<Long>,
+    tags: Map<String, String>? = null
+) : JsonElement(type, id, version, changeset, timestamp, uid, user, tags)
+
+class JsonRelationMember(
+    val type: String,
+    val ref: Long,
+    val role: String
+)
+
+class JsonRelation(
+    type: String,
+    id: Long,
+    version: Int,
+    changeset: Long,
+    timestamp: String,
+    uid: Int,
+    user: String,
+    val members: List<JsonRelationMember>,
+    tags: Map<String, String>? = null
+) : JsonElement(type, id, version, changeset, timestamp, uid, user, tags)
+
+object StreamingModel {
+    private val nodes = HashMap<Long, Node>()
+    private val ways = HashMap<Long, Way>()
+    private val relations = HashMap<Long, Relation>()
+
+    // ext
+    val TypedId.url get() = URL("https://osm.org/${type.lower}/$id")
+
+    data class TypedId(val id: Long, val type: ElementType)
+
+    enum class ElementType {
+        NODE,
+        WAY,
+        RELATION;
+
+        val lower get() = name.lowercase(Locale.ROOT)
+        val capitalized get() = lower.replaceFirstChar { it.titlecase(Locale.ROOT) }
+        val oneLetter get() = name[0]
+
+        companion object {
+            fun fromLetter(letter: Char) = when (letter) {
+                'n' -> NODE
+                'w' -> WAY
+                'r' -> RELATION
+                else -> throw IllegalArgumentException("Illegal ElementType letter: $letter")
+            }
+
+            fun fromString(string: String) = fromLetter(string[0].lowercaseChar())
+        }
+    }
+
+    data class Coordinate(val lat: Double, val lon: Double)
+
+    abstract class Element constructor(
+        val version: Int? = null,
+        val tags: Tags? = null
+    ) : Serializable
+
+    class Node constructor(
+        version: Int? = null,
+        tags: Tags? = null,
+        val coordinate: Coordinate? = null
+    ) : Element(version, tags)
+
+    class Way constructor(
+        version: Int? = null,
+        tags: Tags? = null,
+        val nodes: List<Long>? = null
+    ) : Element(version, tags)
+
+    class RelationMember constructor(
+        val element: TypedId,
+        val role: String
+    ) : Serializable
+
+    class Relation constructor(
+        version: Int? = null,
+        tags: Tags? = null,
+        val members: List<RelationMember>? = null
+    ) : Element(version, tags)
+}
+
+@ExperimentalTime
+fun newStreamingPipeline(json: String) {
+    class ParseException : RuntimeException()
+
+    val nodes = HashMap<Long, StreamingModel.Node>()
+    val ways = HashMap<Long, StreamingModel.Way>()
+    val relations = HashMap<Long, StreamingModel.Relation>()
+
+    fun JsonReader.readElement() {
+        beginObject {
+            var id: Long? = null
+            var type: String? = null
+            var version: Int? = null
+            var changeset: Long? = null
+            var uid: Long? = null
+            var user: String? = null
+            var timestamp: TimeMark? = null
+            var lat: Double? = null
+            var lon: Double? = null
+            /* In the OSM API, an undefined tags dictionary means that there are no tags, not
+            that the information is not known.
+            Why do they not return an empty object? Response size probably.*/
+            val tags = HashMap<String, String>()
+            var wayNodes: List<Long>? = null
+            var members: List<StreamingModel.RelationMember>? = null
+            while (hasNext()) {
+                when (nextName()) {
+                    "id" -> id = nextLong()
+                    "type" -> type = nextString()
+                    "version" -> version = nextInt()
+                    "changeset" -> changeset = nextLong()
+                    "uid" -> uid = nextLong()
+                    "user" -> user = nextString()
+                    "timestamp" -> nextString()
+                    "tags" -> beginObject {
+                        while (hasNext()) {
+                            tags[nextName()] = nextString()
+                        }
+                    }
+
+                    // Node specific
+                    "lon" -> lon = nextDouble()
+                    "lat" -> lat = nextDouble()
+
+                    // Way specific
+                    "nodes" -> beginArray {
+                        wayNodes = object : Iterator<Long> {
+                            override fun hasNext() = this@readElement.hasNext()
+                            override fun next() = this@readElement.nextLong()
+                        }.asSequence().toList()
+                    }
+
+                    // Relation specific
+                    "members" -> beginArray {
+                        members = object : Iterator<StreamingModel.RelationMember> {
+                            override fun hasNext() = this@readElement.hasNext()
+                            override fun next() = beginObject {
+                                var ref: Long? = null
+                                var role: String? = null
+                                var memberType: String? = null
+                                while (hasNext()) {
+                                    when (nextName()) {
+                                        "ref" -> ref = nextLong()
+                                        "role" -> role = nextString()
+                                        "type" -> memberType = nextString()
+                                    }
+                                }
+                                if (ref == null) throw ParseException()
+                                if (role == null) throw ParseException()
+                                if (memberType == null) throw ParseException()
+                                StreamingModel.RelationMember(
+                                    StreamingModel.TypedId(
+                                        ref,
+                                        StreamingModel.ElementType.fromString(memberType)
+                                    ), role
+                                )
+                            }
+                        }.asSequence().toList()
+                    }
+                }
+            }
+            if (type == null) throw ParseException()
+            if (id == null) throw ParseException()
+            if (version == null) throw ParseException()
+            when (type) {
+                "node" -> {
+                    if (lat == null) throw ParseException()
+                    if (lon == null) throw ParseException()
+                    nodes[id] =
+                        StreamingModel.Node(version, tags, StreamingModel.Coordinate(lat, lon))
+                }
+                "way" -> {
+                    if (wayNodes == null) throw ParseException()
+                    ways[id] = StreamingModel.Way(version, tags, wayNodes)
+                }
+                "relation" -> {
+                    if (members == null) throw ParseException()
+                    relations[id] = StreamingModel.Relation(version, tags, members)
+                }
+                else -> throw ParseException()
+            }
+        }
+    }
+
+    JsonReader(StringReader(json)).use { reader ->
+        reader.beginObject {
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "copyright" -> reader.nextString()
+                    "elements" -> {
+                        reader.beginArray {
+                            while (reader.hasNext()) {
+                                reader.readElement()
+                            }
+                        }
+                    }
+                    "attribution" -> reader.nextString()
+                    "bounds" -> {
+                        reader.beginObject {
+                            while (reader.hasNext()) {
+                                reader.nextName()
+                                reader.nextDouble()
+                            }
+                        }
+                    }
+                    "license" -> reader.nextString()
+                    "generator" -> reader.nextString()
+                    "version" -> reader.nextString()
+                }
+            }
+        }
+    }
+
+    val waysList = ways.entries.toList()
+    val coordsUsage = waysList.map { (_, w) ->
+        w.nodes!!.map { n ->
+            nodes[n]!!.coordinate!!
+        }
+    }
+    val lastCoordsSize = coordsUsage.last().size
+    println("${waysList.last().key}: ${lastCoordsSize}")
+    println("n: ${nodes.size}, w: ${ways.size}, r: ${relations.size}")
+}
+
+@ExperimentalTime
+fun hybridPipeline(json: String) {
+    class ParseException : RuntimeException()
+
+    val nodes = HashMap<Long, StreamingModel.Node>()
+    val ways = HashMap<Long, StreamingModel.Way>()
+    val relations = HashMap<Long, StreamingModel.Relation>()
+
+    val klaxon = Klaxon()
+
+    fun JsonReader.readElement() {
+        val jsonElement = klaxon.parse<JsonElement>(this)!!
+        when (jsonElement.type) {
+            "node" -> {
+                val node = jsonElement as JsonNode
+                nodes[node.id] = StreamingModel.Node(
+                    node.version,
+                    node.tags,
+                    StreamingModel.Coordinate(node.lat, node.lon)
+                )
+            }
+            "way" -> {
+                val way = jsonElement as JsonWay
+                ways[way.id] = StreamingModel.Way(way.version, way.tags, way.nodes)
+            }
+            "relation" -> {
+                val relation = jsonElement as JsonRelation
+                relations[relation.id] = StreamingModel.Relation(
+                    relation.version,
+                    relation.tags,
+                    relation.members.map { m ->
+                        StreamingModel.RelationMember(
+                            StreamingModel.TypedId(
+                                m.ref,
+                                StreamingModel.ElementType.fromString(m.type)
+                            ), m.role
+                        )
+                    })
+            }
+            else -> throw ParseException()
+        }
+    }
+
+    JsonReader(StringReader(json)).use { reader ->
+        reader.beginObject {
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "copyright" -> reader.nextString()
+                    "elements" -> {
+                        reader.beginArray {
+                            while (reader.hasNext()) {
+                                reader.readElement()
+                            }
+                        }
+                    }
+                    "attribution" -> reader.nextString()
+                    "bounds" -> {
+                        reader.beginObject {
+                            while (reader.hasNext()) {
+                                reader.nextName()
+                                reader.nextDouble()
+                            }
+                        }
+                    }
+                    "license" -> reader.nextString()
+                    "generator" -> reader.nextString()
+                    "version" -> reader.nextString()
+                }
+            }
+        }
+    }
+
+    val waysList = ways.entries.toList()
+    val coordsUsage = waysList.map { (_, w) ->
+        w.nodes!!.map { n ->
+            nodes[n]!!.coordinate!!
+        }
+    }
+    val lastCoordsSize = coordsUsage.last().size
+    println("${waysList.last().key}: ${lastCoordsSize}")
+    println("n: ${nodes.size}, w: ${ways.size}, r: ${relations.size}")
+}
+
+class ParseException : RuntimeException()
+
+@ExperimentalTime
+fun hybridRawPipeline(json: String) {
+    val nodes = HashMap<Long, StreamingModel.Node>()
+    val ways = HashMap<Long, StreamingModel.Way>()
+    val relations = HashMap<Long, StreamingModel.Relation>()
+
+    val jsonReader = JsonReader(StringReader(json))
+    val rawParser = Parser.default(emptyList(), jsonReader.lexer, streaming = true)
+
+    fun readElement() {
+        val obj = rawParser.parse(jsonReader) as JsonObject
+        val type = obj["type"] as String
+        val id = (obj["id"] as Number).toLong()
+        val version = obj["version"] as Int
+        val tags = obj["tags"]?.let { t ->
+            (t as JsonObject).toMap().mapValues { (_, v) -> v as String }
+        }
+        when (type) {
+            "node" -> {
+                val lat = obj["lat"] as Double
+                val lon = obj["lon"] as Double
+                nodes[id] = StreamingModel.Node(version, tags, StreamingModel.Coordinate(lat, lon))
+            }
+            "way" -> {
+                val wayNodes = (obj["nodes"] as JsonArray<*>).map { e ->
+                    (e as Number).toLong()
+                }
+                ways[id] = StreamingModel.Way(version, tags, wayNodes)
+            }
+            "relation" -> {
+                val members = (obj["members"] as JsonArray<*>).map { e ->
+                    val memberObj = e as JsonObject
+                    val ref = (memberObj["ref"] as Number).toLong()
+                    val memberType = StreamingModel.ElementType.fromString(memberObj["type"] as String)
+                    val role = memberObj["role"] as String
+                    StreamingModel.RelationMember(StreamingModel.TypedId(ref, memberType), role)
+                }
+                relations[id] = StreamingModel.Relation(version, tags, members)
+            }
+            else -> throw ParseException()
+        }
+    }
+
+    jsonReader.use { reader ->
+        reader.beginObject {
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "copyright" -> reader.nextString()
+                    "elements" -> {
+                        reader.beginArray {
+                            while (reader.hasNext()) {
+                                readElement()
+                            }
+                        }
+                    }
+                    "attribution" -> reader.nextString()
+                    "bounds" -> {
+                        reader.beginObject {
+                            while (reader.hasNext()) {
+                                reader.nextName()
+                                reader.nextDouble()
+                            }
+                        }
+                    }
+                    "license" -> reader.nextString()
+                    "generator" -> reader.nextString()
+                    "version" -> reader.nextString()
+                }
+            }
+        }
+    }
+
+    val waysList = ways.entries.toList()
+    val coordsUsage = waysList.map { (_, w) ->
+        w.nodes!!.map { n ->
+            nodes[n]!!.coordinate!!
+        }
+    }
+    val lastCoordsSize = coordsUsage.last().size
+    println("${waysList.last().key}: ${lastCoordsSize}")
+    println("n: ${nodes.size}, w: ${ways.size}, r: ${relations.size}")
+}
+
+
+fun newRawPipeline(json: String) {
+    val nodes = HashMap<Long, StreamingModel.Node>()
+    val ways = HashMap<Long, StreamingModel.Way>()
+    val relations = HashMap<Long, StreamingModel.Relation>()
+
+    val root = Parser.default().parse(StringBuilder(json)) as JsonObject
+    val elements = root["elements"] as JsonArray<*>
+    elements.forEach { element ->
+        val obj = element as JsonObject
+        val type = obj["type"] as String
+        val id = (obj["id"] as Number).toLong()
+        val version = obj["version"] as Int
+        val tags = obj["tags"]?.let { t ->
+            (t as JsonObject).toMap().mapValues { (_, v) -> v as String }
+        }
+        when (type) {
+            "node" -> {
+                val lat = obj["lat"] as Double
+                val lon = obj["lon"] as Double
+                nodes[id] = StreamingModel.Node(version, tags, StreamingModel.Coordinate(lat, lon))
+            }
+            "way" -> {
+                val wayNodes = (obj["nodes"] as JsonArray<*>).map { e ->
+                    (e as Number).toLong()
+                }
+                ways[id] = StreamingModel.Way(version, tags, wayNodes)
+            }
+            "relation" -> {
+                val members = (obj["members"] as JsonArray<*>).map { e ->
+                    val memberObj = e as JsonObject
+                    val ref = (memberObj["ref"] as Number).toLong()
+                    val memberType = StreamingModel.ElementType.fromString(memberObj["type"] as String)
+                    val role = memberObj["role"] as String
+                    StreamingModel.RelationMember(StreamingModel.TypedId(ref, memberType), role)
+                }
+                relations[id] = StreamingModel.Relation(version, tags, members)
+            }
+            else -> throw ParseException()
+        }
+    }
+
+    val waysList = ways.entries.toList()
+    val coordsUsage = waysList.map { (_, w) ->
+        w.nodes!!.map { n ->
+            nodes[n]!!.coordinate!!
+        }
+    }
+    val lastCoordsSize = coordsUsage.last().size
+    println("${waysList.last().key}: ${lastCoordsSize}")
+    println("n: ${nodes.size}, w: ${ways.size}, r: ${relations.size}")
+}
+
+@ExperimentalTime
+fun testPerf() {
+    data class PerfResult(
+        val reproducing: Long,
+        val raw: Long,
+        val streaming: Long,
+        val hybrid: Long,
+        val hybridRaw: Long
+    )
+
+    val runs = 5
+    val results = (0..runs).map { i ->
+        Timber.d(">>>> Run $i of $runs")
+
+        // Reproduce with Klaxon
+        val parseStart = TimeSource.Monotonic.markNow()
+        reproducingPipeline(json)
+        val parseDelta = parseStart.elapsedNow().inWholeMilliseconds
+        Timber.d("Reproducing parse took: $parseDelta")
+
+        //        val klaxonNoField = Klaxon()
+        //            .converter(ElementTypeConverter())
+        //            .converter(InstantConverter())
+        //        val parseNoFieldStart = TimeSource.Monotonic.markNow()
+        //        klaxonNoField.parse<ElementsRes>(json)
+        //        Timber.d("Reproducing parse no field took: ${parseNoFieldStart.elapsedNow().inWholeMilliseconds}")
+        //
+        //        val klaxonNothing = Klaxon()
+        //        val parseNothingStart = TimeSource.Monotonic.markNow()
+        //        klaxonNothing.parse<ElementsResDumb>(json)
+        //        Timber.d("Reproducing parse took: ${parseNothingStart.elapsedNow().inWholeMilliseconds}")
+
+        val parseRawStart = TimeSource.Monotonic.markNow()
+        newRawPipeline(json)
+        val parseRawDelta = parseRawStart.elapsedNow().inWholeMilliseconds
+        Timber.d("Raw pipeline took: $parseRawDelta")
+
+        val parseStreamingStart = TimeSource.Monotonic.markNow()
+        newStreamingPipeline(json)
+        val parseStreamingDelta = parseStreamingStart.elapsedNow().inWholeMilliseconds
+        Timber.d("Streaming pipeline took: $parseStreamingDelta")
+
+        val parseHybridStart = TimeSource.Monotonic.markNow()
+        hybridPipeline(json)
+        val parseHybridDelta = parseHybridStart.elapsedNow().inWholeMilliseconds
+        Timber.d("Hybrid pipeline took: $parseHybridDelta")
+
+        val parseHybridRawStart = TimeSource.Monotonic.markNow()
+        hybridRawPipeline(json)
+        val parseHybridRawDelta = parseHybridRawStart.elapsedNow().inWholeMilliseconds
+        Timber.d("Hybrid raw pipeline took: $parseHybridRawDelta")
+
+        PerfResult(parseDelta, parseRawDelta, parseStreamingDelta, parseHybridDelta, parseHybridRawDelta)
+    }
+    Timber.d(results.toString())
+    val sums = results.reduce { acc, p -> PerfResult(
+        acc.reproducing + p.reproducing,
+        acc.raw + p.raw,
+        acc.streaming + p.streaming,
+        acc.hybrid + p.hybrid,
+        acc.hybridRaw + p.hybridRaw
+    ) }
+    val avgs = PerfResult(
+        sums.reproducing / results.size,
+        sums.raw / results.size,
+        sums.streaming / results.size,
+        sums.hybrid / results.size,
+        sums.hybridRaw / results.size
+    )
+    Timber.d(avgs.toString())
+}

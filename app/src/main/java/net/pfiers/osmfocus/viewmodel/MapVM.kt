@@ -2,43 +2,43 @@
 
 package net.pfiers.osmfocus.viewmodel
 
-import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.*
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.onError
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.*
-import net.pfiers.osmfocus.extensions.kotlin.cartesianProduct
-import net.pfiers.osmfocus.extensions.kotlin.containedSubList
-import net.pfiers.osmfocus.extensions.kotlin.noIndividualValueReuse
+import net.pfiers.osmfocus.service.cartesianProduct
+import net.pfiers.osmfocus.service.containedSubList
+import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.service.noIndividualValueReuse
 import net.pfiers.osmfocus.service.MapApiDownloadManager
 import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
 import net.pfiers.osmfocus.service.ZoomLevelRecededException
-import net.pfiers.osmfocus.service.db.Db
-import net.pfiers.osmfocus.service.osm.OsmElement
+import net.pfiers.osmfocus.service.osm.Element
+import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
 import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import net.pfiers.osmfocus.service.tagboxlocations.tbLocations
 import net.pfiers.osmfocus.service.tagboxlocations.toEnvelopeCoordinate
-import net.pfiers.osmfocus.viewmodel.support.Event
-import net.pfiers.osmfocus.viewmodel.support.ExceptionEvent
-import net.pfiers.osmfocus.viewmodel.support.MoveToCurrentLocationEvent
-import net.pfiers.osmfocus.viewmodel.support.ShowSettingsEvent
+import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.operation.distance.DistanceOp
+import timber.log.Timber
+import java.net.URI
 import kotlin.properties.Delegates
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() {
-    val events = Channel<Event>(10) // TODO: switch to create() function
+class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
+    data class MapState(val envelope: Envelope, val zoomLevel: Double)
+
+    val events = createEventChannel()
     private val downloadManager = MapApiDownloadManager(
         createOsmApiConfig(Defaults.apiBaseUrl), MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, GEOMETRY_FAC
     )
@@ -50,10 +50,9 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
     val savedZoomLevel = settingsDataStore.data.map { settings ->
         settings.lastZoomLevel
     }.asLiveData()
-
-    data class MapState(val center: Point, val envelope: Envelope, val zoomLevel: Double)
-
     var mapState: MapState? by Delegates.observable(null) { _, _, _ ->
+        Timber.d("MapState updated")
+        updateActionsVisibility()
         updateHighlightedElements()
         initiateDownload()
     }
@@ -68,6 +67,20 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
         viewModelScope.launch {
             downloadManager.events.receiveAsFlow().collect { event ->
                 handleDownloadManagerEvent(event)
+            }
+        }
+    }
+
+    fun showSettings() = events.trySend(ShowSettingsEvent()).discard()
+
+    fun moveToCurrentLocation() = events.trySend(MoveToCurrentLocationEvent()).discard()
+
+    fun setZoomLevel(newZoomLevel: Double) {
+        viewModelScope.launch {
+            settingsDataStore.updateData { currentSettings ->
+                currentSettings.toBuilder().apply {
+                    lastZoomLevel = newZoomLevel
+                }.build()
             }
         }
     }
@@ -101,6 +114,13 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
                 updateHighlightedElements()
             }
         }
+    }
+
+
+    private fun updateActionsVisibility() {
+        val lMapState = mapState ?: return
+        val actionsShouldBeVisible = lMapState.zoomLevel < MIN_DISPLAY_ZOOM_LEVEL
+        events.trySend(ActionsVisibilityEvent(actionsShouldBeVisible))
     }
 
     private val backgroundScope = CoroutineScope(Job() + Dispatchers.Default)
@@ -158,7 +178,7 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
                     emptyMap() // Too zoomed out, don't display any elements
                 } else {
                     val displayedElements =
-                        getElementsToDisplay(lMapState.center, lMapState.envelope)
+                        getElementsToDisplay(lMapState.envelope)
                     ensureActive()
                     mapTbLocsToElements(displayedElements) { tbLoc ->
                         tbLoc.toEnvelopeCoordinate(lMapState.envelope)
@@ -175,36 +195,41 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
     }
 
     /**
-     * Returns a list of the closest {@code n} (or less)
-     * elements to {@code centerPoint} and within {@code envelope}.
+     * Returns a list of elements within {@code envelope}, ordered
+     * by distance to {@code envelope}'s center.
      */
     @ExperimentalTime
-    private fun getElementsToDisplay(
-        centerPoint: Point, envelope: Envelope
-    ): List<ElementToDisplayData> {
-        val elementsList = mutableListOf<OsmElement>()
-        elementsList.addAll(downloadManager.elements.nodes.values)
-        elementsList.addAll(downloadManager.elements.ways.values)
-        if (showRelations.value == true) elementsList.addAll(downloadManager.elements.relations.values)
+    private fun getElementsToDisplay(envelope: Envelope): List<ElementToDisplayData> {
+        val center = envelope.centre()
+        val elementsList = mutableListOf<Map.Entry<Long, Element>>()
+        elementsList.addAll(downloadManager.elements.nodes.entries)
+        elementsList.addAll(downloadManager.elements.ways.entries)
+        if (showRelations.value == true) elementsList.addAll(downloadManager.elements.relations.entries)
         return elementsList
-            .filterNot { e -> e.tags.isNullOrEmpty() }
-            .mapNotNull { e ->
-                downloadManager.getElementGeometry(e).takeIf { g ->
+            .filterNot { (_, element) -> element.tags.isNullOrEmpty() }
+            .mapNotNull { (id, e) ->
+                downloadManager.getGeometry(TypedId(id, e))?.takeIf { g ->
                     !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
-                }?.let { g ->
-                    DistanceOp.nearestPoints(g, centerPoint)[0].takeIf { nearCenterCoordinate ->
+                }?.let { geometry ->
+                    DistanceOp.nearestPoints(
+                        geometry,
+                        GEOMETRY_FAC.createPoint(center)
+                    )[0].takeIf { nearCenterCoordinate ->
                         envelope.intersects(nearCenterCoordinate) // Robust check
                     }?.let { nearCenterCoordinate ->
-                        ElementToDisplayData(e, g, nearCenterCoordinate)
+                        ElementToDisplayData(id, e, geometry, nearCenterCoordinate)
                     }
                 }
             }.sortedBy { e ->
-                centerPoint.coordinate.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
+                center.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
             }.toList().containedSubList(0, tbLocations.size)
     }
 
     open class ElementToDisplayData(
-        val element: OsmElement, val geometry: Geometry, val nearCenterCoordinate: Coordinate
+        val id: Long,
+        val element: Element,
+        val geometry: Geometry,
+        val nearCenterCoordinate: Coordinate
     )
 
     /**
@@ -227,22 +252,8 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
         .noIndividualValueReuse()
         .toMap()
 
-    fun showSettings() = events.offer(ShowSettingsEvent())
-
-    fun moveToCurrentLocation() = events.offer(MoveToCurrentLocationEvent())
-
-    fun setZoomLevel(newZoomLevel: Double) {
-        viewModelScope.launch {
-            settingsDataStore.updateData { currentSettings ->
-                currentSettings.toBuilder().apply {
-                    lastZoomLevel = newZoomLevel
-                }.build()
-            }
-        }
-    }
-
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
-        events.offer(ExceptionEvent(exception))
+        events.trySend(ExceptionEvent(exception))
     }
 
     companion object {
@@ -255,7 +266,7 @@ class MapVM(private val settingsDataStore: DataStore<Settings>, ) : ViewModel() 
 
         private fun createOsmApiConfig(baseUrl: String) =
             OsmApiConfig(
-                Uri.parse(baseUrl),
+                URI(baseUrl),
                 "${BuildConfig.APPLICATION_ID}/${BuildConfig.VERSION_NAME}"
             )
     }

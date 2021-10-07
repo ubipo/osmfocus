@@ -11,13 +11,13 @@ internal class ConversionTest {
     private val nodeLat = 1.0
     private val nodeLon = 2.0
     private val nodeTypedId = TypedId(ElementType.NODE, nodeId)
-    private val apiNode = OsmApiNode(ElementType.NODE, nodeId, nodeVersion, 60, 70, nodeLat, nodeLon)
+    private val apiNode = Node(ElementType.NODE, nodeId, nodeVersion, 60, 70, nodeLat, nodeLon)
     private val node = OsmNode(VersionedIdMeta(nodeId, nodeVersion), emptyMap(), Coordinate(nodeLon, nodeLat))
 
     private val wayId = 40L
     private val wayVersion = 30
     private val wayTypedId = TypedId(ElementType.WAY, wayId)
-    private val apiWay = OsmApiWay(ElementType.WAY, wayId, wayVersion, 60, 70, listOf(nodeId))
+    private val apiWay = Way(ElementType.WAY, wayId, wayVersion, 60, 70, listOf(nodeId))
     private val way = OsmWay(VersionedIdMeta(wayId, wayVersion), emptyMap(), listOf(node))
 
     private val elements = MutableOsmElements()

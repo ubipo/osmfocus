@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="@{String.format(`%s %d`, vm.element.type.capitalized, vm.element.meta.id)}"
+            android:text="@{String.format(`%s %d`, vm.typedId.type.capitalized, vm.typedId.id)}"
             tools:text="Relation 146842351"
             android:textIsSelectable="true" />
 
@@ -35,7 +35,7 @@
             style="@style/TextAppearance.AppCompat.Body1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:htmlText="@{@string/last_edit_date(vf.prettyTime(vm.userVersionedMeta.lastEditTimestamp), vm.userVersionedMeta.lastEditTimestamp.toString())}"
+            android:htmlText="@{vm.element.lastEditTimestamp == null ? @string/last_edit_date_unknown : @string/last_edit_date(vf.prettyTime(vm.element.lastEditTimestamp), vm.element.lastEditTimestamp.toString())}"
             tools:text="Last edited just now by pfiers"
             android:textIsSelectable="true" />
 
@@ -43,7 +43,7 @@
             style="@style/TextAppearance.AppCompat.Body1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:htmlText="@{@string/last_edit_by(vm.userVersionedMeta.toUserProfileUrl(), vm.userVersionedMeta.username)}"
+            android:htmlText="@{vm.element.username == null ? @string/last_edit_by_unknown : @string/last_edit_by(vm.element.userProfileUrl, vm.element.username)}"
             tools:text="Changeset 186743"
             android:textIsSelectable="true" />
 
@@ -51,7 +51,7 @@
             style="@style/TextAppearance.AppCompat.Body1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:htmlText="@{@string/last_edit_changeset(vm.userVersionedMeta.toChangesetUrl(), vm.userVersionedMeta.changeset)}"
+            android:htmlText="@{vm.element.changeset == null ? @string/last_edit_changeset_unknown : @string/last_edit_changeset(vm.element.changesetUrl, vm.element.changeset)}"
             tools:text="Changeset 186743"
             android:textIsSelectable="true" />
 

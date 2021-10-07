@@ -1,19 +1,15 @@
 package net.pfiers.osmfocus.view.fragments
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import kotlinx.android.synthetic.main.fragment_exception_dialog.*
-import kotlinx.android.synthetic.main.fragment_settings.*
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -21,13 +17,9 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
-import net.pfiers.osmfocus.extensions.createVMFactory
-import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
-import net.pfiers.osmfocus.view.support.activityAs
-import net.pfiers.osmfocus.view.support.app
+import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.SettingsVM
-import net.pfiers.osmfocus.viewmodel.support.*
-import kotlin.coroutines.coroutineContext
+import net.pfiers.osmfocus.viewmodel.support.EditTagboxLongLinesEvent
 
 class SettingsFragment : Fragment() {
     private val settingsVM: SettingsVM by viewModels {
@@ -36,13 +28,11 @@ class SettingsFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            settingsVM.events.receiveAsFlow().collect { e ->
-                val nav = activityAs<SettingsNavigator>()
-                when (e) {
-                    is EditBaseMapsEvent -> nav.editBaseMaps()
+        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+            settingsVM.events.receiveAsFlow().collect { event ->
+                when(event) {
                     is EditTagboxLongLinesEvent -> showEditTagboxLongLinesDialog()
-                    is ShowAboutEvent -> nav.showAbout()
+                    else -> activityAs<EventReceiver>().handleEvent(event)
                 }
             }
         }
@@ -61,7 +51,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showEditTagboxLongLinesDialog() {
-        AlertDialog.Builder(requireContext()).apply {
+        MaterialAlertDialogBuilder(requireContext()).apply {
             setTitle(R.string.tagbox_long_lines_edit_dialog_title)
             val choices = listOf(
                 Settings.TagboxLongLines.ELLIPSIZE to R.string.setting_tagbox_long_lines_ellipsize,

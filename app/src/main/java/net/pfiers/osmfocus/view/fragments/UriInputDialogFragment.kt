@@ -70,7 +70,7 @@ class UriInputDialogFragment : DialogFragment() {
         if (
             mustBeHttp && (
                 uri.scheme == null
-                || !httpSchemes.contains(uri.scheme.toLowerCase(Locale.ROOT))
+                || !httpSchemes.contains(uri.scheme.lowercase())
             )
         ) {
             binding.editTextUrl.error = "Must be a http(s) URL"

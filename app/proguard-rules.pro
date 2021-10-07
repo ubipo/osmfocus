@@ -19,11 +19,11 @@
 -keepattributes *Annotation*
 #-keep class com.google.common.eventbus.** { *; }
 
--keep class net.pfiers.osmfocus.service.osmapi.OsmApiRes { *; }
--keep class net.pfiers.osmfocus.service.osmapi.OsmApiElement { *; }
--keep class net.pfiers.osmfocus.service.osmapi.OsmApiNode { *; }
--keep class net.pfiers.osmfocus.service.osmapi.OsmApiWay { *; }
--keep class net.pfiers.osmfocus.service.osmapi.OsmApiRelation { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.ElementsRes { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.Element { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.Node { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.Way { *; }
+-keep class net.pfiers.osmfocus.service.osmapi.Relation { *; }
 -keep class net.pfiers.osmfocus.service.osmapi.OsmApiRelationMember { *; }
 
 -keepattributes RuntimeVisibleAnnotations

@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="@{vf.gravityFromTbLoc(vm.tbLoc)}"
             android:background="@{vf.bgFromParams(5, vm.color, Color.WHITE)}"
-            android:visibility="@{vm.element != null}"
+            android:visibility="@{vm.elementCentroidAndId != null}"
             android:clickable="true"
             android:focusable="true">
 

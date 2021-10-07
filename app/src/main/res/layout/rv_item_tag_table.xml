@@ -7,11 +7,11 @@
 
         <variable
             name="key"
-            type="android.text.SpannableString" />
+            type="CharSequence" />
 
         <variable
             name="value"
-            type="android.text.SpannableString" />
+            type="CharSequence" />
 
     </data>
 

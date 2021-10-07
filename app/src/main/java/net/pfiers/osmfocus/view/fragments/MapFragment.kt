@@ -1,13 +1,15 @@
 package net.pfiers.osmfocus.view.fragments
 
 import android.Manifest
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.graphics.Rect
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -21,10 +23,6 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
-import com.github.kittinunf.result.Result
-import com.github.kittinunf.result.getOrElse
-import com.github.kittinunf.result.onError
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -32,25 +30,23 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
-import net.pfiers.osmfocus.extensions.createVMFactory
-import net.pfiers.osmfocus.extensions.kotlin.toLinkedMap
-import net.pfiers.osmfocus.extensions.value
-import net.pfiers.osmfocus.osmdroid.overlays.CrosshairOverlay
-import net.pfiers.osmfocus.osmdroid.overlays.GeometryOverlay
-import net.pfiers.osmfocus.osmdroid.overlays.TagBoxLineOverlay
-import net.pfiers.osmfocus.osmdroid.toEnvelope
-import net.pfiers.osmfocus.osmdroid.toGeoPoint
-import net.pfiers.osmfocus.osmdroid.toPoint
 import net.pfiers.osmfocus.service.MapApiDownloadManager
-import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
-import net.pfiers.osmfocus.service.ZoomLevelRecededException
 import net.pfiers.osmfocus.service.basemaps.BaseMap
 import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
+import net.pfiers.osmfocus.service.osm.ElementCentroidAndId
 import net.pfiers.osmfocus.service.osmapi.OsmApiConnectionException
 import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocations.*
+import net.pfiers.osmfocus.service.toLinkedMap
+import net.pfiers.osmfocus.service.value
+import net.pfiers.osmfocus.view.osmdroid.overlays.CrosshairOverlay
+import net.pfiers.osmfocus.view.osmdroid.overlays.GeometryOverlay
+import net.pfiers.osmfocus.view.osmdroid.overlays.TagBoxLineOverlay
+import net.pfiers.osmfocus.view.osmdroid.toCoordinate
+import net.pfiers.osmfocus.view.osmdroid.toEnvelope
+import net.pfiers.osmfocus.view.osmdroid.toGeoPoint
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
 import net.pfiers.osmfocus.viewmodel.MapVM.Companion.MIN_DOWNLOAD_ZOOM_LEVEL
@@ -70,8 +66,8 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import java.lang.Double.max
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 @ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
@@ -83,7 +79,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
         createVMFactory { MapVM(app.settingsDataStore) }
     }
     private val attributionVM: AttributionVM by activityViewModels()
-    private val exceptionHandler by lazy { activityAs<ExceptionHandler>() }
 
     private var moveToCurrentLocationOnLocationPermissionGranted = AtomicBoolean()
     private val requestPermissionLauncher = registerForActivityResult(
@@ -145,7 +140,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
         tagBoxFragments = lTagBoxFragment
         tagBoxHitRects = lTagBoxHitRects
 
-        lifecycleScope.launch {
+        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             mapVM.events.receiveAsFlow().collect { event ->
                 when(event) {
                     is ExceptionEvent -> {
@@ -162,19 +157,21 @@ class MapFragment : Fragment(), MapEventsReceiver {
                             }
                         }
                     }
-                    is ShowSettingsEvent -> {
-                        activityAs<SettingsNavigator>().showSettings()
-                    }
                     is MoveToCurrentLocationEvent -> {
                         moveToCurrentLocation(launchRequestIfDenied = true)
                     }
+                    is ActionsVisibilityEvent -> {
+                        updateActionsVisibility(event.actionsShouldBeVisible)
+                    }
+                    else -> activityAs<EventReceiver>().handleEvent(event)
                 }
             }
         }
+
+        Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID
     }
 
     @Suppress("UnstableApiUsage")
-    @ExperimentalTime
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -208,11 +205,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
         }
 
         addTagBoxFragmentContainers()
-
-        val context = requireContext()
-        Configuration.getInstance().load(
-            context, PreferenceManager.getDefaultSharedPreferences(context)
-        )
 
         map = binding.map
 
@@ -272,7 +264,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
                     synchronized(this@MapFragment) {
                         previousSaveLocationJob?.cancel()
                         previousSaveLocationJob = backgroundScope.launch {
-                            delay((0.5).seconds)
+                            delay(Duration.seconds(0.5).inWholeMilliseconds)
                             settingsDataStore.updateData { currentSettings ->
                                 currentSettings.toBuilder()
                                     .setLastLocation(map.mapCenter.toSettingsLocation())
@@ -290,7 +282,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
                         synchronized(this@MapFragment) {
                             previousSaveZoomJob?.cancel()
                             previousSaveZoomJob = backgroundScope.launch {
-                                delay((0.5).seconds)
+                                delay(Duration.seconds((0.5)))
                                 mapVM.setZoomLevel(e.zoomLevel)
                             }
                         }
@@ -320,6 +312,39 @@ class MapFragment : Fragment(), MapEventsReceiver {
         return binding.root
     }
 
+    private fun updateActionsVisibility(actionsShouldBeVisible: Boolean) {
+        if (!this::binding.isInitialized) return
+        animateCircularVisibility(binding.locationBtn, actionsShouldBeVisible)
+        animateCircularVisibility(binding.settingsBtn, actionsShouldBeVisible)
+    }
+
+    private fun animateCircularVisibility(view: View, shouldBeVisible: Boolean) {
+        val isVisible = view.visibility == View.VISIBLE
+        if (isVisible != shouldBeVisible) {
+            val newVisibility = if (shouldBeVisible) View.VISIBLE else View.INVISIBLE
+            val cx = view.width / 2
+            val cy = view.height / 2
+            val fullyShownRadius = Math.hypot(cx.toDouble(), cy.toDouble()).toFloat()
+            val (startRadius, endRadius) = if (shouldBeVisible) {
+                Pair(0f, fullyShownRadius)
+            } else {
+                Pair(fullyShownRadius, 0f)
+            }
+            val anim = ViewAnimationUtils.createCircularReveal(view, cx, cy, startRadius, endRadius)
+            if (shouldBeVisible) {
+                view.visibility = newVisibility
+            } else {
+                anim.addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        super.onAnimationEnd(animation)
+                        view.visibility = newVisibility
+                    }
+                })
+            }
+            anim.start()
+        }
+    }
+
     private fun updateLineOverlayStartPoint(tbLoc: TbLoc) {
         val tagBoxHitRect = tagBoxHitRects[tbLoc] ?: return
         if (!this::mapLocationOnScreen.isInitialized) return
@@ -339,7 +364,7 @@ class MapFragment : Fragment(), MapEventsReceiver {
             val lastKnownLocation =
                 locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             if (lastKnownLocation != null) {
-                map.controller.animateTo(lastKnownLocation.toGeoPoint())
+                map.controller.animateTo(lastKnownLocation.toGeoPoint(), MOVE_TO_CURRENT_LOCATION_ZOOM, null)
             }
         } else if (launchRequestIfDenied) {
             moveToCurrentLocationOnLocationPermissionGranted.set(true)
@@ -358,7 +383,6 @@ class MapFragment : Fragment(), MapEventsReceiver {
     }
 
     @Suppress("UnstableApiUsage")
-    @ExperimentalTime
     override fun onStop() {
         val tran = parentFragmentManager.beginTransaction()
         for (tagBoxFragment in tagBoxFragments.values) {
@@ -395,10 +419,11 @@ class MapFragment : Fragment(), MapEventsReceiver {
 
     @ExperimentalTime
     private fun mapScrollHandler() {
-        val center = map.mapCenter.toPoint(geometryFactory)
         val envelope = map.boundingBox.toEnvelope()
         val zoomLevel = map.zoomLevelDouble
-        mapVM.mapState = MapVM.MapState(center, envelope, zoomLevel)
+        if (envelope.area > ENVELOPE_MIN_AREA) {
+            mapVM.mapState = MapVM.MapState(envelope, zoomLevel)
+        }
     }
 
     override fun onResume() {
@@ -416,16 +441,25 @@ class MapFragment : Fragment(), MapEventsReceiver {
         for (tbLoc in tbLocations) {
             val elementToDisplay = tagBoxElementPairs[tbLoc]
 
-            val tagBoxVM = tagBoxVms[tbLoc] ?: error("")
+            val tagBoxVM = tagBoxVms[tbLoc] ?: error("") // TODO: Make error unrepresentable
             val lineOverlay = lineOverlays[tbLoc] ?: error("")
             val geometryOverlay = geometryOverlays[tbLoc] ?: error("")
             val overlaysEnabled = elementToDisplay !== null
 
-            lifecycleScope.launch {
-                val prevElem = tagBoxVM.element.value
-                if (prevElem != elementToDisplay?.element)
-                    tagBoxVM.element.value = elementToDisplay?.element
-            }.join()
+            if (elementToDisplay !== null) {
+                lifecycleScope.launch {
+                    val prevElem = tagBoxVM.elementCentroidAndId.value?.element
+                    if (prevElem == null || prevElem != elementToDisplay.element) {
+                        val elementCentroidAndId = ElementCentroidAndId(
+                            elementToDisplay.id,
+                            elementToDisplay.element,
+                            elementToDisplay.geometry.centroid.coordinate
+                        )
+                        tagBoxVM.elementCentroidAndId.value = elementCentroidAndId
+                    }
+                }.join()
+            }
+
             lineOverlay.isEnabled = overlaysEnabled
             geometryOverlay.isEnabled = overlaysEnabled
 
@@ -442,8 +476,12 @@ class MapFragment : Fragment(), MapEventsReceiver {
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
 
     override fun longPressHelper(p: GeoPoint?): Boolean {
-        val current = binding.btnContainer.visibility
-        binding.btnContainer.visibility = if (current == View.GONE) View.VISIBLE else View.GONE
+//        val current = binding.btnContainer.visibility
+//        binding.btnContainer.visibility = if (current == View.GONE) View.VISIBLE else View.GONE
+        if (p != null) {
+            map.controller.animateTo(p)
+            LocationActionsDialogFragment.newInstance(p.toCoordinate()).showWithDefaultTag(childFragmentManager)
+        }
         return true
     }
 
@@ -464,6 +502,9 @@ class MapFragment : Fragment(), MapEventsReceiver {
     }
 
     companion object {
+        const val ENVELOPE_MIN_AREA = 1e-8 // Considered a null envelope below this
+        const val MOVE_TO_CURRENT_LOCATION_ZOOM = 17.5
+        const val MOVE_TO_TAPPED_LOCATION_ZOOM = 20.0
         const val MAX_ZOOM_LEVEL_BEYOND_BASE_MAP = 24.0
         const val MIN_MAX_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL + 2.5
         val PALETTE = PaletteId.PALETTE_VIBRANT

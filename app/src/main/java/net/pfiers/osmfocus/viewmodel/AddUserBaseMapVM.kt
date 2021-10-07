@@ -9,28 +9,25 @@ import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.onError
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.extensions.NonNullObservableField
-import net.pfiers.osmfocus.extensions.value
+import net.pfiers.osmfocus.service.NonNullObservableField
 import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
 import net.pfiers.osmfocus.service.basemaps.resolveAbcSubdomains
 import net.pfiers.osmfocus.service.db.UserBaseMap
+import net.pfiers.osmfocus.service.value
+import net.pfiers.osmfocus.viewmodel.support.NavigateUpEvent
+import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import java.net.URISyntaxException
-import java.util.*
 
 
 class AddUserBaseMapVM(
     private val repository: BaseMapRepository,
-    private val navigator: Navigator
 ) : ViewModel() {
+    val events = createEventChannel()
     val name = NonNullObservableField("")
     val urlTemplate = NonNullObservableField("")
     val nameErrorRes = ObservableField<@StringRes Int>()
     val urlTemplateErrorRes = ObservableField<@StringRes Int>()
     val valid = ObservableBoolean(false)
-
-    interface Navigator {
-        fun goBack()
-    }
 
     fun onNameFocusChange(hasFocus: Boolean) {
         val shouldShowError = !hasFocus && name.value.isNotEmpty()
@@ -48,15 +45,17 @@ class AddUserBaseMapVM(
 
     fun addUserBaseMap() {
         validate(setNameError = true, setUrlTemplateError = true)?.let { (name, urlTemplate) ->
+            val urlTemplateNormalized =
+                if (urlTemplate.endsWith("/")) urlTemplate else "$urlTemplate/"
             viewModelScope.launch {
-                repository.insert(UserBaseMap(name, null, urlTemplate))
+                repository.insert(UserBaseMap(name, null, urlTemplateNormalized))
             }
-            navigator.goBack()
+            done()
         }
     }
 
-    fun cancel() {
-        navigator.goBack()
+    fun done() {
+        events.trySend(NavigateUpEvent())
     }
 
     private fun validate(
@@ -91,12 +90,7 @@ class AddUserBaseMapVM(
             }
 
             val scheme = uri.scheme
-            if (scheme == null || !HTTP_SCHEMES.contains(
-                    scheme.toLowerCase(
-                        Locale.ROOT
-                    )
-                )
-            ) {
+            if (scheme == null || !HTTP_SCHEMES.contains(scheme.lowercase())) {
                 return Result.error(ValidityException(R.string.add_user_base_map_url_template_err_http))
             }
 

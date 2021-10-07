@@ -1,10 +1,9 @@
-package net.pfiers.osmfocus
+package net.pfiers.osmfocus.service
 
 import net.sf.geographiclib.Geodesic
 import net.sf.geographiclib.PolygonArea
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
-
 
 fun Coordinate.distanceGeo(geodesic: Geodesic, other: Coordinate): Double {
     val distancePoly = PolygonArea(geodesic, true)

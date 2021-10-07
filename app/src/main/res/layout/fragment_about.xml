@@ -44,22 +44,14 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="72dp"
-                    android:onClick="@{() -> vm.showAppInfo()}">
+                    android:onClick="@{() -> vm.showMoreInfo()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/moreInfoIcon"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:background="#E8E8E8"
-                        android:tint="@color/colorPrimary"
-                        app:contentPadding="5dp"
+                        style="@style/SettingsListItemIcon"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:shapeAppearanceOverlay="@style/CornerSize"
                         app:srcCompat="@drawable/ic_baseline_info_24" />
 
                     <LinearLayout
@@ -94,22 +86,58 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="72dp"
-                    android:onClick="@{() -> vm.showIssueTracker()}">
+                    android:onClick="@{() -> vm.showVersionInfo()}">
 
                     <com.google.android.material.imageview.ShapeableImageView
-                        android:id="@+id/issueIcon"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:background="#E8E8E8"
-                        android:tint="@color/colorPrimary"
+                        android:id="@+id/appVersionIcon"
+                        style="@style/SettingsListItemIcon"
                         app:contentPadding="5dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:shapeAppearanceOverlay="@style/CornerSize"
+                        app:srcCompat="@drawable/ic_baseline_app_settings_alt_24" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/appVersionIcon"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:id="@+id/appVersion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/app_version"
+                            android:textAppearance="?attr/textAppearanceListItem" />
+
+                        <TextView
+                            android:id="@+id/appVersionSecond"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/app_version_second_line"
+                            android:textAppearance="?attr/textAppearanceListItemSecondary" />
+
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:onClick="@{() -> vm.showIssueTracker()}">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/issueIcon"
+                        style="@style/SettingsListItemIcon"
+                        app:contentPadding="5dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:srcCompat="@drawable/ic_baseline_bug_report_24" />
 
                     <LinearLayout
@@ -148,18 +176,10 @@
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/sourceCodeIcon"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:background="#E8E8E8"
-                        android:tint="@color/colorPrimary"
-                        app:contentPadding="5dp"
+                        style="@style/SettingsListItemIcon"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:shapeAppearanceOverlay="@style/CornerSize"
                         app:srcCompat="@drawable/ic_git_icon" />
 
                     <LinearLayout
@@ -198,18 +218,10 @@
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/coffeeIcon"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:background="#E8E8E8"
-                        android:tint="@color/colorPrimary"
-                        app:contentPadding="5dp"
+                        style="@style/SettingsListItemIcon"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:shapeAppearanceOverlay="@style/CornerSize"
                         app:srcCompat="@drawable/ic_bmc_simplified" />
 
                     <LinearLayout

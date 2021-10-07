@@ -10,6 +10,7 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.mapError
+import net.pfiers.osmfocus.BuildConfig
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
@@ -23,7 +24,7 @@ const val HTTP_ACCEPT = "Accept"
 const val HTTP_USER_AGENT = "User-Agent"
 const val MIME_PNG = "image/png"
 const val MIME_JSON_UTF8 = "application/json; charset=utf-8"
-private const val PREVIEW_TILE_XYZ = "15/16807/10989.png" // SW of Leuven
+private const val PREVIEW_TILE_XYZ = "15/16807/10990.png" // SW of Leuven
 
 class TileFetchException(override val message: String) : Exception()
 
@@ -40,6 +41,7 @@ suspend fun BaseMap.fetchPreviewTile(): Result<Bitmap, Exception> {
 
     return url.toString()
         .httpGet()
+        .header(HTTP_USER_AGENT, "${BuildConfig.APPLICATION_ID}/${BuildConfig.VERSION_NAME}")
         .header(HTTP_ACCEPT, MIME_PNG)
         .awaitByteArrayResponseResult().third
         .map { data ->

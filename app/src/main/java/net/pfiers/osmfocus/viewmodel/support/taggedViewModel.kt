@@ -1,5 +1,7 @@
 package net.pfiers.osmfocus.viewmodel.support
 
+import android.app.Activity
+import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
@@ -60,6 +62,29 @@ inline fun <reified VM : ViewModel> Fragment.activityTaggedViewModels(
  */
 @MainThread
 fun <VM : ViewModel> Fragment.createTaggedViewModelLazy(
+    viewModelClass: KClass<VM>,
+    tagsProducer: () -> Iterable<String>,
+    storeProducer: () -> ViewModelStore,
+    factoryProducer: (() -> ViewModelProvider.Factory)? = null
+): Lazy<VM> {
+    val factoryPromise = factoryProducer ?: {
+        defaultViewModelProviderFactory
+    }
+    return TaggedViewModelLazy(viewModelClass, tagsProducer, storeProducer, factoryPromise)
+}
+
+@MainThread
+inline fun <reified VM : ViewModel> ComponentActivity.taggedViewModels(
+    noinline tagsProducer: () -> Iterable<String>,
+    noinline factoryProducer: (() -> ViewModelProvider.Factory)? = null
+): Lazy<VM> = createTaggedViewModelLazy(
+    VM::class, tagsProducer, { viewModelStore },
+    factoryProducer ?: { defaultViewModelProviderFactory }
+)
+
+
+@MainThread
+fun <VM : ViewModel> ComponentActivity.createTaggedViewModelLazy(
     viewModelClass: KClass<VM>,
     tagsProducer: () -> Iterable<String>,
     storeProducer: () -> ViewModelStore,

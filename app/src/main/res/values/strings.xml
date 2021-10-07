@@ -107,21 +107,42 @@
     <string name="setting_zoom_beyond_base_map_max_disabled">Disabled</string>
     <string name="setting_zoom_beyond_base_map_max">Zoom beyond basemap max</string>
     <string name="view_on_openstreetmap_org">View on openstreetmap.org</string>
-    <string name="open_geo_uri">Open geo: link</string>
+    <string name="open_geo_uri">Open geo: link (Google Maps, Waze, Vespucci…)</string>
     <string name="open_in_osmand">Open in OsmAnd</string>
     <string name="copy_coordinates">Copy coordinates</string>
     <string name="something_copied">%1$s copied!</string>
     <string name="tag_table_header_key">Key</string>
     <string name="tag_table_header_value">Value</string>
     <string name="tag_table_header_wiki">Wiki</string>
-    <string name="osm_wiki">OSM Wiki</string>
+    <string name="osm_wiki">OSM A</string>
     <string name="last_edit_date"><![CDATA[
         Last edited %1$s <small>(%2$s)</small>
+    ]]></string>
+    <string name="last_edit_date_unknown"><![CDATA[
+        Last edited <i>???</i>
     ]]></string>
     <string name="last_edit_by"><![CDATA[
          …by <a href="%1$s">%2$s</a>
     ]]></string>
+    <string name="last_edit_by_unknown"><![CDATA[
+         …by <i>???</i>
+    ]]></string>
     <string name="last_edit_changeset"><![CDATA[
         …as part of changeset <a href="%1$s">%2$s</a>.
     ]]></string>
+    <string name="last_edit_changeset_unknown"><![CDATA[
+        …as part of changeset ???.
+    ]]></string>
+    <string name="app_version">App version</string>
+    <string name="app_version_second_line">Current version, build type</string>
+    <string name="create_github_issue">Create GitHub Issue</string>
+    <string name="send_email">Send Email</string>
+    <string name="cancel">Cancel</string>
+    <string name="version_info_field_version">Version</string>
+    <string name="version_info_field_version_code">Version code</string>
+    <string name="version_info_field_build_type">Build type</string>
+    <string name="version_info_field_flavor">Build flavor</string>
+    <string name="app_version_dialog_title">App version</string>
+    <string name="actions_for_coordinate">Actions for %1$s</string>
+    <string name="intent_oauth_callback">Callback for openstreetmap.org authentication</string>
 </resources>
