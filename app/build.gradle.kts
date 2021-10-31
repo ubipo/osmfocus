@@ -66,14 +66,14 @@ android {
     buildTypes {
         named("release") {
 //            isDebuggable = true
-            isMinifyEnabled = true
 
-            setProguardFiles(
-                listOf(
-                    getDefaultProguardFile("proguard-android.txt"),
-                    "proguard-rules.pro"
-                )
-            )
+            postprocessing {
+                isRemoveUnusedCode = true
+                isRemoveUnusedResources = true
+                isOptimizeCode = true
+                isObfuscate = false
+                proguardFiles("proguard-rules.pro")
+            }
         }
     }
 
