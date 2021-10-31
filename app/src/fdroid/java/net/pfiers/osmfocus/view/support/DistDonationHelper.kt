@@ -1,15 +1,15 @@
 package net.pfiers.osmfocus.view.support
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 
 /**
  * F-Droid-specific DonationHelper.
  *
  * Just opens buymeacoffee.com in the user's browser.
  */
-class DistDonationHelper (val activity: AppCompatActivity) : DonationHelper(activity) {
+class DistDonationHelper (val activity: Activity) : DonationHelper(activity) {
     override fun showDonationOptions() {
         activity.startActivity(Intent(Intent.ACTION_VIEW, DONATION_URL))
     }

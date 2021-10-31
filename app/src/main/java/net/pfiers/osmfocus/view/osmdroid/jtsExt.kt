@@ -33,6 +33,11 @@ fun GeometryCollection.toGeoPointsPair(): Pair<MutableList<GeoPoint>, MutableLis
         when (geometry) {
             is Point -> geoPoints.add(geometry.toGeoPoint())
             is LineString -> geoPointLists.add(geometry.toGeoPointList())
+            is GeometryCollection -> {
+                val (points, pointLists) = geometry.toGeoPointsPair()
+                geoPoints.addAll(points)
+                geoPointLists.addAll(pointLists)
+            }
             else -> throw NotImplementedError(
                 "Converting ${geometry::class.simpleName} geometries to GeoPoints"
             )

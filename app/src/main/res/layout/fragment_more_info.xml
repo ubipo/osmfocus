@@ -13,26 +13,37 @@
             android:id="@+id/toolbar"
             android:layout_width="0dp"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/colorPrimary"
+            android:background="@color/primary"
             android:theme="@style/ToolbarTheme"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:popupTheme="@style/ToolbarPopupTheme" />
 
-        <WebView
-            android:id="@+id/info"
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar"
-            android:layout_marginStart="@dimen/fragment_vertical_margin"
-            android:layout_marginEnd="@dimen/fragment_vertical_margin"
-            android:layout_marginTop="@dimen/fragment_vertical_margin"
-            android:layout_marginBottom="@dimen/fragment_vertical_margin"
-            android:background="#fff"
-            android:layout_height="0dp"
-            android:layout_width="0dp" />
+            app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+            <!-- FrameLayout to fix child margins -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:ignore="WebViewLayout">
+
+                <WebView
+                    android:id="@+id/info"
+                    android:layout_margin="@dimen/fragment_vertical_margin"
+                    android:background="#fff"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent" />
+
+            </FrameLayout>
+
+        </ScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

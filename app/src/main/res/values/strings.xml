@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">OSMfocus Reborn</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="settings">Settings</string>
     <string name="osm_api_base_url">OSM API base URL</string>
@@ -21,17 +19,25 @@
     <string name="base_map_manage">Manage…</string>
     <string name="map_data_openstreetmap_contributors">Map data © OpenStreetMap contributors</string>
     <string name="add_user_base_map_name_hint">My base map</string>
-    <string name="add_user_base_map_url_template_hint">https://{s}.tile.example.org/</string>
+    <string name="add_user_base_map_url_template_hint">https://a.tile.example.org/</string>
     <string name="add_base_map_add">Add</string>
     <string name="add_base_map_cancel">Cancel</string>
     <string name="add_user_base_map_name">Name</string>
-    <string name="add_user_base_map_template">URL Template</string>
-    <string name="add_user_base_map_template_info">
-        The \"{s}\" will be replaced by \"a\", \"b\" and \"c\".
-        Zoom, x, and y get appended after the trailing slash like \"{z}/{x}/{y}.png\".
+    <string name="add_user_base_map_base_url">URL</string>
+    <string name="add_user_base_map_base_url_info">
+        Zoom, x, and y get appended after the trailing slash like \"{z}/{x}/{y}\".
+        If the tile server uses subdomains (commonly \'a\', \'b\', \'c\'…) and using the base domain
+        does not work, try prepending any of these subdomains.
         \n
-        \nFor more info about tile servers, see wiki.openstreetmap.org/wiki/Tile_servers .
+        \nFor more information about tile servers, see wiki.openstreetmap.org/wiki/Tile_servers .
     </string>
+    <string name="add_user_base_map_file_ending">File ending</string>
+    <string name="add_user_base_map_file_ending_hint">.png</string>
+    <string name="add_user_base_map_max_zoom">Maximum zoom level</string>
+    <string name="add_user_base_map_max_zoom_hint">18</string>
+    <string name="add_user_base_map_max_zoom_err_number">Must be a whole number</string>
+    <string name="add_user_base_map_max_zoom_err_too_small">Must be at least 0</string>
+    <string name="add_user_base_map_max_zoom_err_too_big">Must be at least most 25</string>
     <string name="user_base_maps_add_btn_description">Add base map</string>
     <string name="base_maps_title_builtin">Built-in</string>
     <string name="base_maps_title_user">Own</string>
@@ -77,9 +83,12 @@
             potentially non-free services.</p>
 
         <h2>Libraries</h2>
+        Among others:
         <ul>
             <li><a href="https://github.com/osmdroid/osmdroid">osmdroid</a>: slippy map</li>
-            <li><a href="https://github.com/locationtech/jts">JTS Topology Suite</a></li>
+            <li><a href="https://github.com/locationtech/jts">JTS</a>: Java Topology Suite</li>
+            <li><a href="https://github.com/kittinunf/fuel">Fuel</a>: HTTP networking for Kotlin</li>
+            <li><a href="https://github.com/ocpsoft/prettytime">prettytime</a>: Date and Time Formatting</li>
         </ul>
         ]]>
     </string>
@@ -145,4 +154,5 @@
     <string name="app_version_dialog_title">App version</string>
     <string name="actions_for_coordinate">Actions for %1$s</string>
     <string name="intent_oauth_callback">Callback for openstreetmap.org authentication</string>
+    <string name="copy_coordinates_clipboard_label">Coordinates</string>
 </resources>

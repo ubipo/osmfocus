@@ -7,15 +7,15 @@ import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.onError
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.pfiers.osmfocus.service.extensions.toPolygon
 import net.pfiers.osmfocus.observableProperty
+import net.pfiers.osmfocus.service.extensions.toPolygon
 import net.pfiers.osmfocus.service.osm.Elements
 import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.*
 import net.pfiers.osmfocus.viewmodel.support.Event
+import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import net.sf.geographiclib.Geodesic
 import org.locationtech.jts.geom.Envelope
 import org.locationtech.jts.geom.Geometry
@@ -23,7 +23,6 @@ import org.locationtech.jts.geom.GeometryFactory
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 import kotlin.time.toDuration
 
 @ExperimentalTime
@@ -31,10 +30,10 @@ import kotlin.time.toDuration
 class MapApiDownloadManager(
     var apiConfig: OsmApiConfig,
     maxQps: Double,
-    val maxArea: Double,
+    private val maxArea: Double,
     private val geometryFactory: GeometryFactory
 ) {
-    val events = Channel<Event>(10)
+    val events = createEventChannel()
 
     private var _state: State by observableProperty(State.IDLE, events, this::state)
     val state get() = _state
@@ -60,7 +59,7 @@ class MapApiDownloadManager(
 
     fun getGeometry(typedId: TypedId): Geometry? {
         return elementGeometries[typedId]?: run {
-            val geometry = elements.toGeometry(typedId, geometryFactory)
+            val geometry = elements.toGeometry(typedId, geometryFactory, true)
             if (geometry != null) {
                 elementGeometries[typedId] = geometry
             }
@@ -81,7 +80,6 @@ class MapApiDownloadManager(
      * @throws FresherDownloadCe if a fresher download was started
      */
     suspend fun download(envelopeProvider: () -> Result<Envelope, Exception>): Result<Unit, Exception> {
-        val wholeThingStart = TimeSource.Monotonic.markNow()
         // 1. Check for existing download
         if (!downloadLock.tryLock()) {
             // Download in progress (or waiting for timeout): schedule a new one
@@ -92,9 +90,7 @@ class MapApiDownloadManager(
                 scheduledDownloadJob = newScheduledDownloadJob
                 newScheduledDownloadJob
             }.apply {
-                return resultOfSuspend {
-                    await()
-                }
+                return resultOfSuspend { await() }
             }
         }
 
@@ -109,12 +105,13 @@ class MapApiDownloadManager(
             processingScope.launch {
                 processDownload(apiRes)
                 _isProcessing = false
-                Timber.d("Whole thing took: ${wholeThingStart.elapsedNow().inWholeMilliseconds}")
             }
 
             // 4. Update seen area
             downloadedArea = downloadedArea.union(envelope.toPolygon(geometryFactory))
         }
+
+        downloadLock.unlock()
 
         scheduledJobLock.withLock {
             val lScheduledDownloadJob = scheduledDownloadJob
@@ -127,12 +124,11 @@ class MapApiDownloadManager(
             } else {
                 scheduledDownloadJob = null
                 scheduledDownloadScope.launch {
-                    lScheduledDownloadJob.complete(download(envelopeProvider))
+                    val recursiveRes = download(envelopeProvider)
+                    lScheduledDownloadJob.complete(recursiveRes)
                 }
             }
         }
-        downloadLock.unlock()
-
         return result
     }
 
@@ -159,11 +155,14 @@ class MapApiDownloadManager(
         }.onError { ex -> return Result.error(ex) }.get()
         if (envelope.isNull) return Result.success(null)
         val envelopeArea = envelope.areaGeo(Geodesic.WGS84)
-        if (envelopeArea > maxArea) return Result.error(
-            MaxDownloadAreaExceededException(
-                "Max download area exceeded ($envelopeArea > $maxArea)"
+        if (envelopeArea > maxArea) {
+            Timber.d("Area exceeded")
+            return Result.error(
+                MaxDownloadAreaExceededException(
+                    "Max download area exceeded ($envelopeArea > $maxArea)"
+                )
             )
-        )
+        }
 
         // 3. Fire download
         _state = State.REQUEST

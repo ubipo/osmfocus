@@ -12,13 +12,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.*
-import net.pfiers.osmfocus.service.cartesianProduct
-import net.pfiers.osmfocus.service.containedSubList
-import net.pfiers.osmfocus.service.discard
-import net.pfiers.osmfocus.service.noIndividualValueReuse
-import net.pfiers.osmfocus.service.MapApiDownloadManager
-import net.pfiers.osmfocus.service.MaxDownloadAreaExceededException
-import net.pfiers.osmfocus.service.ZoomLevelRecededException
+import net.pfiers.osmfocus.service.*
+import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
 import net.pfiers.osmfocus.service.osm.Element
 import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
@@ -35,7 +30,10 @@ import kotlin.properties.Delegates
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
+class MapVM(
+    private val settingsDataStore: DataStore<Settings>,
+    private val baseMapRepository: BaseMapRepository
+) : ViewModel() {
     data class MapState(val envelope: Envelope, val zoomLevel: Double)
 
     val events = createEventChannel()
@@ -51,18 +49,42 @@ class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
         settings.lastZoomLevel
     }.asLiveData()
     var mapState: MapState? by Delegates.observable(null) { _, _, _ ->
-        Timber.d("MapState updated")
-        updateActionsVisibility()
         updateHighlightedElements()
         initiateDownload()
     }
     val highlightedElements = MutableLiveData<Map<TbLoc, ElementToDisplayData>>()
 
+    enum class LocationState { INACTIVE, SEARCHING, FOLLOWING, ERROR }
+    val locationState = MutableLiveData(LocationState.INACTIVE)
+
     init {
+        val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
         viewModelScope.launch {
             settingsDataStore.data.collect { settings ->
                 downloadManager.apiConfig = createOsmApiConfig(settings.apiBaseUrl)
             }
+
+//            settingsDataStore.data
+//                .map { s -> Pair(s.baseMapUid, s.zoomBeyondBaseMapMax) }
+//                .distinctUntilChanged()
+//                .collect { (baseMapUid, zoomBeyondBaseMapMax) ->
+//                    baseMapGetterScope.launch {
+//                        val baseMap = baseMapRepository.getOrDefault(baseMapUid)
+//                        val tileSource = tileSourceFromBaseMap(baseMap)
+//                        lifecycleScope.launch {
+//                            attributionVM.tileAttributionText.value = baseMap.attribution
+//                            map.setTileSource(tileSource)
+//                            val maxZoomLevel =
+//                                if (zoomBeyondBaseMapMax) MapFragment.MAX_ZOOM_LEVEL_BEYOND_BASE_MAP else tileSource.maximumZoomLevel.toDouble()
+//                            map.setMaxZoomLevel(
+//                                java.lang.Double.max(
+//                                    maxZoomLevel,
+//                                    MapFragment.MIN_MAX_ZOOM_LEVEL
+//                                )
+//                            )
+//                        }
+//                    }
+//                }
         }
         viewModelScope.launch {
             downloadManager.events.receiveAsFlow().collect { event ->
@@ -71,9 +93,23 @@ class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
         }
     }
 
-    fun showSettings() = events.trySend(ShowSettingsEvent()).discard()
+    fun showSettings() {
+        Timber.d("Showing settings...")
+        events.trySend(ShowSettingsEvent()).discard()
+    }
 
-    fun moveToCurrentLocation() = events.trySend(MoveToCurrentLocationEvent()).discard()
+    fun followMyLocation() = when (locationState.value) {
+        LocationState.SEARCHING, LocationState.FOLLOWING -> Unit
+        else -> events.trySend(StartFollowingLocationEvent()).discard()
+    }
+
+    fun stopFollowingMyLocation() = when (locationState.value) {
+        LocationState.INACTIVE, LocationState.ERROR -> Unit
+        else -> {
+            locationState.value = LocationState.INACTIVE
+            events.trySend(StopFollowingLocationEvent()).discard()
+        }
+    }
 
     fun setZoomLevel(newZoomLevel: Double) {
         viewModelScope.launch {
@@ -114,13 +150,6 @@ class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
                 updateHighlightedElements()
             }
         }
-    }
-
-
-    private fun updateActionsVisibility() {
-        val lMapState = mapState ?: return
-        val actionsShouldBeVisible = lMapState.zoomLevel < MIN_DISPLAY_ZOOM_LEVEL
-        events.trySend(ActionsVisibilityEvent(actionsShouldBeVisible))
     }
 
     private val backgroundScope = CoroutineScope(Job() + Dispatchers.Default)
@@ -188,6 +217,9 @@ class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
                 viewModelScope.launch {
                     highlightedElements.value = tagBoxElementPairs
                 }
+                events.trySend(ActionsVisibilityEvent(
+                    actionsShouldBeVisible = tagBoxElementPairs.isEmpty()
+                ))
             }
             lastUpdateHighlightedElementsJob = job
             job
@@ -208,7 +240,7 @@ class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
         return elementsList
             .filterNot { (_, element) -> element.tags.isNullOrEmpty() }
             .mapNotNull { (id, e) ->
-                downloadManager.getGeometry(TypedId(id, e))?.takeIf { g ->
+                downloadManager.getGeometry(TypedId(id, e::class))?.takeIf { g ->
                     !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
                 }?.let { geometry ->
                     DistanceOp.nearestPoints(
@@ -257,11 +289,11 @@ class MapVM(private val settingsDataStore: DataStore<Settings>) : ViewModel() {
     }
 
     companion object {
-        const val ENVELOPE_BUFFER_FACTOR = 1.2 // Overfetch a little around the current envelope
+        const val ENVELOPE_BUFFER_FACTOR = 1.1 // Overfetch a little around the current envelope
         const val MAX_DOWNLOAD_QPS = 1.0 // Queries per second
-        const val MAX_DOWNLOAD_AREA = 500.0 * 500 // m^2, 500 * 500 = tiny city block
-        const val MIN_DISPLAY_ZOOM_LEVEL = 18
+        const val MAX_DOWNLOAD_AREA = 1500.0 * 1500 // m^2, 1500^2 = entirety of soho
         const val MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
+        const val MIN_DISPLAY_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL
         private val GEOMETRY_FAC = GeometryFactory()
 
         private fun createOsmApiConfig(baseUrl: String) =

@@ -1,6 +1,10 @@
 package net.pfiers.osmfocus.view.support
 
+import android.content.Intent
 import android.content.res.Resources
+import android.net.Uri
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -23,3 +27,8 @@ val Fragment.exceptionHandler
 
 fun <T: DialogFragment> T.showWithDefaultTag(manager: FragmentManager) =
     show(manager, this::class.qualifiedName)
+
+fun Fragment.getDrawable(@DrawableRes drawableRes: Int) =
+    ContextCompat.getDrawable(requireContext(), drawableRes)
+
+fun Fragment.openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))

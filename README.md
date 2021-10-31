@@ -28,7 +28,7 @@ Other stuff by me: [https://pfiers.net](https://pfiers.net)
 
 OSMfocus Reborn allows you to view OpenStreetMap data. This data is [© (Copyright) OpenStreetMap contributors](https://www.openstreetmap.org/copyright) and is available under the [Open Database License](https://opendatacommons.org/licenses/odbl/).
 
-OSMfocus Reborn uses (remixed) names and ideas from OSMfocus (MichaelVL) v0.1.1r1, which is available under the ["Apache License 2.0"](https://github.com/MichaelVL/osm-focus/blob/master/LICENSE).
+OSMfocus Reborn uses (remixed) names and ideas from OSMfocus (MichaelVL) v0.1.1r1, which is available under the [Apache License 2.0](https://github.com/MichaelVL/osm-focus/blob/master/LICENSE).
 
 OSMfocus Reborn uses a remixed version of the OpenStreetMap logo, as per the [Trademark Policy §3.5](https://wiki.osmfoundation.org/wiki/Trademark_Policy).
 

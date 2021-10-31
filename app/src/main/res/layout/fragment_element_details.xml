@@ -15,192 +15,206 @@
 
     </data>
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="10dp"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/title"
-            style="@style/TextAppearance.AppCompat.Large"
+        <!-- ScrollView doesn't respect child's layout_margin without this FrameLayout -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@{String.format(`%s %d`, vm.typedId.type.capitalized, vm.typedId.id)}"
-            tools:text="Relation 146842351"
-            android:textIsSelectable="true" />
+            android:layout_height="wrap_content">
 
-        <TextView
-            style="@style/TextAppearance.AppCompat.Body1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:htmlText="@{vm.element.lastEditTimestamp == null ? @string/last_edit_date_unknown : @string/last_edit_date(vf.prettyTime(vm.element.lastEditTimestamp), vm.element.lastEditTimestamp.toString())}"
-            tools:text="Last edited just now by pfiers"
-            android:textIsSelectable="true" />
-
-        <TextView
-            style="@style/TextAppearance.AppCompat.Body1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:htmlText="@{vm.element.username == null ? @string/last_edit_by_unknown : @string/last_edit_by(vm.element.userProfileUrl, vm.element.username)}"
-            tools:text="Changeset 186743"
-            android:textIsSelectable="true" />
-
-        <TextView
-            style="@style/TextAppearance.AppCompat.Body1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:htmlText="@{vm.element.changeset == null ? @string/last_edit_changeset_unknown : @string/last_edit_changeset(vm.element.changesetUrl, vm.element.changeset)}"
-            tools:text="Changeset 186743"
-            android:textIsSelectable="true" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/tags"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            tools:listitem="@layout/rv_item_tag_table" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusable="true"
-            android:clickable="true"
-            android:onClick="@{() -> vm.showOnOpenstreetmap()}">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/osmOrgIcon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/osmOrgText"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_openstreetmap" />
-
-            <TextView
-                android:id="@+id/osmOrgText"
-                style="@style/TextAppearance.AppCompat.Body1"
-                android:layout_width="0dp"
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="@string/view_on_openstreetmap_org"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/osmOrgIcon"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_margin="20dp"
+                android:orientation="vertical">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/title"
+                    style="@style/TextAppearance.AppCompat.Large"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@{String.format(`%s %d`, vf.capitalized(vm.typedId.type), vm.typedId.id)}"
+                    tools:text="Relation 146842351"
+                    android:textIsSelectable="true" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusable="true"
-            android:clickable="true"
-            android:onClick="@{() -> vm.openInOsmAnd()}">
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Body1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:htmlText="@{vm.element.lastEditTimestamp == null ? @string/last_edit_date_unknown : @string/last_edit_date(vf.prettyTime(vm.element.lastEditTimestamp), vm.element.lastEditTimestamp.toString())}"
+                    tools:text="Last edited just now by pfiers"
+                    android:textIsSelectable="true" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/osmAndIcon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/osmAndText"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_osmand" />
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Body1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:htmlText="@{vm.element.username == null ? @string/last_edit_by_unknown : @string/last_edit_by(vm.element.userProfileUrl, vm.element.username)}"
+                    tools:text="Changeset 186743"
+                    android:textIsSelectable="true" />
 
-            <TextView
-                android:id="@+id/osmAndText"
-                style="@style/TextAppearance.AppCompat.Body1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="@string/open_in_osmand"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/osmAndIcon"
-                app:layout_constraintTop_toTopOf="parent" />
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Body1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:htmlText="@{vm.element.changeset == null ? @string/last_edit_changeset_unknown : @string/last_edit_changeset(vm.element.changesetUrl, vm.element.changeset)}"
+                    tools:text="Changeset 186743"
+                    android:textIsSelectable="true" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/tags"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    tools:listitem="@layout/rv_item_tag_table"
+                    android:nestedScrollingEnabled="false" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusable="true"
-            android:clickable="true"
-            android:onClick="@{() -> vm.openGeoLink()}">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:onClick="@{() -> vm.showOnOpenstreetmap()}">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/geoIcon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/geoText"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_baseline_location"
-                app:tint="@color/colorPrimary" />
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/osmOrgIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/osmOrgText"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_openstreetmap" />
 
-            <TextView
-                android:id="@+id/geoText"
-                style="@style/TextAppearance.AppCompat.Body1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="@string/open_geo_uri"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/geoIcon"
-                app:layout_constraintTop_toTopOf="parent" />
+                    <TextView
+                        android:id="@+id/osmOrgText"
+                        style="@style/TextAppearance.AppCompat.Body1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/view_on_openstreetmap_org"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/osmOrgIcon"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusable="true"
-            android:clickable="true"
-            android:onClick="@{() -> vm.copyCoordinates()}">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:onClick="@{() -> vm.openInOsmAnd()}">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/copyCoordinatesIcon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/copyCoordinatesText"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_baseline_content_copy_24"
-                app:tint="@color/colorPrimary" />
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/osmAndIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/osmAndText"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_osmand" />
 
-            <TextView
-                android:id="@+id/copyCoordinatesText"
-                style="@style/TextAppearance.AppCompat.Body1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="@string/copy_coordinates"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/copyCoordinatesIcon"
-                app:layout_constraintTop_toTopOf="parent" />
+                    <TextView
+                        android:id="@+id/osmAndText"
+                        style="@style/TextAppearance.AppCompat.Body1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/open_in_osmand"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/osmAndIcon"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:onClick="@{() -> vm.openGeoLink()}">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/geoIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/geoText"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_baseline_location"
+                        app:tint="@color/primary" />
+
+                    <TextView
+                        android:id="@+id/geoText"
+                        style="@style/TextAppearance.AppCompat.Body1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/open_geo_uri"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/geoIcon"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:onClick="@{() -> vm.copyCoordinate()}">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/copyCoordinatesIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/copyCoordinatesText"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_baseline_content_copy_24"
+                        app:tint="@color/primary" />
+
+                    <TextView
+                        android:id="@+id/copyCoordinatesText"
+                        style="@style/TextAppearance.AppCompat.Body1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/copy_coordinates"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/copyCoordinatesIcon"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+        </FrameLayout>
+
+    </ScrollView>
 
 </layout>

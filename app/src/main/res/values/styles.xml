@@ -1,18 +1,18 @@
 <resources>
 
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorPrimary</item>
-        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorPrimaryDark">@color/primaryDark</item>
+        <item name="colorAccent">@color/primary</item>
+        <item name="colorOnSecondary">@color/onSecondary</item>
     </style>
 
     <style name="ExceptionDialogTheme" parent="Theme.MaterialComponents.Light.Dialog">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorPrimaryDark">@color/primaryDark</item>
+        <item name="colorAccent">@color/primary</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
@@ -32,8 +32,8 @@
         <item name="android:layout_marginTop">16dp</item>
         <item name="android:layout_marginBottom">16dp</item>
         <item name="shapeAppearanceOverlay">@style/SettingsListItemIconOverlay</item>
-        <item name="android:background">@color/colorSecondary</item>
-        <item name="tint">@color/colorOnSecondary</item>
+        <item name="android:background">@color/secondary</item>
+        <item name="tint">@color/onSecondary</item>
         <item name="contentPadding">5dp</item>
     </style>
 

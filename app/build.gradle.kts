@@ -10,19 +10,25 @@ plugins {
 }
 
 android {
-    compileSdk = 30
+    compileSdk = 31
     buildToolsVersion = "30.0.3"
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
-        targetSdk = 30
+        targetSdk = 31
         versionCode = 112
         versionName = "1.1.2"
 
         multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/room-schemas"
+            }
+        }
     }
 
     compileOptions {
@@ -193,7 +199,7 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.3.6")
 
     // Room DB
-    val roomVersion = "2.3.0"
+    val roomVersion = "2.4.0-alpha05"
     implementation("androidx.room:room-runtime:$roomVersion")
 
     implementation("androidx.room:room-ktx:$roomVersion")

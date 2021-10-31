@@ -46,10 +46,7 @@ class LocationActionsDialogFragment : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         val binding = FragmentLocationActionsDialogBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = viewLifecycleOwner
-
         binding.vm = locationActionsVM
-
         return binding.root
     }
 

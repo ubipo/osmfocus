@@ -12,7 +12,7 @@ import net.pfiers.osmfocus.viewmodel.support.*
 
 
 class ExceptionVM(private val throwableInfo: ThrowableInfo) : ViewModel() {
-    val events = Channel<Event>()
+    val events = createEventChannel()
     val errorMessage = ObservableField<String>(throwableInfo.message ?: throwableInfo.qualifiedName)
 
     fun createGitHubIssue() = events.trySend(

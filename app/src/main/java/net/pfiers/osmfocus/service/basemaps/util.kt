@@ -15,11 +15,6 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
 
-fun resolveAbcSubdomains(baseUrl: String) =
-    ('a' until 'c').map { letter ->
-        Uri.parse(baseUrl.replace("{s}", letter.toString()))
-    }
-
 const val HTTP_ACCEPT = "Accept"
 const val HTTP_USER_AGENT = "User-Agent"
 const val MIME_PNG = "image/png"
@@ -34,7 +29,7 @@ class TileFetchException(override val message: String) : Exception()
  */
 @Suppress("UnstableApiUsage")
 suspend fun BaseMap.fetchPreviewTile(): Result<Bitmap, Exception> {
-    val url = resolveAbcSubdomains(urlTemplate).first()
+    val url = Uri.parse(baseUrl)
         .buildUpon()
         .appendEncodedPath(PREVIEW_TILE_XYZ)
         .build()

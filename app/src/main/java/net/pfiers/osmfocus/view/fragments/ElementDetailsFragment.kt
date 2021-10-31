@@ -10,7 +10,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.ConfigurationCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -29,6 +28,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentElementDetailsBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTableBinding
+import net.pfiers.osmfocus.service.extensions.toDecimalDegrees
 import net.pfiers.osmfocus.service.osm.*
 import net.pfiers.osmfocus.view.rvadapters.HeaderAdapter
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
@@ -39,9 +39,10 @@ import timber.log.Timber
 import java.net.*
 import java.util.*
 
-class ElementDetailsFragment : Fragment() {
+class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
+    FragmentElementDetailsBinding::inflate
+) {
     private lateinit var elementCentroidAndId: AnyElementCentroidAndId
-    private lateinit var binding: FragmentElementDetailsBinding
     private val elementDetailsVM: ElementDetailsVM by activityTaggedViewModels({
         listOf(elementCentroidAndId.typedId.toString())
     }) {
@@ -52,13 +53,22 @@ class ElementDetailsFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            elementCentroidAndId =
-                it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
+            elementCentroidAndId = it.getParcelable(ARG_ELEMENT_CENTROID_AND_ID)!!
         }
 
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
-            elementDetailsVM.events.receiveAsFlow()
-                .collect { activityAs<EventReceiver>().handleEvent(it) }
+            elementDetailsVM.events.receiveAsFlow().collect { event ->
+                when (event) {
+                    is ElementDetailsVM.Companion.CopyCoordinateEvent -> {
+                        copyToClipboard(
+                            event.coordinate.toDecimalDegrees(),
+                            getString(R.string.copy_coordinates_clipboard_label),
+                            binding.copyCoordinatesText
+                        )
+                    }
+                    else -> activityAs<EventReceiver>().handleEvent(event)
+                }
+            }
         }
     }
 
@@ -68,16 +78,16 @@ class ElementDetailsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentElementDetailsBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = this
-
+        initBinding(container)
         binding.vm = elementDetailsVM
 
-        val headerAdapter =
-            HeaderAdapter<RvItemTagTableBinding>(R.layout.rv_item_tag_table_header, this)
-        val adapter = ViewBindingListAdapter<Tag, RvItemTagTableBinding>(
+        val headerAdapter = HeaderAdapter<RvItemTagTableBinding>(
+            R.layout.rv_item_tag_table_header,
+            viewLifecycleOwner
+        )
+        val tagsListAdapter = ViewBindingListAdapter<Tag, RvItemTagTableBinding>(
             R.layout.rv_item_tag_table,
-            this
+            viewLifecycleOwner
         ) { tag, tagBinding ->
             val (key, value) = tag
             tagBinding.key = key
@@ -113,10 +123,10 @@ class ElementDetailsFragment : Fragment() {
                 }
             }
         }
-        binding.tags.adapter = ConcatAdapter(headerAdapter, adapter)
+        binding.tags.adapter = ConcatAdapter(headerAdapter, tagsListAdapter)
         val orientation = RecyclerView.VERTICAL
         binding.tags.layoutManager = LinearLayoutManager(context, orientation, false)
-        adapter.submitList(elementCentroidAndId.e.tags?.entries?.toList())
+        tagsListAdapter.submitList(elementCentroidAndId.e.tags?.entries?.toList())
         binding.tags.addItemDecoration(DividerItemDecoration(context, orientation))
 
         return binding.root
@@ -136,7 +146,7 @@ class ElementDetailsFragment : Fragment() {
         fun newInstance(elementCentroidAndId: AnyElementCentroidAndId) =
             ElementDetailsFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(ARG_ELEMENT_CENTROID_AND_ID, elementCentroidAndId)
+                    putParcelable(ARG_ELEMENT_CENTROID_AND_ID, elementCentroidAndId)
                 }
             }
 

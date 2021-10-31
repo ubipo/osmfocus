@@ -1,13 +1,15 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
-import net.pfiers.osmfocus.service.extensions.*
 import net.pfiers.osmfocus.service.discard
-import net.pfiers.osmfocus.service.osm.*
+import net.pfiers.osmfocus.service.extensions.toGeoUri
+import net.pfiers.osmfocus.service.extensions.toOsmAndUrl
+import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.service.toAndroidUri
-import net.pfiers.osmfocus.viewmodel.support.CopyEvent
+import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.OpenUriEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
+import org.locationtech.jts.geom.Coordinate
 
 class ElementDetailsVM(
     elementCentroidAndId: AnyElementCentroidAndId,
@@ -25,7 +27,11 @@ class ElementDetailsVM(
     fun openGeoLink() = centroid.let { coordinate ->
         events.trySend(OpenUriEvent(coordinate.toGeoUri().toAndroidUri())).discard()
     }
-    fun copyCoordinates() = centroid.let { coordinate ->
-        events.trySend(CopyEvent("Coordinates", coordinate.toDecimalDegrees())).discard()
+    fun copyCoordinate() = centroid.let { coordinate ->
+        events.trySend(CopyCoordinateEvent(coordinate)).discard()
+    }
+
+    companion object {
+        class CopyCoordinateEvent(val coordinate: Coordinate) : Event()
     }
 }

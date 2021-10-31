@@ -4,22 +4,22 @@ import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.service.discard
 import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import net.pfiers.osmfocus.service.discard
 import net.pfiers.osmfocus.viewmodel.support.EditBaseMapsEvent
-import net.pfiers.osmfocus.viewmodel.support.EditTagboxLongLinesEvent
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.ShowAboutEvent
+import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 
 class SettingsVM(
     private val settingsDataStore: DataStore<Settings>,
     private val baseMapRepository: BaseMapRepository
 ) : ViewModel() {
-    val events = Channel<Event>()
+    val events = createEventChannel()
     val baseMap = settingsLd { settings ->
         settings.baseMapUid.ifEmpty { null }?.let { baseMapRepository.getOrDefault(it) }
     }
@@ -31,26 +31,26 @@ class SettingsVM(
     fun editTagboxLongLines() = events.trySend(EditTagboxLongLinesEvent()).discard()
     fun showAbout() = events.trySend(ShowAboutEvent()).discard()
 
-    fun toggleShowRelations() {
-        viewModelScope.launch {
-            settingsDataStore.updateData { currentSettings ->
-                currentSettings.toBuilder().apply {
-                    showRelations = !currentSettings.showRelations
-                }.build()
-            }
+    fun toggleShowRelations() = viewModelScope.launch {
+        settingsDataStore.updateData { currentSettings ->
+            currentSettings.toBuilder().apply {
+                showRelations = !currentSettings.showRelations
+            }.build()
         }
-    }
+    }.discard()
 
-    fun toggleZoomBeyondBaseMapMax() {
-        viewModelScope.launch {
-            settingsDataStore.updateData { currentSettings ->
-                currentSettings.toBuilder().apply {
-                    zoomBeyondBaseMapMax = !currentSettings.zoomBeyondBaseMapMax
-                }.build()
-            }
+    fun toggleZoomBeyondBaseMapMax() = viewModelScope.launch {
+        settingsDataStore.updateData { currentSettings ->
+            currentSettings.toBuilder().apply {
+                zoomBeyondBaseMapMax = !currentSettings.zoomBeyondBaseMapMax
+            }.build()
         }
-    }
+    }.discard()
 
     private fun <T> settingsLd(mapper: suspend (settings: Settings) -> T) =
-        settingsDataStore.data.map(mapper).asLiveData()
+        settingsDataStore.data.map(mapper).distinctUntilChanged().asLiveData()
+
+    companion object {
+        class EditTagboxLongLinesEvent: Event()
+    }
 }

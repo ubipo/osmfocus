@@ -10,6 +10,7 @@ import androidx.annotation.ColorInt
 import androidx.core.graphics.plus
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
@@ -22,16 +23,17 @@ import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
+import net.pfiers.osmfocus.viewmodel.support.NavEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
+import net.pfiers.osmfocus.view.support.handleNavEvent
 import kotlin.properties.Delegates
 
 @ExperimentalStdlibApi
-class TagBoxFragment : Fragment() {
+class TagBoxFragment: Fragment() {
     // The Android gods probably don't like this method of inter-fragment communication...
     class TagBoxHitRectChange(val hitRect: Rect)
 
     val events = Channel<TagBoxHitRectChange>()
-    private lateinit var binding: FragmentTagBoxBinding
     private lateinit var tbLoc: TbLoc
     private var color by Delegates.notNull<Int>()
     private val tagBoxVM: TagBoxVM by activityTaggedViewModels(
@@ -49,8 +51,15 @@ class TagBoxFragment : Fragment() {
             color = it.getInt(ARG_COLOR)
         }
 
+        val navController = findNavController()
+
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
-            tagBoxVM.events.receiveAsFlow().collect { activityAs<EventReceiver>().handleEvent(it) }
+            tagBoxVM.events.receiveAsFlow().collect { event ->
+                when (event) {
+                    is NavEvent -> handleNavEvent(event, navController)
+                    else -> activityAs<EventReceiver>().handleEvent(event)
+                }
+            }
         }
     }
 
@@ -58,9 +67,8 @@ class TagBoxFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentTagBoxBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = this
-
+        val binding = FragmentTagBoxBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = viewLifecycleOwner
         binding.vm = tagBoxVM
         binding.tagsWrapper.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
             val (x, y) = IntArray(2).also { binding.tagsWrapper.getLocationOnScreen(it) }
@@ -71,12 +79,12 @@ class TagBoxFragment : Fragment() {
 
         val adapter = ViewBindingListAdapter<Pair<String, String>, RvItemTagTagboxBinding>(
             R.layout.rv_item_tag_tagbox,
-            this
-        ) { tag, binding ->
+            viewLifecycleOwner
+        ) { tag, listItemBinding ->
             val (key, value) = tag
-            binding.key = key
-            binding.value = value
-            binding.longLinesHandling = tagBoxVM.longLinesHandling
+            listItemBinding.key = key
+            listItemBinding.value = value
+            listItemBinding.longLinesHandling = tagBoxVM.longLinesHandling
         }
         binding.tags.itemAnimator = null
         binding.tags.adapter = adapter

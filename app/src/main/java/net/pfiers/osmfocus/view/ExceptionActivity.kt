@@ -40,7 +40,6 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
         } ?: error("${::ARG_THROWABLE_INFO.name} is required to create ${this::class.simpleName}")
 
         val binding = ActivityExceptionBinding.inflate(layoutInflater)
-        binding.lifecycleOwner = this
         binding.vm = exceptionVM
 
         lifecycleScope.launch {

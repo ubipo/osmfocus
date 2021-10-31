@@ -7,10 +7,12 @@ data class BuiltinBaseMap(
     @StringRes
     private val nameRes: Int,
     override val attribution: String,
-    override val urlTemplate: String
+    override val baseUrl: String,
+    override val maxZoom: Int,
+    override val fileEnding: String = ".png"
 ) : BaseMap() {
     override fun getName(context: Context) = context.resources.getString(nameRes)
     override fun areItemsTheSame(other: BaseMap): Boolean = this == other
     override fun areContentsTheSame(other: BaseMap): Boolean =
-        urlTemplate == other.urlTemplate && other is BuiltinBaseMap && nameRes == other.nameRes
+        baseUrl == other.baseUrl && other is BuiltinBaseMap && nameRes == other.nameRes
 }

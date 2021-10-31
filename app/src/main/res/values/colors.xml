@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#FFC107</color>
-    <color name="colorPrimaryLight">#FFE082</color>
-    <color name="colorPrimaryDark">#F57F17</color>
-    <color name="colorAccent">#028090</color>
-    <color name="colorSecondary">#29335C</color>
-    <color name="colorOnSecondary">#fff</color>
+    <color name="primary">#FFC107</color>
+    <color name="primaryLight">#FFE082</color>
+    <color name="primaryDark">#F57F17</color>
+    <color name="accent">#028090</color>
+    <color name="secondary">#29335C</color>
+    <color name="onSecondary">#fff</color>
+    <color name="error">#c62828</color>
     <color name="listSelectionBackground">#BBDEFB</color>
     <color name="tagBox">#FFFFFF</color>
     <color name="overlayBackground">#77000000</color>

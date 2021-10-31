@@ -15,7 +15,9 @@ import java.util.*
 data class UserBaseMap(
     @ColumnInfo val name: String,
     @ColumnInfo override val attribution: String?,
-    @ColumnInfo(name = "url_template") override val urlTemplate: String,
+    @ColumnInfo(name = "url_template") override val baseUrl: String,
+    @ColumnInfo(name = "file_ending", defaultValue = ".png") override val fileEnding: String,
+    @ColumnInfo(name = "max_zoom") override val maxZoom: Int? = 19,
     @PrimaryKey(autoGenerate = true) val id: Int = 0
 ) : BaseMap() {
     override fun getName(context: Context): String = name
@@ -24,6 +26,6 @@ data class UserBaseMap(
     override fun equals(other: Any?): Boolean = this === other || (other is UserBaseMap
             && name == other.name
             && attribution == other.attribution
-            && urlTemplate == other.urlTemplate)
-    override fun hashCode(): Int = Objects.hash(name, attribution, urlTemplate)
+            && baseUrl == other.baseUrl)
+    override fun hashCode(): Int = Objects.hash(name, attribution, baseUrl)
 }

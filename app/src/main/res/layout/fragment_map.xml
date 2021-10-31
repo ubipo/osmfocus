@@ -7,6 +7,8 @@
 
     <data>
 
+        <import type="net.pfiers.osmfocus.viewmodel.MapVM.LocationState" />
+
         <variable
         name="vm"
         type="net.pfiers.osmfocus.viewmodel.MapVM" />
@@ -97,20 +99,24 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end|bottom">
 
+            <!-- locationBtn's src is changed in MapFragment because we want to be able to start the
+            animation of @drawable/ic_device_location_searching_animated after setting it -->
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/locationBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="16dp"
+                app:maxImageSize="32dp"
                 android:clickable="true"
                 android:contentDescription="@string/map_location_btn_description"
                 android:focusable="true"
-                android:src="@drawable/ic_baseline_my_location_24"
+                android:src="@drawable/ic_device_location_inactive"
                 app:layout_constraintBottom_toTopOf="@+id/settingsBtn"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:tint="#fff"
-                android:onClick="@{() -> vm.moveToCurrentLocation()}" />
+                app:backgroundTint="@{vm.locationState == LocationState.ERROR ? @color/error : vm.locationState == LocationState.FOLLOWING ? @color/accent : @color/secondary}"
+                android:onClick="@{() -> vm.followMyLocation()}" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/settingsBtn"

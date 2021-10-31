@@ -23,7 +23,7 @@
             android:id="@+id/toolbar"
             android:layout_width="0dp"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/colorPrimary"
+            android:background="@color/primary"
             android:theme="@style/ToolbarTheme"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -83,8 +83,8 @@
                                 android:id="@+id/userList"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                tools:listitem="@layout/fragment_base_maps_item"
-                                android:nestedScrollingEnabled="false" />
+                                android:nestedScrollingEnabled="false"
+                                tools:listitem="@layout/fragment_base_maps_item" />
 
                         </RelativeLayout>
 
@@ -125,6 +125,7 @@
                 android:layout_marginEnd="20dp"
                 android:layout_marginBottom="20dp"
                 android:clickable="true"
+                android:onClick="@{() -> vm.add()}"
                 android:contentDescription="@string/user_base_maps_add_btn_description"
                 android:focusable="true"
                 android:src="@drawable/ic_baseline_add_24"

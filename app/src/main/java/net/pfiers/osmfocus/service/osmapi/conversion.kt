@@ -56,7 +56,7 @@ fun jsonToElements(
                     val members = (elementObj["members"] as JsonArray<*>).map { e ->
                         val memberObj = e as JsonObject
                         val ref = (memberObj["ref"] as Number).toLong()
-                        val memberType = ElementType.fromString(memberObj["type"] as String)
+                        val memberType = elementClassFromString(memberObj["type"] as String)
                         val role = memberObj["role"] as String
                         RelationMember(TypedId(ref, memberType), role)
                     }

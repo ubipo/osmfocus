@@ -3,6 +3,8 @@ package net.pfiers.osmfocus.service
 import android.net.Uri
 import androidx.databinding.Observable
 import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import java.net.URI

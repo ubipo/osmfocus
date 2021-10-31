@@ -25,7 +25,8 @@
 
         <activity
             android:name=".view.MainActivity"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme"
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -51,10 +52,13 @@
             android:authorities="net.pfiers.osmfocus.email_attachments_fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/email_attachments_filepaths" />
+
         </provider>
+
     </application>
 
 </manifest>

@@ -15,6 +15,7 @@ import net.pfiers.osmfocus.service.klaxon.InstantConverter
 import net.pfiers.osmfocus.service.klaxon.UriConverter
 import net.pfiers.osmfocus.service.osm.Tag
 import net.pfiers.osmfocus.service.osmapi.*
+import timber.log.Timber
 import java.net.URI
 import java.net.UnknownHostException
 
@@ -77,12 +78,12 @@ suspend fun TagInfoApiConfig.keyValues(
     sortOrder?.let { "sortorder" to sortOrder.paramValue }
 ))}
 
-suspend fun TagInfoApiConfig.keyWikiPages(key: String) =
+suspend fun TagInfoApiConfig.fetchKeyWikiPages(key: String) =
     apiReq<WikiPagesRes>("key/wiki_pages") { uri ->
         uri.appendQueryParameter("key", key)
     }
 
-suspend fun TagInfoApiConfig.tagWikiPages(tag: Tag) =
+suspend fun TagInfoApiConfig.fetchTagWikiPages(tag: Tag) =
     apiReq<WikiPagesRes>("key/wiki_pages") {
         it.appendQueryParameters(
             mapOf(

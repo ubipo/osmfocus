@@ -1,6 +1,6 @@
 package net.pfiers.osmfocus.view.support
 
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
 
 /**
  * Helper to handle all things donations per distribution.
@@ -10,6 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
  * for the dist-specific implementation.
  */
 @Suppress("UNUSED_PARAMETER")
-abstract class DonationHelper(activity: AppCompatActivity) {
+abstract class DonationHelper(activity: Activity) {
     abstract fun showDonationOptions()
 }

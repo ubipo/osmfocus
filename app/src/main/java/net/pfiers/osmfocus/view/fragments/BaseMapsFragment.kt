@@ -8,13 +8,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.ui.NavigationUI
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.*
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
@@ -23,42 +23,50 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsBinding
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsItemBinding
 import net.pfiers.osmfocus.service.basemaps.*
 import net.pfiers.osmfocus.service.db.UserBaseMap
-import net.pfiers.osmfocus.view.support.app
-import net.pfiers.osmfocus.view.support.createVMFactory
+import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
-import net.pfiers.osmfocus.viewmodel.NavVM
+import net.pfiers.osmfocus.viewmodel.support.NavEvent
+import net.pfiers.osmfocus.view.support.handleNavEvent
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-class BaseMapsFragment : Fragment() {
-    private val baseMapsVM: BaseMapsVM by viewModels {
+class BaseMapsFragment: BindingFragment<FragmentBaseMapsBinding>(
+    FragmentBaseMapsBinding::inflate
+) {
+    private val vm: BaseMapsVM by viewModels {
         createVMFactory { BaseMapsVM(app.db) }
     }
-    private val navVM: NavVM by viewModels({ requireActivity() })
-    private lateinit var binding: FragmentBaseMapsBinding
+
     private lateinit var builtinBaseMapAdapter: BaseMapListAdapter<BuiltinBaseMap>
     private lateinit var userBaseMapAdapter: BaseMapListAdapter<UserBaseMap>
+
+    init {
+        lifecycleScope.launchWhenCreated {
+            val navController = findNavController()
+            vm.events.receiveAsFlow().collect { event ->
+                when(event) {
+                    is NavEvent -> handleNavEvent(event, navController)
+                    else -> activityAs<EventReceiver>().handleEvent(event)
+                }
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentBaseMapsBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = this
-
-        binding.vm = baseMapsVM
-
-        val toolbar = binding.toolbar
-        val activity = requireActivity() as AppCompatActivity
-        activity.setSupportActionBar(toolbar)
-        NavigationUI.setupActionBarWithNavController(activity, navVM.navController)
+        initBinding(container)
+        binding.vm = vm
+        binding.toolbar.setupWithNavController(findNavController())
 
         binding.userList.isNestedScrollingEnabled = false
         binding.buildInList.isNestedScrollingEnabled = false
@@ -87,7 +95,6 @@ class BaseMapsFragment : Fragment() {
         builtinBaseMapAdapter = BaseMapListAdapter(
             lifecycleScope,
             backgroundScope,
-            viewLifecycleOwner,
             binding.coordinator,
             app.baseMapRepository,
             selectedItemFlow,
@@ -101,13 +108,12 @@ class BaseMapsFragment : Fragment() {
         userBaseMapAdapter = BaseMapListAdapter(
             lifecycleScope,
             backgroundScope,
-            viewLifecycleOwner,
             binding.coordinator,
             app.baseMapRepository,
             selectedItemFlow,
             updateSelectedItem
         )
-        baseMapsVM.userBaseMaps.observe(viewLifecycleOwner, userBaseMapAdapter::submitList)
+        vm.userBaseMaps.observe(viewLifecycleOwner, userBaseMapAdapter::submitList)
 
         binding.userList.adapter = userBaseMapAdapter
         binding.userList.layoutManager = GridLayoutManager(context, 1)
@@ -115,13 +121,9 @@ class BaseMapsFragment : Fragment() {
             userBaseMapAdapter,
             requireContext()
         ) { userBaseMap ->
-            baseMapsVM.delete(userBaseMap)
+            vm.delete(userBaseMap)
         })
         userListTouchHelper.attachToRecyclerView(binding.userList)
-
-        binding.addBtn.setOnClickListener {
-            navVM.navController.navigate(R.id.action_userBaseMapsFragment_to_addUserBaseMapFragment)
-        }
 
         return binding.root
     }
@@ -130,16 +132,13 @@ class BaseMapsFragment : Fragment() {
     private class BaseMapListAdapter<T : BaseMap>(
         private val uiScope: CoroutineScope,
         private val backgroundScope: CoroutineScope,
-        private val lifecycleOwner: LifecycleOwner,
         private val snackbarView: View,
         private val repository: BaseMapRepository,
         private val selectedItemFlow: Flow<BaseMap?>,
         private val updateSelectedItem: (newBaseMap: BaseMap) -> Unit
     ) : ListAdapter<T, BaseMapListAdapter.Holder>(BaseMapComparator<T>()) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
-            val binding = FragmentBaseMapsItemBinding.inflate(LayoutInflater.from(parent.context))
-            // has implications: https://medium.com/@stephen.brewer/an-adventure-with-recyclerview-databinding-livedata-and-room-beaae4fc8116
-            binding.lifecycleOwner = lifecycleOwner
+            val binding = FragmentBaseMapsItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             return Holder(
                 binding,
                 backgroundScope,
@@ -184,6 +183,7 @@ class BaseMapsFragment : Fragment() {
                     uiScope.launch {
                         previewTileResult.fold(
                             { tileBitmap ->
+                                binding.tilePreview.scaleType = ImageView.ScaleType.CENTER_CROP
                                 binding.tilePreview.setImageBitmap(tileBitmap)
                             }, { ex ->
                                 val snackMsg = when (ex) {
@@ -195,7 +195,15 @@ class BaseMapsFragment : Fragment() {
                                     }
                                 }
                                 Snackbar.make(snackbarView, snackMsg, Snackbar.LENGTH_LONG).show()
-                                binding.tilePreview.setImageResource(R.drawable.ic_baseline_broken_image_24)
+                                val ctx = binding.tilePreview.context
+                                val drawable = ResourcesCompat.getDrawable(
+                                    ctx.resources, R.drawable.ic_broken_image, ctx.theme
+                                )!!
+                                drawable.setTint(ResourcesCompat.getColor(
+                                    ctx.resources, R.color.greyIcon, ctx.theme
+                                ))
+                                binding.tilePreview.scaleType = ImageView.ScaleType.CENTER_CROP
+                                binding.tilePreview.setImageDrawable(drawable)
                             }
                         )
                         binding.tilePreview.visibility = View.VISIBLE
@@ -277,13 +285,5 @@ class BaseMapsFragment : Fragment() {
             background.draw(c)
             icon.draw(c)
         }
-    }
-
-    companion object {
-        @JvmStatic
-        fun newInstance() =
-            BaseMapsFragment().apply {
-                arguments = Bundle().apply { }
-            }
     }
 }

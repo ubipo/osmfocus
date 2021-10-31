@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,18 +20,21 @@ import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.SettingsVM
-import net.pfiers.osmfocus.viewmodel.support.EditTagboxLongLinesEvent
+import net.pfiers.osmfocus.viewmodel.SettingsVM.Companion.EditTagboxLongLinesEvent
+import net.pfiers.osmfocus.viewmodel.support.NavEvent
 
-class SettingsFragment : Fragment() {
+class SettingsFragment: Fragment() {
     private val settingsVM: SettingsVM by viewModels {
         createVMFactory { SettingsVM(app.settingsDataStore, app.baseMapRepository) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val navController = findNavController()
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             settingsVM.events.receiveAsFlow().collect { event ->
                 when(event) {
+                    is NavEvent -> handleNavEvent(event, navController)
                     is EditTagboxLongLinesEvent -> showEditTagboxLongLinesDialog()
                     else -> activityAs<EventReceiver>().handleEvent(event)
                 }
@@ -43,14 +47,13 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         val binding = FragmentSettingsBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = this
-
+        binding.lifecycleOwner = viewLifecycleOwner
         binding.vm = settingsVM
-
         return binding.root
     }
 
     private fun showEditTagboxLongLinesDialog() {
+        // TODO: Window leaked on rotate
         MaterialAlertDialogBuilder(requireContext()).apply {
             setTitle(R.string.tagbox_long_lines_edit_dialog_title)
             val choices = listOf(
