@@ -413,7 +413,7 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
     }
 
     private fun updateActionsVisibility(actionsShouldBeVisible: Boolean) {
-        lifecycleScope.launchWhenCreated {
+        lifecycleScope.launchWhenStarted {
             animateCircularVisibility(binding.locationBtn, actionsShouldBeVisible)
             animateCircularVisibility(binding.settingsBtn, actionsShouldBeVisible)
         }

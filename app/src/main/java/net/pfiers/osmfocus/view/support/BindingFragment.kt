@@ -12,6 +12,7 @@ open class BindingFragment<T: ViewDataBinding>(
 ): Fragment() {
     private var _binding: T? = null
     val binding get() = _binding!!
+    val bindingIsInitialized = _binding != null
 
     fun initBinding(container: ViewGroup?): T {
         val binding = inflate(layoutInflater, container, false)
