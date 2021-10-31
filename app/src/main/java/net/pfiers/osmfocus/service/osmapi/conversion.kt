@@ -5,7 +5,6 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import net.pfiers.osmfocus.service.iso8601DateTimeInUtcToInstant
 import net.pfiers.osmfocus.service.osm.*
-import timber.log.Timber
 
 class OsmApiParseException(message: String, cause: Exception? = null) :
     RuntimeException(message, cause)
@@ -56,7 +55,7 @@ fun jsonToElements(
                     val members = (elementObj["members"] as JsonArray<*>).map { e ->
                         val memberObj = e as JsonObject
                         val ref = (memberObj["ref"] as Number).toLong()
-                        val memberType = elementClassFromString(memberObj["type"] as String)
+                        val memberType = elementTypeFromString(memberObj["type"] as String)
                         val role = memberObj["role"] as String
                         RelationMember(TypedId(ref, memberType), role)
                     }

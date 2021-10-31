@@ -6,16 +6,13 @@ import android.util.TypedValue
 import android.view.Gravity
 import androidx.annotation.ColorInt
 import net.pfiers.osmfocus.service.extensions.toDecimalDegrees
-import net.pfiers.osmfocus.service.osm.Element
-import net.pfiers.osmfocus.service.osm.name
+import net.pfiers.osmfocus.service.osm.ElementType
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import org.locationtech.jts.geom.Coordinate
 import org.ocpsoft.prettytime.PrettyTime
 import java.time.Instant
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.math.roundToInt
-import kotlin.reflect.KClass
 
 @ExperimentalStdlibApi
 class ViewFunctions {
@@ -59,10 +56,5 @@ class ViewFunctions {
 
         @JvmStatic
         fun decimalDegrees(coordinate: Coordinate) = coordinate.toDecimalDegrees()
-
-        @JvmStatic
-        fun capitalized(elementType: KClass<out Element>) = elementType.name.replaceFirstChar {
-            it.titlecase(Locale.ROOT)
-        }
     }
 }

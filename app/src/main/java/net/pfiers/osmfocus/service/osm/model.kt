@@ -1,33 +1,31 @@
 package net.pfiers.osmfocus.service.osm
 
-import android.os.Parcel
-import android.os.Parcelable
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import java.io.Serializable
 import java.net.URL
 import java.time.Instant
+import java.util.*
+import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 
-data class TypedId(val id: Long, val type: KClass<out Element>) : Parcelable {
-    val url get() = URL("https://osm.org/${type.name}/$id")
+/* ElementType is represented by an Enum and not by the actual Element classes (Node, Way, Relation)
+because using the class would necessitate using KClass. Using KClass is not nice because it is not
+Serializable. Using it would mean we have to implement Parcelable for all Element classes (Relation
+uses ElementType in RelationMember). */
+enum class ElementType {
+    NODE, WAY, RELATION;
 
-    constructor(parcel: Parcel) : this(
-        parcel.readLong(),
-        elementClassFromChar(Char(parcel.readInt()))
-    )
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeLong(id)
-        parcel.writeInt(type.name[0].code)
+    val nameLower by lazy { name.lowercase() }
+    val nameCapitalized by lazy {
+        nameLower.replaceFirstChar {
+            it.titlecase(Locale.ROOT)
+        }
     }
+}
 
-    override fun describeContents(): Int = 0
-
-    companion object CREATOR : Parcelable.Creator<TypedId> {
-        override fun createFromParcel(parcel: Parcel): TypedId = TypedId(parcel)
-        override fun newArray(size: Int): Array<TypedId?> = arrayOfNulls(size)
-    }
+data class TypedId(val id: Long, val type: ElementType): Serializable {
+    val url get() = URL("https://osm.org/${type.nameLower}/$id")
 }
 
 data class Coordinate(val lat: Double, val lon: Double)
@@ -46,10 +44,9 @@ open class Elements(
     open val relations: Map<Long, Relation> = emptyMap()
 ) {
     operator fun get(typedId: TypedId) = when (typedId.type) {
-        Node::class -> nodes[typedId.id]
-        Way::class -> ways[typedId.id]
-        Relation::class -> relations[typedId.id]
-        else -> throw UnknownElementTypeException(typedId.type.qualifiedName)
+        ElementType.NODE -> nodes[typedId.id]
+        ElementType.WAY -> ways[typedId.id]
+        ElementType.RELATION -> relations[typedId.id]
     }
 
     fun toGeometry(
@@ -57,16 +54,15 @@ open class Elements(
         geometryFactory: GeometryFactory,
         skipStubMembers: Boolean = false
     ) = when (typedId.type) {
-        Node::class -> nodes
+        ElementType.NODE -> nodes
             .getOrElse(typedId.id, { throw NoSuchElementException() })
             .toGeometry(this, geometryFactory, skipStubMembers)
-        Way::class -> ways
+        ElementType.WAY -> ways
             .getOrElse(typedId.id, { throw NoSuchElementException() })
             .toGeometry(this, geometryFactory, skipStubMembers)
-        Relation::class -> relations
+        ElementType.RELATION -> relations
             .getOrElse(typedId.id, { throw NoSuchElementException() })
             .toGeometry(this, geometryFactory, skipStubMembers)
-        else -> throw UnknownElementTypeException(typedId.type.qualifiedName)
     }
 }
 
@@ -84,7 +80,7 @@ class ElementsMutable(elements: Elements = Elements()) : Elements() {
     }
 
     fun setMerging(id: Long, newElement: Element) {
-        val oldElement = this[TypedId(id, newElement::class)]
+        val oldElement = this[TypedId(id, newElement.type)]
         if (oldElement != null) {
             // Try to merge elements
             if (oldElement.version == null || newElement.version == null) {
@@ -98,36 +94,12 @@ class ElementsMutable(elements: Elements = Elements()) : Elements() {
     }
 }
 
-open class ElementAndId<T : Element>(
+open class ElementAndId<T: Element>(
     val id: Long,
     val element: T
-) : Parcelable {
+): Serializable {
     val e = element
-    val typedId = TypedId(id, element::class)
-
-    @Suppress("UNCHECKED_CAST")
-    constructor(parcel: Parcel) : this(
-        parcel.readLong(),
-        parcel.readSerializable() as T
-    )
-
-    override fun describeContents(): Int = 0
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeLong(id)
-        parcel.writeSerializable(element)
-    }
-
-    companion object {
-        @JvmField
-        @Suppress("unused")
-        val CREATOR = object : Parcelable.Creator<AnyElementAndId> {
-            override fun createFromParcel(parcel: Parcel): ElementAndId<Element> =
-                ElementAndId(parcel)
-
-            override fun newArray(size: Int): Array<ElementAndId<Element>?> = arrayOfNulls(size)
-        }
-    }
+    val typedId = TypedId(id, element.type)
 }
 
 typealias AnyElementAndId = ElementAndId<*>
@@ -136,49 +108,23 @@ class ElementCentroidAndId<T : Element>(
     id: Long,
     element: T,
     val centroid: org.locationtech.jts.geom.Coordinate
-) : ElementAndId<T>(id, element), Parcelable {
-    @Suppress("UNCHECKED_CAST")
-    constructor(parcel: Parcel) : this(
-        parcel.readLong(),
-        parcel.readSerializable() as T,
-        parcel.readSerializable() as org.locationtech.jts.geom.Coordinate
-    )
-
-    override fun describeContents(): Int = 0
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeLong(id)
-        parcel.writeSerializable(element)
-        parcel.writeSerializable(centroid)
-    }
-
-    companion object {
-        @JvmField
-        @Suppress("unused")
-        val CREATOR = object : Parcelable.Creator<AnyElementAndId> {
-            override fun createFromParcel(parcel: Parcel): ElementAndId<Element> =
-                ElementCentroidAndId(parcel)
-
-            override fun newArray(size: Int): Array<ElementAndId<Element>?> = arrayOfNulls(size)
-        }
-    }
-}
+) : ElementAndId<T>(id, element), Serializable
 
 typealias AnyElementCentroidAndId = ElementCentroidAndId<*>
 
 val KClass<out Element>.name
     get() = simpleName!!.lowercase()
 
-fun elementClassFromString(string: String) = try {
-    elementClassFromChar(string[0])
+fun elementTypeFromString(string: String) = try {
+    elementTypeFromChar(string[0])
 } catch (ex: UnknownElementTypeException) {
     throw UnknownElementTypeException("From string \"$string\"")
 }
 
-fun elementClassFromChar(char: Char) = when (char.lowercaseChar()) {
-    'n' -> Node::class
-    'w' -> Way::class
-    'r' -> Relation::class
+fun elementTypeFromChar(char: Char) = when (char.lowercaseChar()) {
+    'n' -> ElementType.NODE
+    'w' -> ElementType.WAY
+    'r' -> ElementType.RELATION
     else -> throw UnknownElementTypeException("From char \"$char\"")
 }
 
@@ -188,8 +134,8 @@ sealed class Element constructor(
     val changeset: Long? = null,
     val lastEditTimestamp: Instant? = null,
     val username: String? = null,
-) : Serializable {
-    abstract val name: String
+): Serializable {
+    abstract val type: ElementType
 
     abstract fun toGeometry(
         universe: Elements,
@@ -208,8 +154,8 @@ class Node constructor(
     changeset: Long? = null,
     lastEditTimestamp: Instant? = null,
     username: String? = null
-) : Element(version, tags, changeset, lastEditTimestamp, username) {
-    override val name: String get() = "node"
+): Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
+    override val type: ElementType = ElementType.NODE
 
     val jtsCoordinate = coordinate?.let {
         org.locationtech.jts.geom.Coordinate(coordinate.lon, coordinate.lat)
@@ -236,8 +182,8 @@ class Way constructor(
     changeset: Long? = null,
     lastEditTimestamp: Instant? = null,
     username: String? = null
-) : Element(version, tags, changeset, lastEditTimestamp, username) {
-    override val name: String get() = "way"
+): Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
+    override val type: ElementType = ElementType.WAY
 
     override fun toGeometry(
         universe: Elements,
@@ -257,7 +203,7 @@ class Way constructor(
 class RelationMember constructor(
     val typedId: TypedId,
     val role: String
-)
+): Serializable
 
 class Relation constructor(
     version: Int? = null,
@@ -266,8 +212,8 @@ class Relation constructor(
     changeset: Long? = null,
     lastEditTimestamp: Instant? = null,
     username: String? = null
-) : Element(version, tags, changeset, lastEditTimestamp, username) {
-    override val name: String get() = "relation"
+): Element(version, tags, changeset, lastEditTimestamp, username) {
+    override val type: ElementType = ElementType.RELATION
 
     override fun toGeometry(
         universe: Elements,

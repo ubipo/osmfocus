@@ -11,7 +11,7 @@ fun handleNavEvent(event: NavEvent, navController: NavController) {
         is ShowElementDetailsEvent -> navController.navigate(
             R.id.elementDetailContainerFragment,
             Bundle().apply {
-                putParcelable(
+                putSerializable(
                     ElementDetailsContainerFragment.ARG_ELEMENT_CENTROID_AND_ID,
                     event.elementCentroidAndId
                 )

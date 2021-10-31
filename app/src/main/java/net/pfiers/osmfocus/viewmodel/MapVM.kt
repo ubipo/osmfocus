@@ -240,7 +240,7 @@ class MapVM(
         return elementsList
             .filterNot { (_, element) -> element.tags.isNullOrEmpty() }
             .mapNotNull { (id, e) ->
-                downloadManager.getGeometry(TypedId(id, e::class))?.takeIf { g ->
+                downloadManager.getGeometry(TypedId(id, e.type))?.takeIf { g ->
                     !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
                 }?.let { geometry ->
                     DistanceOp.nearestPoints(

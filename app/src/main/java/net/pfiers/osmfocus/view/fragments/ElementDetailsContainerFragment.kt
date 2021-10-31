@@ -10,7 +10,7 @@ import net.pfiers.osmfocus.databinding.FragmentElementDetailsContainerBinding
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.view.support.BindingFragment
 
-class ElementDetailsContainerFragment: BindingFragment<FragmentElementDetailsContainerBinding>(
+class ElementDetailsContainerFragment : BindingFragment<FragmentElementDetailsContainerBinding>(
     FragmentElementDetailsContainerBinding::inflate
 ) {
     lateinit var elementCentroidAndId: AnyElementCentroidAndId
@@ -19,7 +19,8 @@ class ElementDetailsContainerFragment: BindingFragment<FragmentElementDetailsCon
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            elementCentroidAndId = it.getParcelable(ARG_ELEMENT_CENTROID_AND_ID)!!
+            elementCentroidAndId =
+                it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
         }
     }
 
@@ -50,13 +51,5 @@ class ElementDetailsContainerFragment: BindingFragment<FragmentElementDetailsCon
 
     companion object {
         const val ARG_ELEMENT_CENTROID_AND_ID = "elementInfo"
-
-        @JvmStatic
-        fun newInstance(elementAndId: AnyElementCentroidAndId) =
-            ElementDetailsContainerFragment().apply {
-                arguments = Bundle().apply {
-                    putParcelable(ARG_ELEMENT_CENTROID_AND_ID, elementAndId)
-                }
-            }
     }
 }

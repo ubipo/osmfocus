@@ -53,7 +53,7 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            elementCentroidAndId = it.getParcelable(ARG_ELEMENT_CENTROID_AND_ID)!!
+            elementCentroidAndId = it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
         }
 
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
@@ -146,7 +146,7 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
         fun newInstance(elementCentroidAndId: AnyElementCentroidAndId) =
             ElementDetailsFragment().apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_ELEMENT_CENTROID_AND_ID, elementCentroidAndId)
+                    putSerializable(ARG_ELEMENT_CENTROID_AND_ID, elementCentroidAndId)
                 }
             }
 
