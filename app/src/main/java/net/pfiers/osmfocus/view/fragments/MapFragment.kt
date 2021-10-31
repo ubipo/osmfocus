@@ -234,7 +234,18 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
                 )
             }
         }
+        initDeviceLocationMarker()
         deviceLocationMarker.position = position
+    }
+
+    private fun initDeviceLocationMarker() {
+        if (this::deviceLocationMarker.isInitialized) return
+        deviceLocationMarker = Marker(map)
+        deviceLocationMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+        val deviceLocationMarkerDrawableBitmap = AppCompatResources.getDrawable(requireContext(), R.drawable.marker_device_location)!!.toBitmap()
+        val deviceLocationMarkerDrawableScaled = BitmapDrawable(resources, deviceLocationMarkerDrawableBitmap.scale(50, 50, true))
+        deviceLocationMarker.icon = deviceLocationMarkerDrawableScaled
+        map.overlayManager.add(deviceLocationMarker)
     }
 
     @Suppress("UnstableApiUsage")
@@ -320,13 +331,6 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
         map.overlayManager.addAll(tbInfos.values.map { n -> n.geometryOverlay })
         map.overlayManager.addAll(tbInfos.values.map { n -> n.lineOverlay })
 
-        deviceLocationMarker = Marker(map)
-        deviceLocationMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-        val deviceLocationMarkerDrawableBitmap = AppCompatResources.getDrawable(requireContext(), R.drawable.marker_device_location)!!.toBitmap()
-        val deviceLocationMarkerDrawableScaled = BitmapDrawable(resources, deviceLocationMarkerDrawableBitmap.scale(50, 50, true))
-        deviceLocationMarker.icon = deviceLocationMarkerDrawableScaled
-        map.overlayManager.add(deviceLocationMarker)
-
         val settingsDataStore = app.settingsDataStore
 
         map.addMapListener(object : MapListener {
@@ -395,6 +399,7 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
         val error = getDrawable(R.drawable.ic_device_location_error)!!
     } }
     private fun updateLocationButton(locationState: MapVM.LocationState) {
+        // TODO: Incorrect ic after FOLLOW -> rotate
         val drawable = when (locationState) {
             MapVM.LocationState.INACTIVE -> deviceLocationIcs.inactive
             MapVM.LocationState.SEARCHING -> deviceLocationIcs.searching

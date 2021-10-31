@@ -93,6 +93,7 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- TODO: Buttons are briefly shown when returning to map and zoomed in -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/actionsContainer"
             android:layout_width="wrap_content"

@@ -50,13 +50,8 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
     }
     private val wikiPageRepository by lazy { app.wikiPageRepository }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            elementCentroidAndId = it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
-        }
-
-        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+    init {
+        lifecycleScope.launchWhenCreated {
             elementDetailsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is ElementDetailsVM.Companion.CopyCoordinateEvent -> {
@@ -69,6 +64,13 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
                     else -> activityAs<EventReceiver>().handleEvent(event)
                 }
             }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            elementCentroidAndId = it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
         }
     }
 

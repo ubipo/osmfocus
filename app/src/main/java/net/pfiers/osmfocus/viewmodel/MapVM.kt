@@ -103,6 +103,7 @@ class MapVM(
         else -> events.trySend(StartFollowingLocationEvent()).discard()
     }
 
+    // TODO: Should also be triggered by scrolling by zooming (double tap somewhere off-center)
     fun stopFollowingMyLocation() = when (locationState.value) {
         LocationState.INACTIVE, LocationState.ERROR -> Unit
         else -> {
