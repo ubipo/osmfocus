@@ -93,7 +93,7 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
     }
     private lateinit var tbInfos: Map<TbLoc, TbInfo>
 
-    private lateinit var deviceLocationMarker: Marker
+    private var deviceLocationMarker: Marker? = null
 
     private lateinit var palette: List<Int>
 
@@ -234,18 +234,19 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
                 )
             }
         }
-        initDeviceLocationMarker()
-        deviceLocationMarker.position = position
+        deviceLocationMarker?.let {
+            it.isEnabled = true
+            it.position = position
+        }
     }
 
-    private fun initDeviceLocationMarker() {
-        if (this::deviceLocationMarker.isInitialized) return
-        deviceLocationMarker = Marker(map)
+    private fun createDeviceLocationMarker(map: MapView): Marker {
+        val deviceLocationMarker = Marker(map)
         deviceLocationMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
         val deviceLocationMarkerDrawableBitmap = AppCompatResources.getDrawable(requireContext(), R.drawable.marker_device_location)!!.toBitmap()
         val deviceLocationMarkerDrawableScaled = BitmapDrawable(resources, deviceLocationMarkerDrawableBitmap.scale(50, 50, true))
         deviceLocationMarker.icon = deviceLocationMarkerDrawableScaled
-        map.overlayManager.add(deviceLocationMarker)
+        return deviceLocationMarker
     }
 
     @Suppress("UnstableApiUsage")
@@ -285,7 +286,8 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
 
         addTagBoxFragmentContainers()
 
-        map = binding.map
+        val map = binding.map
+        this.map = map
 
         map.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             val (x, y) = IntArray(2).also { binding.root.getLocationOnScreen(it) }
@@ -330,6 +332,11 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
 
         map.overlayManager.addAll(tbInfos.values.map { n -> n.geometryOverlay })
         map.overlayManager.addAll(tbInfos.values.map { n -> n.lineOverlay })
+
+        val deviceLocationMarker = createDeviceLocationMarker(map)
+        deviceLocationMarker.isEnabled = false
+        map.overlayManager.add(deviceLocationMarker)
+        this.deviceLocationMarker = deviceLocationMarker
 
         val settingsDataStore = app.settingsDataStore
 
@@ -390,6 +397,11 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
             }
 
         return binding.root
+    }
+
+    override fun onDestroyView() {
+        deviceLocationMarker = null
+        super.onDestroyView()
     }
 
     private val deviceLocationIcs by lazy { object {
