@@ -28,7 +28,7 @@ data class TypedId(val id: Long, val type: ElementType): Serializable {
     val url get() = URL("https://osm.org/${type.nameLower}/$id")
 }
 
-data class Coordinate(val lat: Double, val lon: Double)
+data class Coordinate(val lat: Double, val lon: Double): Serializable
 
 typealias Tags = Map<String, String>
 typealias Tag = Map.Entry<String, String>
