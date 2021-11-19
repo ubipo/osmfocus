@@ -2,7 +2,7 @@ package net.pfiers.osmfocus.service.db
 
 import android.content.Context
 import androidx.room.*
-import net.pfiers.osmfocus.service.basemaps.BaseMap
+import net.pfiers.osmfocus.service.basemap.BaseMap
 import java.util.*
 
 @Entity(

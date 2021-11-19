@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
-import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository
+import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.EditBaseMapsEvent
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.ShowAboutEvent

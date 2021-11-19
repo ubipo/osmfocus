@@ -2,11 +2,8 @@ package net.pfiers.osmfocus.service.klaxon
 
 import com.beust.klaxon.Converter
 import com.beust.klaxon.JsonValue
-import net.pfiers.osmfocus.service.iso8601DateTimeInUtcToInstant
+import net.pfiers.osmfocus.service.util.iso8601DateTimeInUtcToInstant
 import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 class InstantConverter : Converter {
     override fun canConvert(cls: Class<*>): Boolean =

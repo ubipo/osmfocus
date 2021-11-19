@@ -2,8 +2,7 @@ package net.pfiers.osmfocus.view.support
 
 import androidx.annotation.IdRes
 import androidx.constraintlayout.widget.ConstraintSet
-import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
-
+import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 
 fun TbLoc.applyConstraints(
     constraintSet: ConstraintSet,

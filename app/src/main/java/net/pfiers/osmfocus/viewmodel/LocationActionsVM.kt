@@ -7,7 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.ApiConfigRepository
-import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.osmapi.createNote
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.RunWithOsmAccessTokenEvent

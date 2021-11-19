@@ -7,7 +7,7 @@
 
         <variable
             name="baseMap"
-            type="net.pfiers.osmfocus.service.basemaps.BaseMap" />
+            type="net.pfiers.osmfocus.service.basemap.BaseMap" />
 
     </data>
 

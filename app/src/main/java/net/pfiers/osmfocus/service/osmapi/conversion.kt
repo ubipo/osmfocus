@@ -3,7 +3,7 @@ package net.pfiers.osmfocus.service.osmapi
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import net.pfiers.osmfocus.service.iso8601DateTimeInUtcToInstant
+import net.pfiers.osmfocus.service.util.iso8601DateTimeInUtcToInstant
 import net.pfiers.osmfocus.service.osm.*
 
 class OsmApiParseException(message: String, cause: Exception? = null) :

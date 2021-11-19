@@ -13,7 +13,8 @@ import androidx.core.content.PermissionChecker
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import kotlinx.coroutines.*
-import net.pfiers.osmfocus.view.osmdroid.toGeoPoint
+import net.pfiers.osmfocus.service.util.discard
+import net.pfiers.osmfocus.service.util.toGeoPoint
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import timber.log.Timber

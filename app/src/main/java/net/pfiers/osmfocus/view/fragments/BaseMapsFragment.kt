@@ -14,7 +14,6 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.*
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +27,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsBinding
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsItemBinding
-import net.pfiers.osmfocus.service.basemaps.*
+import net.pfiers.osmfocus.service.basemap.*
 import net.pfiers.osmfocus.service.db.UserBaseMap
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM

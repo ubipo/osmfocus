@@ -8,14 +8,11 @@ import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.mapError
 import net.pfiers.osmfocus.service.*
-import net.pfiers.osmfocus.service.basemaps.HTTP_ACCEPT
-import net.pfiers.osmfocus.service.basemaps.HTTP_USER_AGENT
-import net.pfiers.osmfocus.service.basemaps.MIME_JSON_UTF8
 import net.pfiers.osmfocus.service.klaxon.InstantConverter
 import net.pfiers.osmfocus.service.klaxon.UriConverter
 import net.pfiers.osmfocus.service.osm.Tag
 import net.pfiers.osmfocus.service.osmapi.*
-import timber.log.Timber
+import net.pfiers.osmfocus.service.util.*
 import java.net.URI
 import java.net.UnknownHostException
 

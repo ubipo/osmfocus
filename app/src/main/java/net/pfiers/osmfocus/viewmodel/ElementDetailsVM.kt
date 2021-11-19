@@ -1,7 +1,7 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
-import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.extensions.toGeoUri
 import net.pfiers.osmfocus.service.extensions.toOsmAndUrl
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId

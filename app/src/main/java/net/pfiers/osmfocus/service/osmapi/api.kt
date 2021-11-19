@@ -9,19 +9,14 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.mapError
-import net.pfiers.osmfocus.service.appendPath
-import net.pfiers.osmfocus.service.appendQueryParameter
-import net.pfiers.osmfocus.service.basemaps.HTTP_ACCEPT
-import net.pfiers.osmfocus.service.basemaps.HTTP_USER_AGENT
-import net.pfiers.osmfocus.service.basemaps.MIME_JSON_UTF8
+import net.pfiers.osmfocus.service.*
+import net.pfiers.osmfocus.service.util.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
 import java.net.URI
 import java.net.UnknownHostException
 import java.util.*
 import kotlin.time.ExperimentalTime
-
-//private const val HTTP_USER_AGENT = "OSMfocus Reborn/${BuildConfig.VERSION_NAME}"
 
 enum class Endpoint(val path: String) {
     MAP("map"),
@@ -55,26 +50,30 @@ suspend inline fun OsmApiConfig.apiReq(
     noinline reqTransformer: (Request.() -> Request)? = null,
     oauthAccessToken: String? = null,
     method: OsmApiMethod = OsmApiMethod.GET
-): Result<String, Exception> = baseUrl
-    .appendPath(endpoint)
-    .run { if (urlTransformer != null) urlTransformer(this) else this }
-    .toString()
-    .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
-    .run { if (reqTransformer != null) reqTransformer(this) else this }
-    .header(HTTP_USER_AGENT, userAgent)
-    .header(HTTP_ACCEPT, MIME_JSON_UTF8)
-    .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
-    .awaitStringResponseResult().third
-    .mapError { ex: Exception ->
+): Result<String, Exception> {
+    val (_, resp, result) = baseUrl
+        .appendPath(endpoint)
+        .run { if (urlTransformer != null) urlTransformer(this) else this }
+        .toString()
+        .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
+        .run { if (reqTransformer != null) reqTransformer(this) else this }
+        .header(HTTP_USER_AGENT, userAgent)
+        .header(HTTP_ACCEPT, MIME_JSON_UTF8)
+        .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
+        .awaitStringResponseResult()
+
+    return result.mapError { ex: Exception ->
         val bubbleCause = ex.cause
         if (bubbleCause is FuelError) {
             val fuelCause = bubbleCause.cause
-            if (fuelCause is UnknownHostException || fuelCause is HttpException) {
+            val is500 = resp.statusCode % 500 == 0
+            if (fuelCause is UnknownHostException || (fuelCause is HttpException && is500)) {
                 return@mapError OsmApiConnectionException(fuelCause.message, fuelCause as Exception)
             }
         }
         ex
     }
+}
 
 @ExperimentalTime
 suspend inline fun OsmApiConfig.apiReq(

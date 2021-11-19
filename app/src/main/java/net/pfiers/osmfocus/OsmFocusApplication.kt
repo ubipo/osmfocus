@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import net.pfiers.osmfocus.service.ApiConfigRepository
-import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import net.pfiers.osmfocus.service.db.Db
 import net.pfiers.osmfocus.service.db.TagInfoRepository
 import net.pfiers.osmfocus.service.oauth.OsmAuthRepository

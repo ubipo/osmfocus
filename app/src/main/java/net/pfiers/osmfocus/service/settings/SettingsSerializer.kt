@@ -6,7 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import java.io.InputStream
 import java.io.OutputStream
 

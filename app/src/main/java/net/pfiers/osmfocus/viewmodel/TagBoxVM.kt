@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.map
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.service.osm.Tags
-import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
+import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import net.pfiers.osmfocus.viewmodel.support.ShowElementDetailsEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 

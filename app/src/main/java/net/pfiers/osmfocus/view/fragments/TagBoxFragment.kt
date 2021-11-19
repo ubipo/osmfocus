@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTagboxBinding
-import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
+import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.TagBoxVM

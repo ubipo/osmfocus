@@ -10,9 +10,8 @@ import com.github.kittinunf.result.onError
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.service.NonNullObservableField
-import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import net.pfiers.osmfocus.service.db.UserBaseMap
-import net.pfiers.osmfocus.service.value
 import net.pfiers.osmfocus.viewmodel.support.NavigateUpEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import java.net.URISyntaxException

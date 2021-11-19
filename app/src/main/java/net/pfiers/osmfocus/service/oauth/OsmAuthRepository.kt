@@ -7,7 +7,7 @@ import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.service.appendPath
+import net.pfiers.osmfocus.service.util.appendPath
 import net.pfiers.osmfocus.service.toAndroidUri
 import timber.log.Timber
 import java.net.URI

@@ -1,7 +1,7 @@
 package net.pfiers.osmfocus.service.settings
 
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.view.osmdroid.toCoordinate
+import net.pfiers.osmfocus.service.util.toCoordinate
 import org.locationtech.jts.geom.Coordinate
 import org.osmdroid.api.IGeoPoint
 import org.osmdroid.util.GeoPoint

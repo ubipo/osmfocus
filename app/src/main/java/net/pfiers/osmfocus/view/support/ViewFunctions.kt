@@ -6,12 +6,10 @@ import android.util.TypedValue
 import android.view.Gravity
 import androidx.annotation.ColorInt
 import net.pfiers.osmfocus.service.extensions.toDecimalDegrees
-import net.pfiers.osmfocus.service.osm.ElementType
-import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
+import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import org.locationtech.jts.geom.Coordinate
 import org.ocpsoft.prettytime.PrettyTime
 import java.time.Instant
-import java.util.*
 import kotlin.collections.HashMap
 
 @ExperimentalStdlibApi

@@ -18,6 +18,8 @@ import net.openid.appauth.*
 import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.service.*
+import net.pfiers.osmfocus.service.util.createEmailIntent
+import net.pfiers.osmfocus.service.util.div
 import net.pfiers.osmfocus.view.support.EventReceiver
 import net.pfiers.osmfocus.view.support.ExceptionHandler
 import net.pfiers.osmfocus.view.support.app

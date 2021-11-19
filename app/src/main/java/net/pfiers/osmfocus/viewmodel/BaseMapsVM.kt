@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.db.Db
 import net.pfiers.osmfocus.service.db.UserBaseMap
-import net.pfiers.osmfocus.service.discard
+import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.AddBaseMapEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 

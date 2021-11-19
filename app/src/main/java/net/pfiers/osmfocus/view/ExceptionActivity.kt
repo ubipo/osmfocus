@@ -11,8 +11,8 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.databinding.ActivityExceptionBinding
 import net.pfiers.osmfocus.service.ThrowableInfo
-import net.pfiers.osmfocus.service.createEmailIntent
-import net.pfiers.osmfocus.service.div
+import net.pfiers.osmfocus.service.util.createEmailIntent
+import net.pfiers.osmfocus.service.util.div
 import net.pfiers.osmfocus.view.support.EventReceiver
 import net.pfiers.osmfocus.view.support.createVMFactory
 import net.pfiers.osmfocus.viewmodel.ExceptionVM
