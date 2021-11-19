@@ -1,9 +1,10 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.annotation.ColorInt
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.*
 import kotlinx.coroutines.flow.map
-import net.pfiers.osmfocus.OsmFocusApplication
+import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.service.osm.Tags
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
@@ -12,10 +13,10 @@ import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 
 @ExperimentalStdlibApi
 class TagBoxVM constructor(
-    application: OsmFocusApplication,
+    val settingsDataStore: DataStore<Settings>,
     val tbLoc: TbLoc,
     @ColorInt val color: Int
-) : AndroidViewModel(application) {
+) : ViewModel() {
     val events = createEventChannel()
     val elementCentroidAndId = MutableLiveData<AnyElementCentroidAndId>(null)
     val tags: LiveData<Tags?> = Transformations.map(elementCentroidAndId) { newElementInfo ->
@@ -23,7 +24,7 @@ class TagBoxVM constructor(
             it.e.tags!!
         }
     }
-    val longLinesHandling = application.settingsDataStore.data.map { settings ->
+    val longLinesHandling = settingsDataStore.data.map { settings ->
         settings.tagboxLongLines
     }.asLiveData()
 

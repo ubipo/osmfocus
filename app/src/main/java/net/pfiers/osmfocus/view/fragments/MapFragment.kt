@@ -74,7 +74,7 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
 ), MapEventsReceiver {
     private lateinit var mapLocationOnScreen: android.graphics.Point
     private val mapVM: MapVM by activityViewModels {
-        createVMFactory { MapVM(app.settingsDataStore, app.baseMapRepository) }
+        createVMFactory { MapVM(app.settingsDataStore, app.baseMapRepository, app.apiConfigRepository) }
     }
     private val attributionVM: AttributionVM by activityViewModels()
 
@@ -115,7 +115,7 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
             val geometryOverlay = GeometryOverlay(color, geometryFactory)
             val vm: TagBoxVM = createActivityTaggedViewModel(
                 listOf(tbLoc.toString()),
-                createVMFactory { TagBoxVM(app, tbLoc, color) }
+                createVMFactory { TagBoxVM(app.settingsDataStore, tbLoc, color) }
             )
             val fragment = TagBoxFragment.newInstance(color, tbLoc)
             val tbInfo = TbInfo(fragment, vm, lineOverlay, geometryOverlay)
@@ -567,8 +567,6 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
 
     override fun longPressHelper(p: GeoPoint?): Boolean {
-//        val current = binding.btnContainer.visibility
-//        binding.btnContainer.visibility = if (current == View.GONE) View.VISIBLE else View.GONE
         if (p != null) {
             map.controller.animateTo(p)
             LocationActionsDialogFragment.newInstance(p.toCoordinate())

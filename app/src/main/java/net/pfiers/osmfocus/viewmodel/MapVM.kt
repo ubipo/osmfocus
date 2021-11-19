@@ -16,8 +16,6 @@ import net.pfiers.osmfocus.service.*
 import net.pfiers.osmfocus.service.basemaps.BaseMapRepository
 import net.pfiers.osmfocus.service.osm.Element
 import net.pfiers.osmfocus.service.osm.TypedId
-import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
-import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.tagboxlocations.TbLoc
 import net.pfiers.osmfocus.service.tagboxlocations.tbLocations
 import net.pfiers.osmfocus.service.tagboxlocations.toEnvelopeCoordinate
@@ -25,20 +23,20 @@ import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.operation.distance.DistanceOp
 import timber.log.Timber
-import java.net.URI
 import kotlin.properties.Delegates
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 class MapVM(
     private val settingsDataStore: DataStore<Settings>,
-    private val baseMapRepository: BaseMapRepository
+    private val baseMapRepository: BaseMapRepository,
+    private val apiConfigRepository: ApiConfigRepository
 ) : ViewModel() {
     data class MapState(val envelope: Envelope, val zoomLevel: Double)
 
     val events = createEventChannel()
     private val downloadManager = MapApiDownloadManager(
-        createOsmApiConfig(Defaults.apiBaseUrl), MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, GEOMETRY_FAC
+        ApiConfigRepository.defaultOsmApiConfig, MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, GEOMETRY_FAC
     )
     val overlayText = MutableLiveData<@StringRes Int?>()
     val downloadState = MutableLiveData(downloadManager.state)
@@ -60,8 +58,8 @@ class MapVM(
     init {
         val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
         viewModelScope.launch {
-            settingsDataStore.data.collect { settings ->
-                downloadManager.apiConfig = createOsmApiConfig(settings.apiBaseUrl)
+            apiConfigRepository.osmApiConfigFlow.collect { apiConfig ->
+                downloadManager.apiConfig = apiConfig
             }
 
 //            settingsDataStore.data
@@ -296,11 +294,5 @@ class MapVM(
         const val MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
         const val MIN_DISPLAY_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL
         private val GEOMETRY_FAC = GeometryFactory()
-
-        private fun createOsmApiConfig(baseUrl: String) =
-            OsmApiConfig(
-                URI(baseUrl),
-                "${BuildConfig.APPLICATION_ID}/${BuildConfig.VERSION_NAME}"
-            )
     }
 }

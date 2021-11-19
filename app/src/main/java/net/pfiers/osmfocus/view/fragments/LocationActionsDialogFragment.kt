@@ -10,20 +10,19 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.databinding.FragmentLocationActionsDialogBinding
-import net.pfiers.osmfocus.view.support.EventReceiver
-import net.pfiers.osmfocus.view.support.activityAs
-import net.pfiers.osmfocus.view.support.createVMFactory
-import net.pfiers.osmfocus.view.support.exceptionHandler
+import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.LocationActionsVM
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import org.locationtech.jts.geom.Coordinate
+import kotlin.time.ExperimentalTime
 
-class LocationActionsDialogFragment : BottomSheetDialogFragment() {
+@ExperimentalTime
+class LocationActionsDialogFragment: BottomSheetDialogFragment() {
     private lateinit var location: Coordinate
     private val locationActionsVM by activityTaggedViewModels<LocationActionsVM>({
         listOf(location.toString())
     }) {
-        createVMFactory { LocationActionsVM(location) }
+        createVMFactory { LocationActionsVM(location, app.apiConfigRepository) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +34,12 @@ class LocationActionsDialogFragment : BottomSheetDialogFragment() {
 
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             locationActionsVM.events.receiveAsFlow().collect { event ->
-                activityAs<EventReceiver>().handleEvent(event)
+                when(event) {
+                    is LocationActionsVM.Companion.CloseLocationActionsEvent -> {
+                        this@LocationActionsDialogFragment.dismiss()
+                    }
+                    else -> activityAs<EventReceiver>().handleEvent(event)
+                }
             }
         }
     }

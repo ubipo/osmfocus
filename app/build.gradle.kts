@@ -29,6 +29,8 @@ android {
                 arguments["room.schemaLocation"] = "$projectDir/room-schemas"
             }
         }
+
+        manifestPlaceholders["appAuthRedirectScheme"] = "net.pfiers.osmfocus"
     }
 
     compileOptions {
@@ -221,7 +223,7 @@ dependencies {
     implementation("com.jakewharton.timber:timber:4.7.1")
 
     // Auth
-    implementation("com.google.oauth-client:google-oauth-client:1.32.1")
+    implementation("net.openid:appauth:0.10.0")
 
     // Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

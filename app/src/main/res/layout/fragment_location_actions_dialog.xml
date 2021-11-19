@@ -36,7 +36,10 @@
             android:layout_height="56dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:onClick="@{() -> vm.createNote()}">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:layout_width="32dp"

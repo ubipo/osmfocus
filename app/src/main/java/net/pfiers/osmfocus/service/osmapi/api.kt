@@ -2,9 +2,11 @@ package net.pfiers.osmfocus.service.osmapi
 
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.HttpException
+import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.extensions.authentication
 import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
 import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.mapError
 import net.pfiers.osmfocus.service.appendPath
@@ -12,8 +14,7 @@ import net.pfiers.osmfocus.service.appendQueryParameter
 import net.pfiers.osmfocus.service.basemaps.HTTP_ACCEPT
 import net.pfiers.osmfocus.service.basemaps.HTTP_USER_AGENT
 import net.pfiers.osmfocus.service.basemaps.MIME_JSON_UTF8
-import net.pfiers.osmfocus.service.oauth.OAuthRequestCredentials
-import net.pfiers.osmfocus.service.oauth.oAuth1a
+import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
 import java.net.URI
 import java.net.UnknownHostException
@@ -24,15 +25,15 @@ import kotlin.time.ExperimentalTime
 
 enum class Endpoint(val path: String) {
     MAP("map"),
-    USER_DETAILS("user/details")
+    USER_DETAILS("user/details"),
+    NOTES("notes")
 }
 
 const val OSM_API_PARAM_BBOX = "bbox"
 
 data class OsmApiConfig(
     val baseUrl: URI,
-    val userAgent: String,
-    val oauthCredentials: OAuthRequestCredentials? = null
+    val userAgent: String
 )
 
 /** Indicates any connection exception related to an osm API
@@ -44,19 +45,25 @@ class OsmApiConnectionException(
     cause: Exception
 ) : Exception(message, cause)
 
+enum class OsmApiMethod { GET, POST }
+
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
 suspend inline fun OsmApiConfig.apiReq(
     endpoint: String,
-    noinline urlTransformer: (URI.() -> URI)? = null
+    noinline urlTransformer: (URI.() -> URI)? = null,
+    noinline reqTransformer: (Request.() -> Request)? = null,
+    oauthAccessToken: String? = null,
+    method: OsmApiMethod = OsmApiMethod.GET
 ): Result<String, Exception> = baseUrl
     .appendPath(endpoint)
     .run { if (urlTransformer != null) urlTransformer(this) else this }
     .toString()
-    .httpGet()
+    .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
+    .run { if (reqTransformer != null) reqTransformer(this) else this }
     .header(HTTP_USER_AGENT, userAgent)
     .header(HTTP_ACCEPT, MIME_JSON_UTF8)
-    .run { if (oauthCredentials != null) authentication().oAuth1a(oauthCredentials) else this }
+    .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
     .awaitStringResponseResult().third
     .mapError { ex: Exception ->
         val bubbleCause = ex.cause
@@ -72,14 +79,33 @@ suspend inline fun OsmApiConfig.apiReq(
 @ExperimentalTime
 suspend inline fun OsmApiConfig.apiReq(
     endpoint: Endpoint,
-    noinline urlTransformer: (URI.() -> URI)? = null
-) = apiReq(endpoint.path, urlTransformer)
+    noinline urlTransformer: (URI.() -> URI)? = null,
+    noinline reqTransformer: (Request.() -> Request)? = null,
+    oauthAccessToken: String? = null,
+    method: OsmApiMethod = OsmApiMethod.GET
+) = apiReq(endpoint.path, urlTransformer, reqTransformer, oauthAccessToken, method)
 
 @ExperimentalTime
-suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP) {
+suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
     // We can't use URLEncoder.encode because it percent-encodes commas (which we don't want)
     appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
-}
+})
+
+@ExperimentalTime
+suspend fun OsmApiConfig.createNote(
+    location: Coordinate,
+    text: String,
+    oauthAccessToken: String
+) = apiReq(
+    Endpoint.NOTES,
+    null,
+    {
+        parameters = parameters + location.toApiQueryParameters().toList() + Pair("text", text)
+        this
+    },
+    oauthAccessToken,
+    OsmApiMethod.POST
+)
 
 //@ExperimentalTime
 //suspend fun OsmApiConfig.userDetails() = apiReq<UserDetailsRes>(Endpoint.USER_DETAILS)

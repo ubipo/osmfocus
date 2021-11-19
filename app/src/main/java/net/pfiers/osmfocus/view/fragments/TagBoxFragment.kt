@@ -25,7 +25,6 @@ import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
-import net.pfiers.osmfocus.view.support.handleNavEvent
 import kotlin.properties.Delegates
 
 @ExperimentalStdlibApi
@@ -39,7 +38,7 @@ class TagBoxFragment: Fragment() {
     private val tagBoxVM: TagBoxVM by activityTaggedViewModels(
         { listOf(tbLoc.toString()) },
         {
-            createVMFactory { TagBoxVM(app, tbLoc, color) }
+            createVMFactory { TagBoxVM(app.settingsDataStore, tbLoc, color) }
         }
     )
 

@@ -1,14 +1,7 @@
 package net.pfiers.osmfocus.service.oauth
 
-import com.github.kittinunf.fuel.core.Headers
-import com.github.kittinunf.fuel.core.Parameters
-import com.github.kittinunf.fuel.core.extensions.AuthenticatedRequest
-import com.google.api.client.auth.oauth.OAuthHmacSigner
-import com.google.api.client.auth.oauth.OAuthParameters
-import com.google.api.client.http.GenericUrl
-import java.net.URL
-import java.net.URLEncoder
-
+// Not used anymore as we now use OAuth 2 which just uses Authorization: Bearer XXX.
+/*
 fun AuthenticatedRequest.oAuth1a(credentials: OAuthRequestCredentials): AuthenticatedRequest {
     val oAuthParameters = OAuthParameters().apply {
         consumerKey = credentials.consumerKey
@@ -28,7 +21,9 @@ fun AuthenticatedRequest.oAuth1a(credentials: OAuthRequestCredentials): Authenti
 
     return request
 }
+*/
 
+/*
 /**
  * Stolen from com.github.kittinunf.fuel.core.interceptors
  */
@@ -69,3 +64,4 @@ private fun URL.withParameters(parameters: Parameters): URL {
 
     return URL(toExternalForm() + joiner + encoded)
 }
+*/

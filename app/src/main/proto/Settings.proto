@@ -29,4 +29,6 @@ message Settings {
 
   bool zoomBeyondBaseMapMax = 7;
 
+  string osmAuthState = 8;
+
 }

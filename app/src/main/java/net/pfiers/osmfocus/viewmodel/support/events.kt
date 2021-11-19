@@ -36,4 +36,7 @@ class ActionsVisibilityEvent(val actionsShouldBeVisible: Boolean): Event()
 // Dialog
 class CancelEvent: Event()
 
+// OAuth
+class RunWithOsmAccessTokenEvent(val action: (accessToken: String) -> Unit): Event()
+
 fun createEventChannel() = Channel<Event>(10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
