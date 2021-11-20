@@ -155,4 +155,11 @@
     <string name="actions_for_coordinate">Actions for %1$s</string>
     <string name="intent_oauth_callback">Callback for openstreetmap.org authentication</string>
     <string name="copy_coordinates_clipboard_label">Coordinates</string>
+    <string name="create_note_text_label">Note text</string>
+    <string name="osm_login_confirm_dialog_title">Log in to OpenStreetMap.org?</string>
+    <string name="osm_login_confirm_dialog_message">You need to login to OpenStreetMap.org to %1$s.</string>
+    <string name="osm_login_reason_notes">create notes</string>
+    <string name="osm_login_confirm_dialog_log_in">Log in</string>
+    <string name="osm_login_confirm_dialog_cancel">Cancel</string>
+    <string name="create">Create</string>
 </resources>

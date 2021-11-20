@@ -7,21 +7,14 @@ import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
 import net.pfiers.osmfocus.service.settings.Defaults
-import timber.log.Timber
 import java.net.URI
 
 class ApiConfigRepository(
     settingsDataStore: DataStore<Settings>
 ) {
     val osmApiConfigFlow = settingsDataStore.data
-        .map { settings ->
-            Timber.d("Mapping settings to apiBaseUrl...")
-            settings.apiBaseUrl.ifBlank { Defaults.apiBaseUrl }
-        }
-        .distinctUntilChanged().map { apiBaseUrl ->
-            Timber.d("Mapping apiBaseUrl to OsmApiConfig")
-            createOsmApiConfig(apiBaseUrl)
-        }
+        .map { settings -> settings.apiBaseUrl.ifBlank { Defaults.apiBaseUrl } }
+        .distinctUntilChanged().map { apiBaseUrl -> createOsmApiConfig(apiBaseUrl) }
 
     companion object {
         val defaultOsmApiConfig = createOsmApiConfig(Defaults.apiBaseUrl)

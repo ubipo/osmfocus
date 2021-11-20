@@ -1,6 +1,7 @@
 package net.pfiers.osmfocus.viewmodel.support
 
 import android.net.Uri
+import androidx.annotation.StringRes
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
@@ -38,6 +39,6 @@ class ActionsVisibilityEvent(val actionsShouldBeVisible: Boolean) : Event()
 class CancelEvent : Event()
 
 // OAuth
-class RunWithOsmAccessTokenEvent(val action: (accessToken: String) -> Unit) : Event()
+class RunWithOsmAccessTokenEvent(val action: (accessToken: String) -> Unit, @StringRes val reason: Int) : Event()
 
 fun createEventChannel() = Channel<Event>(10, onBufferOverflow = BufferOverflow.DROP_OLDEST)

@@ -91,6 +91,11 @@ suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
 })
 
 @ExperimentalTime
+suspend fun OsmApiConfig.notes(envelope: Envelope) = apiReq(Endpoint.NOTES, {
+    appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
+})
+
+@ExperimentalTime
 suspend fun OsmApiConfig.createNote(
     location: Coordinate,
     text: String,

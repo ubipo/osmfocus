@@ -4,4 +4,11 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="fragment_horizontal_margin">16dp</dimen>
     <dimen name="fragment_vertical_margin">16dp</dimen>
+
+    <dimen name="dialog_title_top_margin">24dp</dimen>
+    <dimen name="dialog_title_content_margin">16dp</dimen>
+    <dimen name="dialog_text_horizontal_margin">24dp</dimen>
+    <dimen name="dialog_content_bottom_margin">28dp</dimen>
+    <dimen name="inter_button_margin">8dp</dimen>
+    <dimen name="dialog_buttons_margin">8dp</dimen>
 </resources>

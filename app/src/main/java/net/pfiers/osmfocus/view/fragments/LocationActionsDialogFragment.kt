@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.databinding.FragmentLocationActionsDialogBinding
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.LocationActionsVM
+import net.pfiers.osmfocus.viewmodel.LocationActionsVM.ShowCreateNoteDialogEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import org.locationtech.jts.geom.Coordinate
 import kotlin.time.ExperimentalTime
@@ -35,8 +36,9 @@ class LocationActionsDialogFragment : BottomSheetDialogFragment() {
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             locationActionsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
-                    is LocationActionsVM.CloseLocationActionsEvent -> {
-                        this@LocationActionsDialogFragment.dismiss()
+                    is ShowCreateNoteDialogEvent -> {
+                        CreateNoteDialogFragment.newInstance(location).showWithDefaultTag(childFragmentManager)
+//                        this@LocationActionsDialogFragment.dismiss()
                     }
                     else -> activityAs<EventReceiver>().handleEvent(event)
                 }

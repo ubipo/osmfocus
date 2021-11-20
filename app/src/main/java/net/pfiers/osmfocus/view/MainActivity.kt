@@ -9,9 +9,12 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.getOrElse
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import net.openid.appauth.*
@@ -144,13 +147,10 @@ class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
             )
             is RunWithOsmAccessTokenEvent -> oAuthScope.launch {
                 val authState = osmAuthRepository.getAuthState()
-                Timber.d("Checking if authorized...")
                 if (!authState.isAuthorized) {
-                    Timber.d("Not authorized. Authorizing...")
-                    osmAuthorize()
+                    if (!osmAuthorize(event.reason)) return@launch
                 }
 
-                Timber.d("Now authorized, performing action with fresh tokens")
                 authState.performActionWithFreshTokens(authService) { accessToken, _, ex ->
                     if (ex != null || accessToken == null) {
                         val description = ex?.errorDescription ?: "unknown error"
@@ -161,7 +161,6 @@ class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
                         ).show()
                         return@performActionWithFreshTokens
                     }
-                    Timber.d("Fresh tokens received, performing action...")
                     event.action(accessToken)
                 }
             }
@@ -170,13 +169,33 @@ class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
         }
     }
 
-    private suspend fun osmAuthorize() {
+    /**
+     * @return true if authorization launched, false if cancelled
+     */
+    private suspend fun osmAuthorize(@StringRes reason: Int): Boolean {
+        val confirmJob = CompletableDeferred<Boolean>()
+        lifecycleScope.launch {
+            MaterialAlertDialogBuilder(this@MainActivity).apply {
+                setTitle(R.string.osm_login_confirm_dialog_title)
+                setMessage(getString(R.string.osm_login_confirm_dialog_message, getString(reason)))
+                setPositiveButton(R.string.osm_login_confirm_dialog_log_in) { dialog, _ ->
+                    dialog.dismiss()
+                    confirmJob.complete(true)
+                }
+                setNegativeButton(R.string.osm_login_confirm_dialog_cancel) { dialog, _ ->
+                    dialog.dismiss()
+                    confirmJob.complete(false)
+                }
+            }.show()
+        }
+        if (!confirmJob.await()) return false
         if (osmAuthorizationJob == null) osmAuthorizationJob = Job()
         val authIntent = authService.getAuthorizationRequestIntent(
             osmAuthRepository.createAuthorizationRequest()
         )
         osmAuthorizationResultLauncher.launch(authIntent)
         osmAuthorizationJob!!.join()
+        return true
     }
 
     private fun authResponseFromActivityResult(result: ActivityResult): Result<AuthorizationResponse, AuthResponseException> {

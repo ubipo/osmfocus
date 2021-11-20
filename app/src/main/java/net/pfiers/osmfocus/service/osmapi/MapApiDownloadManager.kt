@@ -22,7 +22,6 @@ import net.sf.geographiclib.Geodesic
 import org.locationtech.jts.geom.Envelope
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
@@ -160,7 +159,6 @@ class MapApiDownloadManager(
         if (envelope.isNull) return Result.success(null)
         val envelopeArea = envelope.areaGeo(Geodesic.WGS84)
         if (envelopeArea > maxArea) {
-            Timber.d("Area exceeded")
             return Result.error(
                 MaxDownloadAreaExceededException(
                     "Max download area exceeded ($envelopeArea > $maxArea)"
