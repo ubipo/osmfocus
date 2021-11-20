@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.AttributeSet
 
-
 class VerticalTextView : androidx.appcompat.widget.AppCompatTextView {
     private var _width = 0
     private var _height = 0
@@ -16,6 +15,7 @@ class VerticalTextView : androidx.appcompat.widget.AppCompatTextView {
         attrs,
         defStyle
     )
+
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context) : super(context)
 

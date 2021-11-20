@@ -113,7 +113,6 @@ class LocationHelper(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    @SuppressWarnings("deprecation")
     private fun platformGetCurrentLocation(
         provider: String,
         callback: (location: Location) -> Unit
@@ -127,6 +126,7 @@ class LocationHelper(private val context: Context) {
                     callback
                 )
             } else {
+                @Suppress("deprecation")
                 locationManager.requestSingleUpdate(
                     provider,
                     callback,
@@ -180,12 +180,10 @@ class LocationHelper(private val context: Context) {
         }
     }
 
-    companion object {
-        class RequestPermissionEvent(val permission: String) : Event()
-        class LocationEvent(val location: Location) : Event()
-        class LocationProviderDisableEvent : Event()
+    class RequestPermissionEvent(val permission: String) : Event()
+    class LocationEvent(val location: Location) : Event()
+    class LocationProviderDisableEvent : Event()
 
-        class LocationUnavailableException : Exception()
-        class LocationPermissionDeniedException : Exception()
-    }
+    class LocationUnavailableException : Exception()
+    class LocationPermissionDeniedException : Exception()
 }

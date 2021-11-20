@@ -15,9 +15,8 @@ import net.pfiers.osmfocus.databinding.FragmentAddUserBaseMapBinding
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.AddUserBaseMapVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
-import net.pfiers.osmfocus.view.support.handleNavEvent
 
-class AddUserBaseMapFragment: BindingFragment<FragmentAddUserBaseMapBinding>(
+class AddUserBaseMapFragment : BindingFragment<FragmentAddUserBaseMapBinding>(
     FragmentAddUserBaseMapBinding::inflate
 ) {
     private val addUserBaseMapVM: AddUserBaseMapVM by viewModels {

@@ -1,10 +1,6 @@
 package net.pfiers.osmfocus.service.util
 
-import androidx.annotation.ColorInt
-import net.pfiers.osmfocus.service.extensions.asList
-import net.pfiers.osmfocus.view.osmdroid.GeometryCollectionOverlay
-import net.pfiers.osmfocus.view.osmdroid.LineStringOverlay
-import net.pfiers.osmfocus.view.osmdroid.PointOverlay
+import net.pfiers.osmfocus.service.jts.asList
 import org.locationtech.jts.geom.*
 import org.osmdroid.api.IGeoPoint
 import org.osmdroid.util.BoundingBox
@@ -44,14 +40,6 @@ fun GeometryCollection.toGeoPointsPair(): Pair<MutableList<GeoPoint>, MutableLis
     }
     return Pair(geoPoints, geoPointLists)
 }
-
-fun Geometry.toOverlay(@ColorInt color: Int) =
-    when(this) {
-        is Point -> PointOverlay(this, color)
-        is LineString -> LineStringOverlay(this, color)
-        is GeometryCollection -> GeometryCollectionOverlay(this, color)
-        else -> error("Unknown Geometry: ${this::class.simpleName}")
-    }
 
 fun BoundingBox.toEnvelope() =
     Envelope(lonWest, lonEast, latSouth, latNorth)

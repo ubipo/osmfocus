@@ -17,7 +17,7 @@ import org.locationtech.jts.geom.Coordinate
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-class LocationActionsDialogFragment: BottomSheetDialogFragment() {
+class LocationActionsDialogFragment : BottomSheetDialogFragment() {
     private lateinit var location: Coordinate
     private val locationActionsVM by activityTaggedViewModels<LocationActionsVM>({
         listOf(location.toString())
@@ -34,8 +34,8 @@ class LocationActionsDialogFragment: BottomSheetDialogFragment() {
 
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             locationActionsVM.events.receiveAsFlow().collect { event ->
-                when(event) {
-                    is LocationActionsVM.Companion.CloseLocationActionsEvent -> {
+                when (event) {
+                    is LocationActionsVM.CloseLocationActionsEvent -> {
                         this@LocationActionsDialogFragment.dismiss()
                     }
                     else -> activityAs<EventReceiver>().handleEvent(event)

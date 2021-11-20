@@ -10,7 +10,7 @@ import net.pfiers.osmfocus.databinding.FragmentElementDetailsContainerBinding
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.view.support.BindingFragment
 
-class ElementDetailsContainerFragment: BindingFragment<FragmentElementDetailsContainerBinding>(
+class ElementDetailsContainerFragment : BindingFragment<FragmentElementDetailsContainerBinding>(
     FragmentElementDetailsContainerBinding::inflate
 ) {
     lateinit var elementCentroidAndId: AnyElementCentroidAndId

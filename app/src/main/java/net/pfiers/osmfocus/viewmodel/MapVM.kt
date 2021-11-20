@@ -17,13 +17,11 @@ import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import net.pfiers.osmfocus.service.osm.Element
 import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager
+import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager.*
 import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import net.pfiers.osmfocus.service.tagboxlocation.tbLocations
 import net.pfiers.osmfocus.service.tagboxlocation.toEnvelopeCoordinate
-import net.pfiers.osmfocus.service.util.cartesianProduct
-import net.pfiers.osmfocus.service.util.containedSubList
-import net.pfiers.osmfocus.service.util.discard
-import net.pfiers.osmfocus.service.util.noIndividualValueReuse
+import net.pfiers.osmfocus.service.util.*
 import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.operation.distance.DistanceOp
@@ -58,6 +56,7 @@ class MapVM(
     val highlightedElements = MutableLiveData<Map<TbLoc, ElementToDisplayData>>()
 
     enum class LocationState { INACTIVE, SEARCHING, FOLLOWING, ERROR }
+
     val locationState = MutableLiveData(LocationState.INACTIVE)
 
     init {
@@ -130,17 +129,17 @@ class MapVM(
             is PropertyChangedEvent<*> -> {
                 when (event.property) {
                     downloadManager::state -> {
-                        val state = event.newValue as MapApiDownloadManager.State
+                        val state = event.newValue as State
                         viewModelScope.launch {
                             downloadState.value = state
                         }
-                        if (state == MapApiDownloadManager.State.REQUEST) {
+                        if (state == State.REQUEST) {
                             overlayText.value = null
                         }
                     }
                 }
             }
-            is MapApiDownloadManager.DownloadEndedEvent -> {
+            is DownloadEndedEvent -> {
                 event.result.onError { ex ->
                     when (ex) {
                         is ZoomLevelRecededException, is MaxDownloadAreaExceededException -> {
@@ -149,7 +148,7 @@ class MapVM(
                     }
                 }
             }
-            is MapApiDownloadManager.NewElementsEvent -> {
+            is NewElementsEvent -> {
                 overlayText.value = null
                 updateHighlightedElements()
             }
@@ -221,9 +220,11 @@ class MapVM(
                 viewModelScope.launch {
                     highlightedElements.value = tagBoxElementPairs
                 }
-                events.trySend(ActionsVisibilityEvent(
-                    actionsShouldBeVisible = tagBoxElementPairs.isEmpty()
-                ))
+                events.trySend(
+                    ActionsVisibilityEvent(
+                        actionsShouldBeVisible = tagBoxElementPairs.isEmpty()
+                    )
+                )
             }
             lastUpdateHighlightedElementsJob = job
             job

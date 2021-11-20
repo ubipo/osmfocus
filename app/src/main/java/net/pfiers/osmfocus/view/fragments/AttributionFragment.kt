@@ -9,7 +9,7 @@ import net.pfiers.osmfocus.databinding.FragmentAttributionBinding
 import net.pfiers.osmfocus.view.support.BindingFragment
 import net.pfiers.osmfocus.viewmodel.AttributionVM
 
-class AttributionFragment: BindingFragment<FragmentAttributionBinding>(
+class AttributionFragment : BindingFragment<FragmentAttributionBinding>(
     FragmentAttributionBinding::inflate
 ) {
     private val attributionVM: AttributionVM by activityViewModels()

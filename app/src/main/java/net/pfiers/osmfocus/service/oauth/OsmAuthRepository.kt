@@ -8,7 +8,7 @@ import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.util.appendPath
-import net.pfiers.osmfocus.service.toAndroidUri
+import net.pfiers.osmfocus.service.util.toAndroidUri
 import timber.log.Timber
 import java.net.URI
 
@@ -28,7 +28,7 @@ class OsmAuthRepository(
         settingsDataStore.data.first().osmAuthState.ifBlank { null }
             ?.let { AuthState.jsonDeserialize(it) }
             ?: AuthState(serviceConfig)
-            .also { authState -> _authState = authState }
+                .also { authState -> _authState = authState }
     }
 
     fun createAuthorizationRequest() = AuthorizationRequest.Builder(

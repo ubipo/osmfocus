@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentElementDetailsBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTableBinding
-import net.pfiers.osmfocus.service.extensions.toDecimalDegrees
+import net.pfiers.osmfocus.service.jts.toDecimalDegrees
 import net.pfiers.osmfocus.service.osm.*
 import net.pfiers.osmfocus.view.rvadapters.HeaderAdapter
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
@@ -39,7 +39,7 @@ import timber.log.Timber
 import java.net.*
 import java.util.*
 
-class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
+class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
     FragmentElementDetailsBinding::inflate
 ) {
     private lateinit var elementCentroidAndId: AnyElementCentroidAndId
@@ -54,7 +54,7 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
         lifecycleScope.launchWhenCreated {
             elementDetailsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
-                    is ElementDetailsVM.Companion.CopyCoordinateEvent -> {
+                    is ElementDetailsVM.CopyCoordinateEvent -> {
                         copyToClipboard(
                             event.coordinate.toDecimalDegrees(),
                             getString(R.string.copy_coordinates_clipboard_label),
@@ -70,7 +70,8 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            elementCentroidAndId = it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
+            elementCentroidAndId =
+                it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
         }
     }
 
@@ -152,8 +153,7 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
                 }
             }
 
-        data class TemporaryException(override val message: String) : Exception()
-
+        // TODO: Duplicate, see osm api
         private fun transformFuelError(exception: Exception): Exception {
             val cause = exception.cause
             return if (cause is FuelError) {
@@ -166,4 +166,6 @@ class ElementDetailsFragment: BindingFragment<FragmentElementDetailsBinding>(
             } else exception
         }
     }
+
+    data class TemporaryException(override val message: String) : Exception()
 }

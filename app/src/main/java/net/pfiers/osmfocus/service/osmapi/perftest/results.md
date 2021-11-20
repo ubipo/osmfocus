@@ -14,6 +14,7 @@
 ```
 
 ## Averages
+
 ```text
 reproducing  8384
 hybrid       7943

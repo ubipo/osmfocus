@@ -9,11 +9,10 @@ import org.locationtech.jts.geom.LineString
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-
 class LineStringOverlay(
     lineString: LineString,
     @ColorInt color: Int
-): Overlay() {
+) : Overlay() {
     private val paint = Paint()
     private val geoPoints = lineString.toGeoPointList()
 

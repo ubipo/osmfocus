@@ -1,9 +1,11 @@
 package net.pfiers.osmfocus.service.db
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
 
 @Dao
-interface TagMetaDao  {
+interface TagMetaDao {
     @Query("SELECT * FROM tag_meta WHERE `key` = :key AND `value` = :value")
     suspend fun getTagMeta(key: String, value: String): TagMeta?
 

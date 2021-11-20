@@ -1,7 +1,10 @@
 package net.pfiers.osmfocus.service.db
 
 import android.content.Context
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
 import net.pfiers.osmfocus.service.basemap.BaseMap
 import java.util.*
 
@@ -27,5 +30,6 @@ data class UserBaseMap(
             && name == other.name
             && attribution == other.attribution
             && baseUrl == other.baseUrl)
+
     override fun hashCode(): Int = Objects.hash(name, attribution, baseUrl)
 }

@@ -12,7 +12,7 @@ import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentMoreInfoBinding
 import net.pfiers.osmfocus.viewmodel.NavVM
 
-class MoreInfoFragment: Fragment() {
+class MoreInfoFragment : Fragment() {
     private val navVM: NavVM by activityViewModels()
 
     override fun onCreateView(

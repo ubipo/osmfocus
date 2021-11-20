@@ -29,7 +29,7 @@ inline fun <reified T> Fragment.activityAs(): T = let {
 val Fragment.exceptionHandler
     get() = activityAs<ExceptionHandler>()
 
-fun <T: DialogFragment> T.showWithDefaultTag(manager: FragmentManager) =
+fun <T : DialogFragment> T.showWithDefaultTag(manager: FragmentManager) =
     show(manager, this::class.qualifiedName)
 
 fun Fragment.getDrawable(@DrawableRes drawableRes: Int) =

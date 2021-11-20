@@ -4,20 +4,19 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import androidx.annotation.ColorInt
-import net.pfiers.osmfocus.toPath
-import net.pfiers.osmfocus.service.extensions.asInteriorRingList
-import net.pfiers.osmfocus.service.extensions.asList
+import net.pfiers.osmfocus.service.jts.asInteriorRingList
+import net.pfiers.osmfocus.service.jts.asList
 import net.pfiers.osmfocus.service.util.toGeoPoint
+import net.pfiers.osmfocus.service.util.toPath
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.MultiPolygon
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-
 class MultipolygonOverlay(
     private val multiPolygon: MultiPolygon,
     @ColorInt color: Int
-): Overlay() {
+) : Overlay() {
     private val paint = Paint()
 
     override fun draw(pCanvas: Canvas?, pProjection: Projection?) {

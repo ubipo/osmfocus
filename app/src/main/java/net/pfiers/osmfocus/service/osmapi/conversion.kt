@@ -3,8 +3,8 @@ package net.pfiers.osmfocus.service.osmapi
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import net.pfiers.osmfocus.service.util.iso8601DateTimeInUtcToInstant
 import net.pfiers.osmfocus.service.osm.*
+import net.pfiers.osmfocus.service.util.iso8601DateTimeInUtcToInstant
 
 class OsmApiParseException(message: String, cause: Exception? = null) :
     RuntimeException(message, cause)
@@ -29,7 +29,8 @@ fun jsonToElements(
             val version = elementObj["version"] as Int
             val tags = elementObj["tags"]?.let { t ->
                 (t as JsonObject).toMap().mapValues { (_, v) -> v as String }
-            }?: emptyMap() // This is a quirk (response size saving measure) of the OSM API: an undefined tags object means 'no tags'
+            }
+                ?: emptyMap() // This is a quirk (response size saving measure) of the OSM API: an undefined tags object means 'no tags'
             val changeset = (elementObj["changeset"] as Number).toLong()
             val timestamp = iso8601DateTimeInUtcToInstant(elementObj["timestamp"] as String)
             val username = elementObj["user"] as String
@@ -63,7 +64,7 @@ fun jsonToElements(
                     mergedUniverse.setMerging(id, relation)
                     newElements[id] = relation
                 }
-                else -> throw OsmApiParseException("Unrecognised element type: $type",)
+                else -> throw OsmApiParseException("Unrecognised element type: $type")
             }
         }
     } catch (ccEx: ClassCastException) {

@@ -7,8 +7,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.ApiConfigRepository
-import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.osmapi.createNote
+import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.RunWithOsmAccessTokenEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
@@ -47,7 +47,5 @@ class LocationActionsVM(
 
     fun createNote() = createNote(null) // ViewBinding does not like default args
 
-    companion object {
-        class CloseLocationActionsEvent: Event()
-    }
+    class CloseLocationActionsEvent : Event()
 }

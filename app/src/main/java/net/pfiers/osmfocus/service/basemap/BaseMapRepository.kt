@@ -29,7 +29,8 @@ class BaseMapRepository(
         val uidOfDefault get() = uidOf(default)
 
         fun uidOf(baseMap: BaseMap): String = when (baseMap) {
-            is BuiltinBaseMap -> UID_PREFIX_BUILTIN.toString() + builtinBaseMaps.indexOf(baseMap).toString()
+            is BuiltinBaseMap -> UID_PREFIX_BUILTIN.toString() + builtinBaseMaps.indexOf(baseMap)
+                .toString()
             is UserBaseMap -> UID_PREFIX_USER.toString() + baseMap.id
             else -> error("Unknown BaseMap class \"${baseMap::class.simpleName}\"")
         }

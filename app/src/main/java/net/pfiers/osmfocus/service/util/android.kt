@@ -8,7 +8,6 @@ import org.osmdroid.util.GeoPoint
 import java.net.URI
 import java.net.URL
 
-
 fun URL.toAndroidUri(): Uri = Uri.parse(toExternalForm())
 
 fun URI.toAndroidUri(): Uri = Uri.parse(toString())

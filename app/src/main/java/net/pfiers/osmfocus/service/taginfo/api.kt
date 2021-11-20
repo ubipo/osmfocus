@@ -23,6 +23,7 @@ private fun createKlaxon() = Klaxon()
         override fun toJson(fieldName: String) = FieldRenamer.camelToUnderscores(fieldName)
         override fun fromJson(fieldName: String) = FieldRenamer.underscoreToCamel(fieldName)
     })
+
 private const val API_V4_BASE_PATH = "/api/4"
 
 class TagInfoApiConnectionException(
@@ -67,13 +68,15 @@ suspend fun TagInfoApiConfig.keyValues(
     page: Int = 0,
     sortName: SortName? = null,
     sortOrder: SortOrder? = null
-) = apiReq<ValuesRes>("key/values") { it.appendQueryParameters(mapOfNotNull(
-    "key" to key,
-    "rp" to resultsPerPage,
-    "page" to page + 1,
-    sortName?.let { "sortname" to sortName.paramValue },
-    sortOrder?.let { "sortorder" to sortOrder.paramValue }
-))}
+) = apiReq<ValuesRes>("key/values") {
+    it.appendQueryParameters(mapOfNotNull(
+        "key" to key,
+        "rp" to resultsPerPage,
+        "page" to page + 1,
+        sortName?.let { "sortname" to sortName.paramValue },
+        sortOrder?.let { "sortorder" to sortOrder.paramValue }
+    ))
+}
 
 suspend fun TagInfoApiConfig.fetchKeyWikiPages(key: String) =
     apiReq<WikiPagesRes>("key/wiki_pages") { uri ->

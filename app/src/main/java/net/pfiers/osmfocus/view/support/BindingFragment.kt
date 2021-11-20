@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 
-open class BindingFragment<T: ViewDataBinding>(
+open class BindingFragment<T : ViewDataBinding>(
     val inflate: (inflater: LayoutInflater, root: ViewGroup?, attachToRoot: Boolean) -> T
-): Fragment() {
+) : Fragment() {
     private var _binding: T? = null
     val binding get() = _binding!!
     val bindingIsInitialized = _binding != null

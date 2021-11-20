@@ -9,21 +9,18 @@ import org.locationtech.jts.geom.Point
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-
 class PointOverlay(
     point: Point,
     @ColorInt color: Int
-): Overlay() {
-    private val paint = Paint()
+) : Overlay() {
+    private val paint = Paint().apply {
+        style = Paint.Style.STROKE
+        this.color = color
+        strokeWidth = 10.0f
+    }
     private val geoPoint = point.toGeoPoint()
 
     override fun draw(canvas: Canvas, projection: Projection) {
         geoPoint.draw(projection, canvas, paint)
-    }
-
-    init {
-        paint.style = Paint.Style.STROKE
-        paint.color = color
-        paint.strokeWidth = 10.0f
     }
 }

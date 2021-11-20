@@ -51,4 +51,5 @@ fun <A, B> Iterable<Pair<A, B>>.noIndividualValueReuse(): List<Pair<A, B>> {
     }
 }
 
-fun <K, V> mapOfNotNull(vararg pairs: Pair<K, V>?): Map<K, V> = mapOf(*pairs.filterNotNull().toTypedArray())
+fun <K, V> mapOfNotNull(vararg pairs: Pair<K, V>?): Map<K, V> =
+    mapOf(*pairs.filterNotNull().toTypedArray())

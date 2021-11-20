@@ -10,14 +10,19 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 
-class ViewBindingListAdapter<T, B: ViewDataBinding>(
+class ViewBindingListAdapter<T, B : ViewDataBinding>(
     @LayoutRes private val itemLayout: Int,
     private val lifecycleOwner: LifecycleOwner,
     itemCallback: DiffUtil.ItemCallback<T> = EqualsItemCallback(),
     private val bind: (item: T, binding: B) -> Unit,
 ) : ListAdapter<T, ViewBindingListAdapter.ViewHolder<T, B>>(itemCallback) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<T, B> {
-        val binding = DataBindingUtil.inflate<B>(LayoutInflater.from(parent.context), itemLayout, parent, false)
+        val binding = DataBindingUtil.inflate<B>(
+            LayoutInflater.from(parent.context),
+            itemLayout,
+            parent,
+            false
+        )
         binding.lifecycleOwner = lifecycleOwner
         return ViewHolder(binding, bind)
     }
@@ -38,7 +43,10 @@ class ViewBindingListAdapter<T, B: ViewDataBinding>(
         override fun areContentsTheSame(a: T, b: T): Boolean = true
     }
 
-    class ViewHolder<T, B : ViewDataBinding>(private val binding: B, val bind: (item: T, binding: B) -> Unit) :
+    class ViewHolder<T, B : ViewDataBinding>(
+        private val binding: B,
+        val bind: (item: T, binding: B) -> Unit
+    ) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: T) = bind(item, binding)
     }

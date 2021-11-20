@@ -15,10 +15,8 @@ class AboutVM : ViewModel() {
     fun showDonationOptions() = events.trySend(ShowDonationOptionsEvent()).discard()
     fun showIssueTracker() = events.trySend(ShowIssueTrackerEvent()).discard()
 
-    companion object {
-        class ShowVersionInfoEvent: Event()
-        class ShowDonationOptionsEvent: Event()
-        class ShowIssueTrackerEvent: Event()
-        class ShowSourceCodeEvent: Event()
-    }
+    class ShowVersionInfoEvent : Event()
+    class ShowDonationOptionsEvent : Event()
+    class ShowIssueTrackerEvent : Event()
+    class ShowSourceCodeEvent : Event()
 }

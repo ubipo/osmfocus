@@ -2,7 +2,6 @@ package net.pfiers.osmfocus.view.support
 
 import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import net.pfiers.osmfocus.R
 
 enum class PaletteId(val id: Int) {
@@ -13,6 +12,7 @@ enum class PaletteId(val id: Int) {
 const val PALETTE_SIZE = 8
 
 typealias Palettes = Map<PaletteId, List<Int>>
+
 fun generatePalettes(context: Context): Palettes =
     PaletteId.values().map { paletteId ->
         val arr = context.resources.obtainTypedArray(paletteId.id)

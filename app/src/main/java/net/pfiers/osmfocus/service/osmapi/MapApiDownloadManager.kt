@@ -9,13 +9,13 @@ import com.github.kittinunf.result.onError
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.pfiers.osmfocus.observableProperty
-import net.pfiers.osmfocus.service.extensions.toPolygon
+import net.pfiers.osmfocus.service.jts.toPolygon
 import net.pfiers.osmfocus.service.osm.Elements
 import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.osmapi.*
-import net.pfiers.osmfocus.service.util.resultOfSuspend
 import net.pfiers.osmfocus.service.util.areaGeo
+import net.pfiers.osmfocus.service.util.observableProperty
+import net.pfiers.osmfocus.service.util.resultOfSuspend
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import net.sf.geographiclib.Geodesic
@@ -60,7 +60,7 @@ class MapApiDownloadManager(
     private val minDurBetweenDownloads = (1.0 / maxQps).toDuration(TimeUnit.SECONDS)
 
     fun getGeometry(typedId: TypedId): Geometry? {
-        return elementGeometries[typedId]?: run {
+        return elementGeometries[typedId] ?: run {
             val geometry = elements.toGeometry(typedId, geometryFactory, true)
             if (geometry != null) {
                 elementGeometries[typedId] = geometry
@@ -68,6 +68,7 @@ class MapApiDownloadManager(
             geometry
         }
     }
+
     private val scheduledDownloadScope = CoroutineScope(Job() + Dispatchers.Default)
     private val downloadLock = Mutex()
     private val scheduledJobLock = Mutex()
@@ -142,7 +143,8 @@ class MapApiDownloadManager(
     ): Result<Pair<Envelope, String>?, Exception> {
         // 1. Check for timeout (to not overload the API)
         lastReqTime?.let { lastReqTime ->
-            val elapsed = (System.currentTimeMillis() - lastReqTime).toDuration(TimeUnit.MILLISECONDS)
+            val elapsed =
+                (System.currentTimeMillis() - lastReqTime).toDuration(TimeUnit.MILLISECONDS)
             if (elapsed < minDurBetweenDownloads) {
                 _state = State.TIMEOUT
                 val timeUntilNext = minDurBetweenDownloads - elapsed
@@ -185,13 +187,11 @@ class MapApiDownloadManager(
         return unseenGeom.envelopeInternal
     }
 
-    companion object {
-        class MaxDownloadAreaExceededException(message: String?) : Exception(message)
-        class ZoomLevelRecededException(message: String?) : Exception(message)
+    class MaxDownloadAreaExceededException(message: String?) : Exception(message)
+    class ZoomLevelRecededException(message: String?) : Exception(message)
 
-        class DownloadEndedEvent(val result: Result<Unit, Exception>) : Event()
-        class NewElementsEvent(val newElements: Elements) : Event()
+    class DownloadEndedEvent(val result: Result<Unit, Exception>) : Event()
+    class NewElementsEvent(val newElements: Elements) : Event()
 
-        class FresherDownloadCe : CancellationException()
-    }
+    class FresherDownloadCe : CancellationException()
 }

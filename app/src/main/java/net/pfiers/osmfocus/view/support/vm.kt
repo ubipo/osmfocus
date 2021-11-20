@@ -10,6 +10,6 @@ inline fun <reified S : ViewModel> createVMFactory(crossinline creator: () -> S)
                 @Suppress("UNCHECKED_CAST")
                 return creator() as T
             }
-            throw IllegalArgumentException("Unknown ViewModel class")
+            throw IllegalArgumentException("Unknown ViewModel class: \"${modelClass.simpleName}\"")
         }
     }

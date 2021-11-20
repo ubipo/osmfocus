@@ -10,7 +10,7 @@ import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.AddBaseMapEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 
-class BaseMapsVM(private val db: Db): ViewModel() {
+class BaseMapsVM(private val db: Db) : ViewModel() {
     val events = createEventChannel()
 
     val userBaseMaps = db.baseMapDefinitionDao().getAll().asLiveData()

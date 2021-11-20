@@ -4,11 +4,10 @@ import android.os.Build
 import androidx.databinding.ObservableField
 import androidx.lifecycle.ViewModel
 import net.pfiers.osmfocus.BuildConfig
-import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.ThrowableInfo
 import net.pfiers.osmfocus.service.util.createGitHubIssueUrl
+import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.*
-
 
 class ExceptionVM(private val throwableInfo: ThrowableInfo) : ViewModel() {
     val events = createEventChannel()
@@ -17,11 +16,11 @@ class ExceptionVM(private val throwableInfo: ThrowableInfo) : ViewModel() {
     fun createGitHubIssue() = events.trySend(
         OpenUriEvent(
             createGitHubIssueUrl(
-            "Unhandled exception: ${throwableInfo.message}",
-            markdownReportBody,
-            listOf("from app", "bug"),
-            listOf("ubipo")
-        )
+                "Unhandled exception: ${throwableInfo.message}",
+                markdownReportBody,
+                listOf("from app", "bug"),
+                listOf("ubipo")
+            )
         )
     ).discard()
 

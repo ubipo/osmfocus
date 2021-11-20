@@ -9,13 +9,13 @@ import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.onError
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.service.NonNullObservableField
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import net.pfiers.osmfocus.service.db.UserBaseMap
+import net.pfiers.osmfocus.service.util.NonNullObservableField
+import net.pfiers.osmfocus.service.util.value
 import net.pfiers.osmfocus.viewmodel.support.NavigateUpEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import java.net.URISyntaxException
-
 
 class AddUserBaseMapVM(
     private val repository: BaseMapRepository,
@@ -55,7 +55,15 @@ class AddUserBaseMapVM(
             ?.let { (name, baseUrl, fileEnding, maxZoom) ->
                 val baseUrlNormalized = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
                 viewModelScope.launch {
-                    repository.insert(UserBaseMap(name, null, baseUrlNormalized, fileEnding, maxZoom))
+                    repository.insert(
+                        UserBaseMap(
+                            name,
+                            null,
+                            baseUrlNormalized,
+                            fileEnding,
+                            maxZoom
+                        )
+                    )
                 }
                 done()
             }
@@ -83,16 +91,15 @@ class AddUserBaseMapVM(
         val maxZoomRes = validateMaxZoom(maxZoomString.value).onError { ex ->
             if (setMaxZoomError) maxZoomErrorRes.value = ex.errorRes
         }
-        val formResult = if (nameRes is Result.Success && baseUrlRes is Result.Success && maxZoomRes is Result.Success) {
-            FormResult(nameRes.value, baseUrlRes.value, fileEnding.value, maxZoomRes.value)
-        } else null
+        val formResult =
+            if (nameRes is Result.Success && baseUrlRes is Result.Success && maxZoomRes is Result.Success) {
+                FormResult(nameRes.value, baseUrlRes.value, fileEnding.value, maxZoomRes.value)
+            } else null
         return formResult
     }
 
     companion object {
         private val HTTP_SCHEMES = arrayOf("http", "https")
-
-        private class ValidityException(@StringRes val errorRes: Int) : Exception()
 
         private fun validateBaseUrlTemplate(baseUrl: String): Result<String, ValidityException> {
             if (baseUrl.isBlank()) return Result.error(ValidityException(R.string.add_user_base_map_url_template_err_blank))
@@ -120,7 +127,9 @@ class AddUserBaseMapVM(
         }
 
         private fun validateMaxZoom(maxZoomString: String): Result<Int, ValidityException> {
-            val maxZoom = try { maxZoomString.toInt() } catch (ex: NumberFormatException) {
+            val maxZoom = try {
+                maxZoomString.toInt()
+            } catch (ex: NumberFormatException) {
                 return Result.error(
                     ValidityException(R.string.add_user_base_map_max_zoom_err_number)
                 )
@@ -137,4 +146,6 @@ class AddUserBaseMapVM(
             return Result.success(maxZoom)
         }
     }
+
+    private class ValidityException(@StringRes val errorRes: Int) : Exception()
 }

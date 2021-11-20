@@ -11,7 +11,8 @@ private val WIKI_DEFAULT_LOCALE = Locale.ENGLISH
 private fun urlEncode(s: String) = URLEncoder.encode(s, StandardCharsets.UTF_8.toString())
 
 private fun toWikiPageUrl(page: String, locale: Locale = WIKI_DEFAULT_LOCALE): URI {
-    val languagePrefix = if (locale.language == WIKI_DEFAULT_LOCALE.language) "" else "${locale.language}:"
+    val languagePrefix =
+        if (locale.language == WIKI_DEFAULT_LOCALE.language) "" else "${locale.language}:"
     return URI("$WIKI_BASE_URL/$languagePrefix$page")
 }
 

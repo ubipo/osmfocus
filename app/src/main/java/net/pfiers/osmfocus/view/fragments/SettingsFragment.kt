@@ -20,10 +20,10 @@ import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.SettingsVM
-import net.pfiers.osmfocus.viewmodel.SettingsVM.Companion.EditTagboxLongLinesEvent
+import net.pfiers.osmfocus.viewmodel.SettingsVM.EditTagboxLongLinesEvent
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
 
-class SettingsFragment: Fragment() {
+class SettingsFragment : Fragment() {
     private val settingsVM: SettingsVM by viewModels {
         createVMFactory { SettingsVM(app.settingsDataStore, app.baseMapRepository) }
     }
@@ -33,7 +33,7 @@ class SettingsFragment: Fragment() {
         val navController = findNavController()
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             settingsVM.events.receiveAsFlow().collect { event ->
-                when(event) {
+                when (event) {
                     is NavEvent -> handleNavEvent(event, navController)
                     is EditTagboxLongLinesEvent -> showEditTagboxLongLinesDialog()
                     else -> activityAs<EventReceiver>().handleEvent(event)

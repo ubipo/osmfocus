@@ -4,7 +4,7 @@ import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
 
 
-class GeometryCollectionList<G: Geometry>(
+class GeometryCollectionList<G : Geometry>(
     private val geometryCollection: GeometryCollection,
     dontCheckTypes: Boolean = false
 ) : AbstractList<G>(), RandomAccess {

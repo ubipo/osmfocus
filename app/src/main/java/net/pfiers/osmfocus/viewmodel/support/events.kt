@@ -8,35 +8,36 @@ import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 abstract class Event
 
 // General
-class OpenUriEvent(val uri: Uri): Event()
-class CopyEvent(val label: String, val text: String): Event()
+class OpenUriEvent(val uri: Uri) : Event()
+class CopyEvent(val label: String, val text: String) : Event()
 class SendEmailEvent(
     val address: String,
     val subject: String,
     val body: String,
     val attachments: Map<String, ByteArray> = emptyMap()
-): Event()
-class ExceptionEvent(val exception: Throwable): Event()
+) : Event()
+
+class ExceptionEvent(val exception: Throwable) : Event()
 
 // Navigation
-open class NavEvent: Event()
-class EditBaseMapsEvent: NavEvent()
-class AddBaseMapEvent: NavEvent()
-class ShowAboutEvent: NavEvent()
-class ShowSettingsEvent: NavEvent()
-class ShowElementDetailsEvent(val elementCentroidAndId: AnyElementCentroidAndId): NavEvent()
-class ShowMoreInfoEvent: NavEvent()
-class NavigateUpEvent: NavEvent()
+open class NavEvent : Event()
+class EditBaseMapsEvent : NavEvent()
+class AddBaseMapEvent : NavEvent()
+class ShowAboutEvent : NavEvent()
+class ShowSettingsEvent : NavEvent()
+class ShowElementDetailsEvent(val elementCentroidAndId: AnyElementCentroidAndId) : NavEvent()
+class ShowMoreInfoEvent : NavEvent()
+class NavigateUpEvent : NavEvent()
 
 // Map
-class StartFollowingLocationEvent: Event()
-class StopFollowingLocationEvent: Event()
-class ActionsVisibilityEvent(val actionsShouldBeVisible: Boolean): Event()
+class StartFollowingLocationEvent : Event()
+class StopFollowingLocationEvent : Event()
+class ActionsVisibilityEvent(val actionsShouldBeVisible: Boolean) : Event()
 
 // Dialog
-class CancelEvent: Event()
+class CancelEvent : Event()
 
 // OAuth
-class RunWithOsmAccessTokenEvent(val action: (accessToken: String) -> Unit): Event()
+class RunWithOsmAccessTokenEvent(val action: (accessToken: String) -> Unit) : Event()
 
 fun createEventChannel() = Channel<Event>(10, onBufferOverflow = BufferOverflow.DROP_OLDEST)

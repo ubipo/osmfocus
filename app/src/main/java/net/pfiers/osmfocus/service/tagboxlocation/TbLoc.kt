@@ -17,11 +17,20 @@ data class TbLoc(
     val y: Y
 ) : Parcelable {
     // Order of these enums matters, TbLoc.applyConstraints uses it to sort
-    enum class X { LEFT, MIDDLE, RIGHT;
-        companion object { val values by lazy { values() } }
+    enum class X {
+        LEFT, MIDDLE, RIGHT;
+
+        companion object {
+            val values by lazy { values() }
+        }
     }
-    enum class Y { TOP, MIDDLE, BOTTOM;
-        companion object { val values by lazy { values() } }
+
+    enum class Y {
+        TOP, MIDDLE, BOTTOM;
+
+        companion object {
+            val values by lazy { values() }
+        }
     }
 
     constructor(parcel: Parcel) : this(

@@ -10,7 +10,7 @@ class InstantConverter : Converter {
         cls == Instant::class.java
 
     override fun fromJson(jv: JsonValue): Any = iso8601DateTimeInUtcToInstant(
-        jv.string?: throw error("Can only convert JSON strings to Instant")
+        jv.string ?: throw error("Can only convert JSON strings to Instant")
     )
 
     override fun toJson(value: Any): String {

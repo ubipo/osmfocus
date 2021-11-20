@@ -50,7 +50,5 @@ class SettingsVM(
     private fun <T> settingsLd(mapper: suspend (settings: Settings) -> T) =
         settingsDataStore.data.map(mapper).distinctUntilChanged().asLiveData()
 
-    companion object {
-        class EditTagboxLongLinesEvent: Event()
-    }
+    class EditTagboxLongLinesEvent : Event()
 }

@@ -12,12 +12,10 @@ class TagBoxLineOverlay(
     @ColorInt color: Int,
     var startPoint: Point? = null,
     var geoPoint: GeoPoint? = null
-): Overlay() {
-    private val paint = Paint()
-
-    init {
-        paint.color = color
-        paint.strokeWidth = 5.0f
+) : Overlay() {
+    private val paint = Paint().apply {
+        this.color = color
+        strokeWidth = 5.0f
     }
 
     override fun draw(canvas: Canvas?, projection: Projection?) {

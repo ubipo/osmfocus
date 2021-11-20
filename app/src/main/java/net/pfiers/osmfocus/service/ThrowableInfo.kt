@@ -7,7 +7,7 @@ import java.util.*
  * A data class to serialize information about a throwable.
  * Because not all throwables are serializable.
  */
-class ThrowableInfo(throwable: Throwable): Serializable {
+class ThrowableInfo(throwable: Throwable) : Serializable {
     val message = throwable.message
     val qualifiedName = throwable::class.qualifiedName
     val simpleName = throwable::class.simpleName

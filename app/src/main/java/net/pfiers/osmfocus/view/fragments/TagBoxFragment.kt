@@ -28,7 +28,7 @@ import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import kotlin.properties.Delegates
 
 @ExperimentalStdlibApi
-class TagBoxFragment: Fragment() {
+class TagBoxFragment : Fragment() {
     // The Android gods probably don't like this method of inter-fragment communication...
     class TagBoxHitRectChange(val hitRect: Rect)
 
@@ -88,9 +88,11 @@ class TagBoxFragment: Fragment() {
         binding.tags.itemAnimator = null
         binding.tags.adapter = adapter
         binding.tags.layoutManager = LinearLayoutManager(context)
-        tagBoxVM.tags.observe(viewLifecycleOwner) { tags -> tags?.let {
-            adapter.submitList(tags.toList())
-        } }
+        tagBoxVM.tags.observe(viewLifecycleOwner) { tags ->
+            tags?.let {
+                adapter.submitList(tags.toList())
+            }
+        }
 
         return binding.root
     }

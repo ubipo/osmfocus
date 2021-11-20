@@ -24,11 +24,11 @@ enum class ElementType {
     }
 }
 
-data class TypedId(val id: Long, val type: ElementType): Serializable {
+data class TypedId(val id: Long, val type: ElementType) : Serializable {
     val url get() = URL("https://osm.org/${type.nameLower}/$id")
 }
 
-data class Coordinate(val lat: Double, val lon: Double): Serializable
+data class Coordinate(val lat: Double, val lon: Double) : Serializable
 
 typealias Tags = Map<String, String>
 typealias Tag = Map.Entry<String, String>
@@ -94,10 +94,10 @@ class ElementsMutable(elements: Elements = Elements()) : Elements() {
     }
 }
 
-open class ElementAndId<T: Element>(
+open class ElementAndId<T : Element>(
     val id: Long,
     val element: T
-): Serializable {
+) : Serializable {
     val e = element
     val typedId = TypedId(id, element.type)
 }
@@ -134,7 +134,7 @@ sealed class Element constructor(
     val changeset: Long? = null,
     val lastEditTimestamp: Instant? = null,
     val username: String? = null,
-): Serializable {
+) : Serializable {
     abstract val type: ElementType
 
     abstract fun toGeometry(
@@ -154,7 +154,7 @@ class Node constructor(
     changeset: Long? = null,
     lastEditTimestamp: Instant? = null,
     username: String? = null
-): Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
+) : Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
     override val type: ElementType = ElementType.NODE
 
     val jtsCoordinate = coordinate?.let {
@@ -182,7 +182,7 @@ class Way constructor(
     changeset: Long? = null,
     lastEditTimestamp: Instant? = null,
     username: String? = null
-): Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
+) : Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
     override val type: ElementType = ElementType.WAY
 
     override fun toGeometry(
@@ -203,7 +203,7 @@ class Way constructor(
 class RelationMember constructor(
     val typedId: TypedId,
     val role: String
-): Serializable
+) : Serializable
 
 class Relation constructor(
     version: Int? = null,
@@ -212,7 +212,7 @@ class Relation constructor(
     changeset: Long? = null,
     lastEditTimestamp: Instant? = null,
     username: String? = null
-): Element(version, tags, changeset, lastEditTimestamp, username) {
+) : Element(version, tags, changeset, lastEditTimestamp, username) {
     override val type: ElementType = ElementType.RELATION
 
     override fun toGeometry(

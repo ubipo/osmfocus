@@ -9,12 +9,17 @@ import org.locationtech.jts.geom.GeometryCollection
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-
 class GeometryCollectionOverlay(
     geometryCollection: GeometryCollection,
     @ColorInt color: Int
-): Overlay() {
-    private val paint = Paint()
+) : Overlay() {
+    private val paint = Paint().apply {
+        style = Paint.Style.STROKE
+        this.color = color
+        strokeWidth = 10.0f
+        strokeJoin = Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
+    }
     private val geoPointsPair = geometryCollection.toGeoPointsPair()
 
     override fun draw(canvas: Canvas, projection: Projection) {
@@ -25,13 +30,5 @@ class GeometryCollectionOverlay(
         for (geoPointList in geoPointLists) {
             geoPointList.draw(projection, canvas, paint)
         }
-    }
-
-    init {
-        paint.style = Paint.Style.STROKE
-        paint.color = color
-        paint.strokeWidth = 10.0f
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.strokeCap = Paint.Cap.ROUND
     }
 }

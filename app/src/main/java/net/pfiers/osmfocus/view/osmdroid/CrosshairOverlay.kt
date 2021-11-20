@@ -7,9 +7,11 @@ import android.graphics.Point
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-
-class CrosshairOverlay: Overlay() {
-    private val paint = Paint()
+class CrosshairOverlay : Overlay() {
+    private val paint = Paint().apply {
+        color = Color.BLACK
+        strokeWidth = LINE_WIDTH
+    }
 
     override fun draw(canvas: Canvas, projection: Projection) {
         val center = Point(
@@ -47,14 +49,9 @@ class CrosshairOverlay: Overlay() {
         )
     }
 
-    init {
-        paint.color = Color.BLACK
-        paint.strokeWidth = 3.0f
-    }
-
     companion object {
         private const val LINE_LEN = 30
-        private const val LINE_WIDTH = 20
+        private const val LINE_WIDTH = 3.0f
         private const val GAP = 10
     }
 }

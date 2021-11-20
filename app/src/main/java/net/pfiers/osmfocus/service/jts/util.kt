@@ -1,8 +1,5 @@
-package net.pfiers.osmfocus.service.extensions
+package net.pfiers.osmfocus.service.jts
 
-import net.pfiers.osmfocus.service.jts.CoordinateSequenceList
-import net.pfiers.osmfocus.service.jts.GeometryCollectionList
-import net.pfiers.osmfocus.service.jts.InteriorRingList
 import org.locationtech.jts.geom.*
 import java.net.URI
 import java.net.URL
@@ -15,7 +12,7 @@ fun CoordinateSequence.asList() =
 fun GeometryCollection.asList() =
     GeometryCollectionList<Geometry>(this, dontCheckTypes = true)
 
-fun <G: Geometry> GeometryCollection.asListOfType(dontCheckTypes: Boolean = true) =
+fun <G : Geometry> GeometryCollection.asListOfType(dontCheckTypes: Boolean = true) =
     GeometryCollectionList<G>(this, dontCheckTypes)
 
 fun MultiPolygon.asList() =
@@ -24,14 +21,16 @@ fun MultiPolygon.asList() =
 fun Polygon.asInteriorRingList() =
     InteriorRingList(this)
 
-fun Envelope.toPolygon(factory: GeometryFactory) =
-    factory.createPolygon(listOf(
-        Coordinate(minX, minY),
-        Coordinate(maxX, minY),
-        Coordinate(maxX, maxY),
-        Coordinate(minX, maxY),
-        Coordinate(minX, minY)
-    ).toTypedArray())
+fun Envelope.toPolygon(factory: GeometryFactory): Polygon =
+    factory.createPolygon(
+        listOf(
+            Coordinate(minX, minY),
+            Coordinate(maxX, minY),
+            Coordinate(maxX, maxY),
+            Coordinate(minX, maxY),
+            Coordinate(minX, minY)
+        ).toTypedArray()
+    )
 
 val Envelope.centerX get() = (minX + maxX) / 2.0
 val Envelope.centerY get() = (minY + maxY) / 2.0
@@ -49,5 +48,3 @@ fun Coordinate.toDecimalDegrees(): String {
     val lat = "%.${DECIMAL_DEGREES_DECIMALS}f".format(Locale.ROOT, y.absoluteValue)
     return "$lat° $sOrN, $lon° $wOrE"
 }
-
-val defaultGeometryFactory = GeometryFactory()

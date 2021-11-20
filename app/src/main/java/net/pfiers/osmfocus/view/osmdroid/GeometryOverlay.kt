@@ -2,7 +2,6 @@ package net.pfiers.osmfocus.view.osmdroid
 
 import android.graphics.Canvas
 import androidx.annotation.ColorInt
-import net.pfiers.osmfocus.service.util.toOverlay
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.osmdroid.views.Projection

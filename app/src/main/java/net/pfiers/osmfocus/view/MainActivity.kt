@@ -202,7 +202,7 @@ class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
         const val EMAIL_ATTACHMENTS_URI_BASE =
             "content://net.pfiers.osmfocus.email_attachments_fileprovider"
         const val LOGGING_TAG = "net.pfiers.osmfocus"
-
-        private class AuthResponseException(override val message: String) : Exception()
     }
+
+    private class AuthResponseException(override val message: String) : Exception()
 }

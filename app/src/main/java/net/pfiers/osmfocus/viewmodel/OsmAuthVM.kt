@@ -10,6 +10,4 @@ class OsmAuthVM(
     val events = createEventChannel()
 
 
-
-
 }

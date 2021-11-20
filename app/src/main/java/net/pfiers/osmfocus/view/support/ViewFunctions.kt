@@ -5,12 +5,11 @@ import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
 import androidx.annotation.ColorInt
-import net.pfiers.osmfocus.service.extensions.toDecimalDegrees
+import net.pfiers.osmfocus.service.jts.toDecimalDegrees
 import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import org.locationtech.jts.geom.Coordinate
 import org.ocpsoft.prettytime.PrettyTime
 import java.time.Instant
-import kotlin.collections.HashMap
 
 @ExperimentalStdlibApi
 class ViewFunctions {
@@ -33,13 +32,18 @@ class ViewFunctions {
         }
 
         @JvmStatic
-        fun createStrokeFrameBg(strokeWidthDp: Float, @ColorInt strokeColor: Int, @ColorInt bgColor: Int) =
+        fun createStrokeFrameBg(
+            strokeWidthDp: Float,
+            @ColorInt strokeColor: Int,
+            @ColorInt bgColor: Int
+        ) =
             GradientDrawable().apply {
                 setStroke(dpToPx(strokeWidthDp), strokeColor)
                 setColor(bgColor)
             }
 
         private val pxToDpCache = HashMap<Float, Int>()
+
         @JvmStatic
         fun dpToPx(dp: Float): Int = pxToDpCache.getOrPut(dp) {
             TypedValue.applyDimension(

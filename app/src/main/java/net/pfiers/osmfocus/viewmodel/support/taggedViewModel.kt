@@ -1,6 +1,5 @@
 package net.pfiers.osmfocus.viewmodel.support
 
-import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
@@ -42,7 +41,12 @@ inline fun <reified VM : ViewModel> Fragment.taggedViewModels(
     noinline ownerProducer: () -> ViewModelStoreOwner = { this },
     noinline factoryProducer: (() -> ViewModelProvider.Factory)? = null
 ): Lazy<VM> =
-    createTaggedViewModelLazy(VM::class, tagsProducer, { ownerProducer().viewModelStore }, factoryProducer)
+    createTaggedViewModelLazy(
+        VM::class,
+        tagsProducer,
+        { ownerProducer().viewModelStore },
+        factoryProducer
+    )
 
 
 /**

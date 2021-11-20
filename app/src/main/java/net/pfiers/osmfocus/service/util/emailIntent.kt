@@ -19,7 +19,7 @@ fun createEmailIntent(
     body: String,
     attachments: Map<String, ByteArray>,
 
-): Intent {
+    ): Intent {
     val attachmentDirName = "${Instant.now().epochSecond}-${UUID.randomUUID()}"
     val attachmentDir = attachmentsDir / attachmentDirName
     attachmentDir.mkdirs()
@@ -27,7 +27,11 @@ fun createEmailIntent(
     val attachmentUris = attachments.map { (filename, content) ->
         val file = attachmentDir / filename
         file.writeBytes(content)
-        FileProvider.getUriForFile(context, "${context.packageName}.email_attachments_fileprovider", file)
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.email_attachments_fileprovider",
+            file
+        )
     }
 
     val emailIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {

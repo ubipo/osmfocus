@@ -14,6 +14,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.*
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
@@ -32,12 +33,11 @@ import net.pfiers.osmfocus.service.db.UserBaseMap
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
-import net.pfiers.osmfocus.view.support.handleNavEvent
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-class BaseMapsFragment: BindingFragment<FragmentBaseMapsBinding>(
+class BaseMapsFragment : BindingFragment<FragmentBaseMapsBinding>(
     FragmentBaseMapsBinding::inflate
 ) {
     private val vm: BaseMapsVM by viewModels {
@@ -51,7 +51,7 @@ class BaseMapsFragment: BindingFragment<FragmentBaseMapsBinding>(
         lifecycleScope.launchWhenCreated {
             val navController = findNavController()
             vm.events.receiveAsFlow().collect { event ->
-                when(event) {
+                when (event) {
                     is NavEvent -> handleNavEvent(event, navController)
                     else -> activityAs<EventReceiver>().handleEvent(event)
                 }
@@ -137,7 +137,11 @@ class BaseMapsFragment: BindingFragment<FragmentBaseMapsBinding>(
         private val updateSelectedItem: (newBaseMap: BaseMap) -> Unit
     ) : ListAdapter<T, BaseMapListAdapter.Holder>(BaseMapComparator<T>()) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
-            val binding = FragmentBaseMapsItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val binding = FragmentBaseMapsItemBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
             return Holder(
                 binding,
                 backgroundScope,
@@ -198,9 +202,11 @@ class BaseMapsFragment: BindingFragment<FragmentBaseMapsBinding>(
                                 val drawable = ResourcesCompat.getDrawable(
                                     ctx.resources, R.drawable.ic_broken_image, ctx.theme
                                 )!!
-                                drawable.setTint(ResourcesCompat.getColor(
-                                    ctx.resources, R.color.greyIcon, ctx.theme
-                                ))
+                                drawable.setTint(
+                                    ResourcesCompat.getColor(
+                                        ctx.resources, R.color.greyIcon, ctx.theme
+                                    )
+                                )
                                 binding.tilePreview.scaleType = ImageView.ScaleType.CENTER_CROP
                                 binding.tilePreview.setImageDrawable(drawable)
                             }

@@ -30,19 +30,21 @@ import kotlinx.coroutines.flow.*
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.service.LocationHelper
-import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager
 import net.pfiers.osmfocus.service.basemap.BaseMap
 import net.pfiers.osmfocus.service.osm.ElementCentroidAndId
+import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager
 import net.pfiers.osmfocus.service.osmapi.OsmApiConnectionException
 import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.settings.toGeoPoint
+import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocation.*
-import net.pfiers.osmfocus.view.osmdroid.CrosshairOverlay
-import net.pfiers.osmfocus.view.osmdroid.GeometryOverlay
-import net.pfiers.osmfocus.view.osmdroid.TagBoxLineOverlay
 import net.pfiers.osmfocus.service.util.toCoordinate
 import net.pfiers.osmfocus.service.util.toEnvelope
 import net.pfiers.osmfocus.service.util.toGeoPoint
+import net.pfiers.osmfocus.service.util.value
+import net.pfiers.osmfocus.view.osmdroid.CrosshairOverlay
+import net.pfiers.osmfocus.view.osmdroid.GeometryOverlay
+import net.pfiers.osmfocus.view.osmdroid.TagBoxLineOverlay
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
 import net.pfiers.osmfocus.viewmodel.MapVM.Companion.MIN_DOWNLOAD_ZOOM_LEVEL
@@ -67,12 +69,18 @@ import kotlin.time.ExperimentalTime
 @ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
 @ExperimentalTime
-class MapFragment: BindingFragment<FragmentMapBinding>(
+class MapFragment : BindingFragment<FragmentMapBinding>(
     FragmentMapBinding::inflate
 ), MapEventsReceiver {
     private lateinit var mapLocationOnScreen: android.graphics.Point
     private val mapVM: MapVM by activityViewModels {
-        createVMFactory { MapVM(app.settingsDataStore, app.baseMapRepository, app.apiConfigRepository) }
+        createVMFactory {
+            MapVM(
+                app.settingsDataStore,
+                app.baseMapRepository,
+                app.apiConfigRepository
+            )
+        }
     }
     private val attributionVM: AttributionVM by activityViewModels()
 
@@ -89,6 +97,7 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
         lateinit var hitRect: Rect
         val hitRectIsInitialized get() = ::hitRect.isInitialized
     }
+
     private lateinit var tbInfos: Map<TbLoc, TbInfo>
 
     private var deviceLocationMarker: Marker? = null
@@ -154,9 +163,9 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
                                     // TODO: Fix bug: start location search indoors, cancel search by moving map, start search again -> doesn't work
                                     // TODO: Add button to enable location when not on
                                     val snackBarMessage = when (ex) {
-                                        is LocationHelper.Companion.LocationUnavailableException ->
+                                        is LocationHelper.LocationUnavailableException ->
                                             "Location unavailable (is location on?)"
-                                        is LocationHelper.Companion.LocationPermissionDeniedException ->
+                                        is LocationHelper.LocationPermissionDeniedException ->
                                             "Location permission denied"
                                         else -> {
                                             Timber.e("Unknown error result getting location: ${ex.stackTraceToString()}")
@@ -206,13 +215,13 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
                 lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
                     locationHelper.events.receiveAsFlow().collect { event ->
                         when (event) {
-                            is LocationHelper.Companion.RequestPermissionEvent -> {
+                            is LocationHelper.RequestPermissionEvent -> {
                                 requestPermissionLauncher.launch(event.permission)
                             }
-                            is LocationHelper.Companion.LocationEvent -> {
+                            is LocationHelper.LocationEvent -> {
                                 handleLocationUpdate(event.location)
                             }
-                            is LocationHelper.Companion.LocationProviderDisableEvent -> {
+                            is LocationHelper.LocationProviderDisableEvent -> {
                                 mapVM.locationState.value = MapVM.LocationState.INACTIVE
                             }
                         }
@@ -241,8 +250,11 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
     private fun createDeviceLocationMarker(map: MapView): Marker {
         val deviceLocationMarker = Marker(map)
         deviceLocationMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-        val deviceLocationMarkerDrawableBitmap = AppCompatResources.getDrawable(requireContext(), R.drawable.marker_device_location)!!.toBitmap()
-        val deviceLocationMarkerDrawableScaled = BitmapDrawable(resources, deviceLocationMarkerDrawableBitmap.scale(50, 50, true))
+        val deviceLocationMarkerDrawableBitmap =
+            AppCompatResources.getDrawable(requireContext(), R.drawable.marker_device_location)!!
+                .toBitmap()
+        val deviceLocationMarkerDrawableScaled =
+            BitmapDrawable(resources, deviceLocationMarkerDrawableBitmap.scale(50, 50, true))
         deviceLocationMarker.icon = deviceLocationMarkerDrawableScaled
         return deviceLocationMarker
     }
@@ -402,12 +414,15 @@ class MapFragment: BindingFragment<FragmentMapBinding>(
         super.onDestroyView()
     }
 
-    private val deviceLocationIcs by lazy { object {
-        val searching = getDrawable(R.drawable.ic_device_location_searching_animated)!!
-        val following = getDrawable(R.drawable.ic_device_location_following)!!
-        val inactive = getDrawable(R.drawable.ic_device_location_inactive)!!
-        val error = getDrawable(R.drawable.ic_device_location_error)!!
-    } }
+    private val deviceLocationIcs by lazy {
+        object {
+            val searching = getDrawable(R.drawable.ic_device_location_searching_animated)!!
+            val following = getDrawable(R.drawable.ic_device_location_following)!!
+            val inactive = getDrawable(R.drawable.ic_device_location_inactive)!!
+            val error = getDrawable(R.drawable.ic_device_location_error)!!
+        }
+    }
+
     private fun updateLocationButton(locationState: MapVM.LocationState) {
         // TODO: Incorrect ic after FOLLOW -> rotate
         val drawable = when (locationState) {
