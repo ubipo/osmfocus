@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="username"
+            type="String" />
+
+        <variable
+            name="actionTextHtml"
+            type="String" />
+
+        <variable
+            name="timestamp"
+            type="java.time.Instant" />
+
+        <variable
+            name="html"
+            type="String" />
+
+        <import type="net.pfiers.osmfocus.view.support.ViewFunctions" alias="vf" />
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Medium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:htmlText="@{actionTextHtml}"
+            tools:text="Created by the intangible concept of peace 3 days ago"
+            android:textIsSelectable="true" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Body1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:htmlText="@{timestamp == null ? @string/created_date_unknown :  @string/created_date(vf.prettyTime(timestamp), timestamp.toString())}"
+            tools:text="just now (2022-...)"
+            android:textIsSelectable="true" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Body1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:htmlText="@{html}"
+            tools:text="Housenumber should be 23B. See mapillary.com/..."
+            android:textIsSelectable="true" />
+
+    </LinearLayout>
+
+</layout>

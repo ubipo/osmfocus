@@ -2,6 +2,7 @@ package net.pfiers.osmfocus.view.fragments
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.drawable.*
 import android.location.Location
@@ -27,27 +28,28 @@ import com.github.kittinunf.result.onError
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.service.LocationHelper
 import net.pfiers.osmfocus.service.basemap.BaseMap
 import net.pfiers.osmfocus.service.osm.ElementCentroidAndId
-import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager
+import net.pfiers.osmfocus.service.osm.NoteAndId
+import net.pfiers.osmfocus.service.osm.Notes
+import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
 import net.pfiers.osmfocus.service.osmapi.OsmApiConnectionException
 import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocation.*
-import net.pfiers.osmfocus.service.util.toCoordinate
-import net.pfiers.osmfocus.service.util.toEnvelope
-import net.pfiers.osmfocus.service.util.toGeoPoint
-import net.pfiers.osmfocus.service.util.value
+import net.pfiers.osmfocus.service.util.*
 import net.pfiers.osmfocus.view.osmdroid.CrosshairOverlay
 import net.pfiers.osmfocus.view.osmdroid.GeometryOverlay
 import net.pfiers.osmfocus.view.osmdroid.TagBoxLineOverlay
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.*
-import net.pfiers.osmfocus.viewmodel.MapVM.Companion.MIN_DOWNLOAD_ZOOM_LEVEL
+import net.pfiers.osmfocus.viewmodel.MapVM.Companion.ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL
 import net.pfiers.osmfocus.viewmodel.support.*
 import org.locationtech.jts.geom.*
 import org.osmdroid.config.Configuration
@@ -63,8 +65,15 @@ import timber.log.Timber
 import java.lang.Double.max
 import java.util.*
 import java.util.concurrent.*
+import kotlin.collections.HashSet
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+
+
+
+
+
+
 
 @ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
@@ -85,18 +94,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
     private val attributionVM: AttributionVM by activityViewModels()
 
     private lateinit var locationHelper: LocationHelper
-    private lateinit var map: MapView
-
-    data class TbInfo(
-        val fragment: TagBoxFragment,
-        val vm: TagBoxVM,
-        val lineOverlay: TagBoxLineOverlay,
-        val geometryOverlay: GeometryOverlay
-    ) {
-        lateinit var fragmentContainer: FragmentContainerView
-        lateinit var hitRect: Rect
-        val hitRectIsInitialized get() = ::hitRect.isInitialized
-    }
+    private var map: MapView? = null
 
     private lateinit var tbInfos: Map<TbLoc, TbInfo>
 
@@ -104,10 +102,11 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 
     private lateinit var palette: List<Int>
 
+    private val displayedNotes = HashSet<Long>()
+
     private val locationSearchScope = CoroutineScope(Job() + Dispatchers.Default)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let { }
 
         @Suppress("MapGetWithNotNullAssertionOperator")
         palette = generatePalettes(requireContext())[PALETTE]!!
@@ -198,6 +197,9 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     is ActionsVisibilityEvent -> {
                         updateActionsVisibility(event.actionsShouldBeVisible)
                     }
+                    is MapVM.NewNotesEvent -> {
+                        addNotesMarkers(event.newNotes)
+                    }
                     is NavEvent -> handleNavEvent(event, navController)
                     else -> activityAs<EventReceiver>().handleEvent(event)
                 }
@@ -233,12 +235,14 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
     private fun handleLocationUpdate(location: Location) {
         val position = location.toGeoPoint()
         if (mapVM.locationState.value == MapVM.LocationState.FOLLOWING) {
-            if (!map.isAnimating) {
-                map.controller.animateTo(
-                    position,
-                    MOVE_TO_CURRENT_LOCATION_ZOOM,
-                    null
-                )
+            map?.let { map ->
+                if (!map.isAnimating) {
+                    map.controller.animateTo(
+                        position,
+                        MOVE_TO_CURRENT_LOCATION_ZOOM,
+                        null
+                    )
+                }
             }
         }
         deviceLocationMarker?.let {
@@ -271,9 +275,9 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 
         mapVM.downloadState.observe(viewLifecycleOwner) { state ->
             val icon = when (state) {
-                MapApiDownloadManager.State.CALLED, MapApiDownloadManager.State.ENVELOPE -> R.drawable.ic_baseline_change_circle_24
-                MapApiDownloadManager.State.TIMEOUT -> R.drawable.ic_baseline_timer_24
-                MapApiDownloadManager.State.REQUEST -> R.drawable.ic_baseline_cloud_download_24
+                EnvelopeDownloadManager.State.CALLED, EnvelopeDownloadManager.State.ENVELOPE -> R.drawable.ic_baseline_change_circle_24
+                EnvelopeDownloadManager.State.TIMEOUT -> R.drawable.ic_baseline_timer_24
+                EnvelopeDownloadManager.State.REQUEST -> R.drawable.ic_baseline_cloud_download_24
                 else -> null
             }
             if (icon != null) {
@@ -343,6 +347,10 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         map.overlayManager.addAll(tbInfos.values.map { n -> n.geometryOverlay })
         map.overlayManager.addAll(tbInfos.values.map { n -> n.lineOverlay })
 
+        lifecycleScope.launch {
+            addNotesMarkers(mapVM.notes)
+        }
+
         val deviceLocationMarker = createDeviceLocationMarker(map)
         deviceLocationMarker.isEnabled = false
         map.overlayManager.add(deviceLocationMarker)
@@ -401,7 +409,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                         map.setTileSource(tileSource)
                         val maxZoomLevel =
                             if (zoomBeyondBaseMapMax) MAX_ZOOM_LEVEL_BEYOND_BASE_MAP else tileSource.maximumZoomLevel.toDouble()
-                        map.setMaxZoomLevel(max(maxZoomLevel, MIN_MAX_ZOOM_LEVEL))
+                        map.maxZoomLevel = max(maxZoomLevel, MIN_MAX_ZOOM_LEVEL)
                     }
                 }
             }
@@ -411,6 +419,8 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 
     override fun onDestroyView() {
         deviceLocationMarker = null
+        map = null
+        lifecycleScope.launch { displayedNotesMutex.withLock { displayedNotes.clear() } }
         super.onDestroyView()
     }
 
@@ -441,6 +451,51 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         lifecycleScope.launchWhenStarted {
             animateCircularVisibility(binding.locationBtn, actionsShouldBeVisible)
             animateCircularVisibility(binding.settingsBtn, actionsShouldBeVisible)
+        }
+    }
+
+    private class NoteDrawables(val open: Drawable, val closed: Drawable)
+    private val noteDrawables by lazy {
+        fun createNoteDrawable(mipmapId: Int): BitmapDrawable {
+            val noDpDrawable = getDrawable(mipmapId) as BitmapDrawable
+            val widthDp = NOTE_ICON_BASE_SIZE
+            val withScaled = widthDp.toDp(resources)
+            val heightScaled = (
+                    (widthDp / noDpDrawable.intrinsicWidth) * noDpDrawable.intrinsicHeight
+                    ).toDp(resources)
+
+            return BitmapDrawable(
+                resources,
+                noDpDrawable.toBitmap(withScaled.toInt(), heightScaled.toInt(), Bitmap.Config.ARGB_8888)
+            )
+        }
+        NoteDrawables(
+            createNoteDrawable(R.mipmap.ic_bm_closed_note),
+            createNoteDrawable(R.mipmap.ic_bm_open_note)
+        )
+    }
+
+    private val displayedNotesMutex = Mutex()
+    private suspend fun addNotesMarkers(notes: Notes) {
+        map?.let { map ->
+            for ((id, note) in notes) {
+                if (!displayedNotesMutex.withLock { displayedNotes.add(id) }) continue
+                map.overlayManager.add(
+                    Marker(map).apply {
+                        position = note.coordinate.toOsmDroid()
+                        icon = if (note.isOpen) noteDrawables.open else noteDrawables.closed
+                        setAnchor(Marker.ANCHOR_CENTER, NOTE_ICON_ANCHOR_Y.toFloat())
+                        infoWindow = null
+                        setOnMarkerClickListener { _, _ ->
+                            handleNavEvent(
+                                ShowNoteDetailsEvent(NoteAndId(note, id)),
+                                findNavController()
+                            )
+                            true
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -526,29 +581,30 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 
     @ExperimentalTime
     private fun mapScrollHandler() {
-        val envelope = map.boundingBox.toEnvelope()
-        val zoomLevel = map.zoomLevelDouble
-        if (envelope.area > ENVELOPE_MIN_AREA) {
-            mapVM.mapState = MapVM.MapState(envelope, zoomLevel)
-        }
+        map?.let { map ->
+            val envelope = map.boundingBox.toEnvelope()
+            val zoomLevel = map.zoomLevelDouble
+            if (envelope.area > ENVELOPE_MIN_AREA) {
+                mapVM.mapState = MapVM.MapState(envelope, zoomLevel)
+            }
 
-        val isAnimating = map.isAnimating
-        if (!isAnimating) { // User interacted with the map; cancel following
-            mapVM.stopFollowingMyLocation()
+            val isAnimating = map.isAnimating
+            if (!isAnimating) { // User interacted with the map; cancel following
+                mapVM.stopFollowingMyLocation()
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        map.onResume()
+        map?.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        map.onPause()
+        map?.onPause()
     }
 
-    @Synchronized
     private suspend fun updateHighlightedElements(tagBoxElementPairs: Map<TbLoc, MapVM.ElementToDisplayData>) {
         for (tbLoc in tbLocations) {
             val elementToDisplay = tagBoxElementPairs[tbLoc]
@@ -574,16 +630,18 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                 tbInfo.geometryOverlay.geometry = elementToDisplay.geometry
             }
         }
-        map.invalidate()
+        map?.invalidate()
     }
 
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
 
     override fun longPressHelper(p: GeoPoint?): Boolean {
         if (p != null) {
-            map.controller.animateTo(p)
-            LocationActionsDialogFragment.newInstance(p.toCoordinate())
-                .showWithDefaultTag(childFragmentManager)
+            map?.let { map ->
+                map.controller.animateTo(p)
+                LocationActionsDialogFragment.newInstance(p.toCoordinate())
+                    .showWithDefaultTag(childFragmentManager)
+            }
         }
         return true
     }
@@ -603,13 +661,26 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         )
     }
 
+    data class TbInfo(
+        val fragment: TagBoxFragment,
+        val vm: TagBoxVM,
+        val lineOverlay: TagBoxLineOverlay,
+        val geometryOverlay: GeometryOverlay
+    ) {
+        lateinit var fragmentContainer: FragmentContainerView
+        lateinit var hitRect: Rect
+        val hitRectIsInitialized get() = ::hitRect.isInitialized
+    }
+
     companion object {
         const val ENVELOPE_MIN_AREA = 1e-8 // Considered a null envelope below this
         const val MOVE_TO_CURRENT_LOCATION_ZOOM = 17.5
         const val MOVE_TO_TAPPED_LOCATION_ZOOM = 20.0
         const val MAX_ZOOM_LEVEL_BEYOND_BASE_MAP = 24.0
-        const val MIN_MAX_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL + 1
+        const val MIN_MAX_ZOOM_LEVEL = ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL + 1
         val PALETTE = PaletteId.PALETTE_VIBRANT
+        const val NOTE_ICON_BASE_SIZE = 35f // dp
+        const val NOTE_ICON_ANCHOR_Y = (500.0 + 20) / (500 + 40) // See images/closed-note.svg
 
         private val geometryFactory = GeometryFactory()
 

@@ -13,6 +13,7 @@ import net.pfiers.osmfocus.service.*
 import net.pfiers.osmfocus.service.util.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
+import timber.log.Timber
 import java.net.URI
 import java.net.UnknownHostException
 import java.util.*
@@ -21,7 +22,7 @@ import kotlin.time.ExperimentalTime
 enum class Endpoint(val path: String) {
     MAP("map"),
     USER_DETAILS("user/details"),
-    NOTES("notes")
+    NOTES("notes.json") // Notes endpoint doesn't respect Accept: application/json
 }
 
 const val OSM_API_PARAM_BBOX = "bbox"
@@ -55,6 +56,7 @@ suspend inline fun OsmApiConfig.apiReq(
         .appendPath(endpoint)
         .run { if (urlTransformer != null) urlTransformer(this) else this }
         .toString()
+        .also { Timber.d("Req url: $it") }
         .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
         .run { if (reqTransformer != null) reqTransformer(this) else this }
         .header(HTTP_USER_AGENT, userAgent)
@@ -87,6 +89,7 @@ suspend inline fun OsmApiConfig.apiReq(
 @ExperimentalTime
 suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
     // We can't use URLEncoder.encode because it percent-encodes commas (which we don't want)
+    // TODO: Maybe fuel parameters is OK to use, then we don't need req-/urlTransformer
     appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
 })
 

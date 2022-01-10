@@ -127,14 +127,20 @@
     <string name="last_edit_date"><![CDATA[
         Last edited %1$s <small>(%2$s)</small>
     ]]></string>
-    <string name="last_edit_date_unknown"><![CDATA[
-        Last edited <i>???</i>
+    <string name="created_date"><![CDATA[
+        Created %1$s <small>(%2$s)</small>
     ]]></string>
-    <string name="last_edit_by"><![CDATA[
+    <string name="created_date_unknown"><![CDATA[
+        Created <i>an unknown time ago</i>
+    ]]></string>
+    <string name="last_edit_date_unknown"><![CDATA[
+        Last edited <i>an unknown time ago</i>
+    ]]></string>
+    <string name="by_x"><![CDATA[
          …by <a href="%1$s">%2$s</a>
     ]]></string>
-    <string name="last_edit_by_unknown"><![CDATA[
-         …by <i>???</i>
+    <string name="by_unknown"><![CDATA[
+         …by <i>anonymous</i>
     ]]></string>
     <string name="last_edit_changeset"><![CDATA[
         …as part of changeset <a href="%1$s">%2$s</a>.
@@ -162,4 +168,24 @@
     <string name="osm_login_confirm_dialog_log_in">Log in</string>
     <string name="osm_login_confirm_dialog_cancel">Cancel</string>
     <string name="create">Create</string>
+
+    <string name="reopened"><![CDATA[
+         Reopened by <a href="%1$s">%2$s</a>
+    ]]></string>
+    <string name="reopened_anonymous"><![CDATA[
+         Reopened by <i>anonymous</i>
+    ]]></string>
+    <string name="closed"><![CDATA[
+         Closed by <a href="%1$s">%2$s</a>
+    ]]></string>
+    <string name="closed_anonymous"><![CDATA[
+         Closed by <i>anonymous</i>
+    ]]></string>
+    <string name="commented"><![CDATA[
+         Comment from <a href="%1$s">%2$s</a>
+    ]]></string>
+    <string name="commented_anonymous"><![CDATA[
+         Comment from <i>anonymous</i>
+    ]]></string>
+    <string name="description">Description</string>
 </resources>

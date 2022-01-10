@@ -14,3 +14,14 @@ fun iso8601DateTimeInUtcToInstant(iso8601DateTimeUtc: String): Instant =
         iso8601DateTimeUtc,
         iso8601DateTimeInUtcFormatter
     ).atZone(ZoneOffset.UTC).toInstant()
+
+private val osmCommentDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(
+    "yyyy-MM-dd HH:mm:ss 'UTC'"
+)
+
+fun osmCommentDateTimeToInstant(osmCommentDateTime: String): Instant =
+    LocalDateTime.parse(
+        osmCommentDateTime,
+        osmCommentDateTimeFormatter
+    ).atZone(ZoneOffset.UTC).toInstant()
+

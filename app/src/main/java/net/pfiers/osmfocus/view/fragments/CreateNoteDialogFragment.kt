@@ -22,7 +22,7 @@ class CreateNoteDialogFragment : MaterialDialogFragment() {
     }) {
         createVMFactory { CreateNoteDialogVM(location, app.apiConfigRepository) }
     }
-    private val location get() = requireArguments().getSerializable(ARG_LOCATION) as Coordinate
+    private val location by argument<Coordinate>(ARG_LOCATION)
 
     init {
         lifecycleScope.launchWhenCreated {

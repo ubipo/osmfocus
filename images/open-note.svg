@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="388"
+   height="540"
+   viewBox="0 0 102.65833 142.875"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20, custom)"
+   sodipodi:docname="open-note.svg"
+   inkscape:export-filename="/data/projects/osmfocus/images/open-note.png"
+   inkscape:export-xdpi="53.27"
+   inkscape:export-ydpi="53.27"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     width="500px"
+     inkscape:snap-object-midpoints="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:snap-intersection-paths="true"
+     inkscape:object-paths="true"
+     inkscape:snap-bbox="false"
+     inkscape:snap-page="true"
+     inkscape:snap-smooth-nodes="true"
+     showguides="false"
+     inkscape:guide-bbox="true"
+     inkscape:zoom="0.7547353"
+     inkscape:cx="-35.111648"
+     inkscape:cy="309.37999"
+     inkscape:window-width="1879"
+     inkscape:window-height="1051"
+     inkscape:window-x="41"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <sodipodi:guide
+       position="-4.0666666e-07,85.247505"
+       orientation="0,-1"
+       id="guide9583" />
+    <sodipodi:guide
+       position="46.0375,85.247505"
+       orientation="0.70710678,-0.70710678"
+       id="guide9585" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Greyscale"
+       id="filter22014"
+       x="-0.10366704"
+       y="-0.036283465"
+       width="1.2073341"
+       height="1.0725669">
+      <feGaussianBlur
+         stdDeviation="2 2"
+         result="fbSourceGraphic"
+         id="feGaussianBlur22012" />
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix22272" />
+      <feColorMatrix
+         id="feColorMatrix22274"
+         values="0.21 0.72 0.072 0 0 0.21 0.72 0.072 0 0 0.21 0.72 0.072 0 0 0 0 0 1 0 "
+         in="fbSourceGraphic" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Greyscale"
+       id="filter22018"
+       x="-0.10366704"
+       y="-0.036283465"
+       width="1.2073341"
+       height="1.0725669">
+      <feGaussianBlur
+         stdDeviation="2 2"
+         result="fbSourceGraphic"
+         id="feGaussianBlur22016" />
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix22276" />
+      <feColorMatrix
+         id="feColorMatrix22278"
+         values="0.21 0.72 0.072 0 0 0.21 0.72 0.072 0 0 0.21 0.72 0.072 0 0 0 0 0 1 0 "
+         in="fbSourceGraphic" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-28.75826,-0.99142672)">
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use4138"
+       id="use21266"
+       style="fill:#1a1a1a;fill-opacity:1;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;filter:url(#filter22014)"
+       transform="translate(1.4022207,1.1640955)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path846"
+       id="use21268"
+       style="fill:#1a1a1a;fill-opacity:1;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;filter:url(#filter22018)"
+       transform="translate(1.4022207,1.1640955)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path846"
+       id="use4138"
+       transform="matrix(-1,0,0,1,160.17484,1.2112544e-8)"
+       width="100%"
+       height="100%"
+       style="paint-order:stroke markers fill;fill:#8bbf3b;fill-opacity:1" />
+    <path
+       id="path846"
+       style="fill:#8bbf3b;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:15.6122;stroke-linecap:square;stroke-opacity:0.886275;paint-order:stroke markers fill"
+       d="m 80.35201,6.2830935 c -26.01694,-2e-6 -46.302083,20.0061225 -46.302083,47.0441635 0,32.98908 31.347251,35.495227 45.772917,85.247503 0.529166,0 0.529166,0 0.529166,0 z"
+       sodipodi:nodetypes="ccccc" />
+    <g
+       id="g3971"
+       transform="translate(-0.32582433)">
+      <path
+         style="fill:none;stroke:#ffffff;stroke-width:10.965;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 98.083092,35.288087 76.912425,66.5565"
+         id="path5763"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;stroke:#ffffff;stroke-width:10.965;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 76.647828,66.324343 62.74341,52.440191"
+         id="path5763-3"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+</svg>

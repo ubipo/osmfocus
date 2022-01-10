@@ -42,7 +42,7 @@ import java.util.*
 class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
     FragmentElementDetailsBinding::inflate
 ) {
-    private lateinit var elementCentroidAndId: AnyElementCentroidAndId
+    private val elementCentroidAndId by argument<AnyElementCentroidAndId>(ARG_ELEMENT_AND_CENTROID_AND_ID)
     private val elementDetailsVM: ElementDetailsVM by activityTaggedViewModels({
         listOf(elementCentroidAndId.typedId.toString())
     }) {
@@ -67,14 +67,6 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            elementCentroidAndId =
-                it.getSerializable(ARG_ELEMENT_CENTROID_AND_ID) as AnyElementCentroidAndId
-        }
-    }
-
     private val wikiPageLookupScope = CoroutineScope(Dispatchers.Default + Job())
 
     override fun onCreateView(
@@ -88,7 +80,7 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
             R.layout.rv_item_tag_table_header,
             viewLifecycleOwner
         )
-        val tagsListAdapter = ViewBindingListAdapter<Tag, RvItemTagTableBinding>(
+        val tagListAdapter = ViewBindingListAdapter<Tag, RvItemTagTableBinding>(
             R.layout.rv_item_tag_table,
             viewLifecycleOwner
         ) { tag, tagBinding ->
@@ -126,10 +118,11 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
                 }
             }
         }
-        binding.tags.adapter = ConcatAdapter(headerAdapter, tagsListAdapter)
+
+        binding.tags.adapter = ConcatAdapter(headerAdapter, tagListAdapter)
         val orientation = RecyclerView.VERTICAL
         binding.tags.layoutManager = LinearLayoutManager(context, orientation, false)
-        tagsListAdapter.submitList(elementCentroidAndId.e.tags?.entries?.toList())
+        tagListAdapter.submitList(elementCentroidAndId.e.tags?.entries?.toList())
         binding.tags.addItemDecoration(DividerItemDecoration(context, orientation))
 
         return binding.root
@@ -143,15 +136,7 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
     }
 
     companion object {
-        private const val ARG_ELEMENT_CENTROID_AND_ID = "elementCentroidAndId"
-
-        @JvmStatic
-        fun newInstance(elementCentroidAndId: AnyElementCentroidAndId) =
-            ElementDetailsFragment().apply {
-                arguments = Bundle().apply {
-                    putSerializable(ARG_ELEMENT_CENTROID_AND_ID, elementCentroidAndId)
-                }
-            }
+        const val ARG_ELEMENT_AND_CENTROID_AND_ID = "elementAndCentroidAndId"
 
         // TODO: Duplicate, see osm api
         private fun transformFuelError(exception: Exception): Exception {

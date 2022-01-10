@@ -10,6 +10,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import net.pfiers.osmfocus.OsmFocusApplication
+import kotlin.properties.ReadOnlyProperty
 
 val Activity.app
     get() = application as OsmFocusApplication
@@ -36,3 +37,7 @@ fun Fragment.getDrawable(@DrawableRes drawableRes: Int) =
     ContextCompat.getDrawable(requireContext(), drawableRes)
 
 fun Fragment.openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
+
+inline fun <reified T> argument(key: String) = ReadOnlyProperty<Fragment, T> { thisRef, _ ->
+    thisRef.requireArguments()[key]!! as T
+}

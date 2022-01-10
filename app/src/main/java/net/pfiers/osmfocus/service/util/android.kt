@@ -1,7 +1,9 @@
 package net.pfiers.osmfocus.service.util
 
+import android.content.res.Resources
 import android.location.Location
 import android.net.Uri
+import android.util.TypedValue
 import androidx.databinding.Observable
 import androidx.databinding.ObservableField
 import org.osmdroid.util.GeoPoint
@@ -62,3 +64,9 @@ class NonNullObservableField<T : Any>(
 }
 
 fun Location.toGeoPoint() = GeoPoint(latitude, longitude)
+
+fun Float.toDp(res: Resources) = TypedValue.applyDimension(
+    TypedValue.COMPLEX_UNIT_DIP,
+    this,
+    res.displayMetrics
+)

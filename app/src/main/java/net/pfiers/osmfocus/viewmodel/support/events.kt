@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
+import net.pfiers.osmfocus.service.osm.NoteAndId
 
 abstract class Event
 
@@ -27,6 +28,7 @@ class AddBaseMapEvent : NavEvent()
 class ShowAboutEvent : NavEvent()
 class ShowSettingsEvent : NavEvent()
 class ShowElementDetailsEvent(val elementCentroidAndId: AnyElementCentroidAndId) : NavEvent()
+class ShowNoteDetailsEvent(val noteAndId: NoteAndId) : NavEvent()
 class ShowMoreInfoEvent : NavEvent()
 class NavigateUpEvent : NavEvent()
 

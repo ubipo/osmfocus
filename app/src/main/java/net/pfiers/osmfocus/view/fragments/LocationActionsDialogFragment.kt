@@ -19,7 +19,7 @@ import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 class LocationActionsDialogFragment : BottomSheetDialogFragment() {
-    private lateinit var location: Coordinate
+    private val location by argument<Coordinate>(ARG_LOCATION)
     private val locationActionsVM by activityTaggedViewModels<LocationActionsVM>({
         listOf(location.toString())
     }) {
@@ -28,10 +28,6 @@ class LocationActionsDialogFragment : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        arguments?.let {
-            location = it.getSerializable(ARG_LOCATION) as Coordinate
-        }
 
         lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
             locationActionsVM.events.receiveAsFlow().collect { event ->

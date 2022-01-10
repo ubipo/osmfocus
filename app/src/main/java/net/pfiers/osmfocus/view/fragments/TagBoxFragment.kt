@@ -25,7 +25,6 @@ import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
-import kotlin.properties.Delegates
 
 @ExperimentalStdlibApi
 class TagBoxFragment : Fragment() {
@@ -33,8 +32,8 @@ class TagBoxFragment : Fragment() {
     class TagBoxHitRectChange(val hitRect: Rect)
 
     val events = Channel<TagBoxHitRectChange>()
-    private lateinit var tbLoc: TbLoc
-    private var color by Delegates.notNull<Int>()
+    private val tbLoc by argument<TbLoc>(ARG_TBLOC)
+    private val color by argument<Int>(ARG_COLOR)
     private val tagBoxVM: TagBoxVM by activityTaggedViewModels(
         { listOf(tbLoc.toString()) },
         {
@@ -44,11 +43,6 @@ class TagBoxFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            @Suppress("UNCHECKED_CAST")
-            tbLoc = it.getParcelable(ARG_TBLOC)!!
-            color = it.getInt(ARG_COLOR)
-        }
 
         val navController = findNavController()
 

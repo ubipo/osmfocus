@@ -15,9 +15,12 @@ import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.service.*
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import net.pfiers.osmfocus.service.osm.Element
+import net.pfiers.osmfocus.service.osm.Notes
 import net.pfiers.osmfocus.service.osm.TypedId
-import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager
-import net.pfiers.osmfocus.service.osmapi.MapApiDownloadManager.*
+import net.pfiers.osmfocus.service.osmapi.ElementsDownloadManager
+import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
+import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager.*
+import net.pfiers.osmfocus.service.osmapi.NotesDownloadManager
 import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import net.pfiers.osmfocus.service.tagboxlocation.tbLocations
 import net.pfiers.osmfocus.service.tagboxlocation.toEnvelopeCoordinate
@@ -38,11 +41,11 @@ class MapVM(
     data class MapState(val envelope: Envelope, val zoomLevel: Double)
 
     val events = createEventChannel()
-    private val downloadManager = MapApiDownloadManager(
-        ApiConfigRepository.defaultOsmApiConfig, MAX_DOWNLOAD_QPS, MAX_DOWNLOAD_AREA, GEOMETRY_FAC
+    private val elementsDownloadManager = ElementsDownloadManager(
+        ApiConfigRepository.defaultOsmApiConfig, MAX_DOWNLOAD_QPS, ELEMENTS_MAX_DOWNLOAD_AREA, GEOMETRY_FAC
     )
     val overlayText = MutableLiveData<@StringRes Int?>()
-    val downloadState = MutableLiveData(downloadManager.state)
+    val downloadState = MutableLiveData(elementsDownloadManager.state)
     val showRelations = settingsDataStore.data.map { settings ->
         settings.showRelations
     }.asLiveData()
@@ -55,6 +58,11 @@ class MapVM(
     }
     val highlightedElements = MutableLiveData<Map<TbLoc, ElementToDisplayData>>()
 
+    private val notesDownloadManager = NotesDownloadManager(
+        ApiConfigRepository.defaultOsmApiConfig, MAX_DOWNLOAD_QPS, NOTES_MAX_DOWNLOAD_AREA, GEOMETRY_FAC
+    )
+    val notes get() = notesDownloadManager.notes
+
     enum class LocationState { INACTIVE, SEARCHING, FOLLOWING, ERROR }
 
     val locationState = MutableLiveData(LocationState.INACTIVE)
@@ -63,7 +71,8 @@ class MapVM(
         val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
         viewModelScope.launch {
             apiConfigRepository.osmApiConfigFlow.collect { apiConfig ->
-                downloadManager.apiConfig = apiConfig
+                elementsDownloadManager.apiConfig = apiConfig
+                notesDownloadManager.apiConfig = apiConfig
             }
 
 //            settingsDataStore.data
@@ -89,8 +98,15 @@ class MapVM(
 //                }
         }
         viewModelScope.launch {
-            downloadManager.events.receiveAsFlow().collect { event ->
+            elementsDownloadManager.events.receiveAsFlow().collect { event ->
                 handleDownloadManagerEvent(event)
+            }
+        }
+        viewModelScope.launch {
+            notesDownloadManager.events.receiveAsFlow().collect { event ->
+                if (event is NotesDownloadManager.NewNotesEvent) {
+                    events.trySend(NewNotesEvent(event.newNotes))
+                }
             }
         }
     }
@@ -128,7 +144,7 @@ class MapVM(
         when (event) {
             is PropertyChangedEvent<*> -> {
                 when (event.property) {
-                    downloadManager::state -> {
+                    EnvelopeDownloadManager::state -> {
                         val state = event.newValue as State
                         viewModelScope.launch {
                             downloadState.value = state
@@ -142,13 +158,13 @@ class MapVM(
             is DownloadEndedEvent -> {
                 event.result.onError { ex ->
                     when (ex) {
-                        is ZoomLevelRecededException, is MaxDownloadAreaExceededException -> {
+                        is ZoomLevelRecededException -> {
                             overlayText.value = R.string.too_zoomed_out
                         }
                     }
                 }
             }
-            is NewElementsEvent -> {
+            is ElementsDownloadManager.NewElementsEvent -> {
                 overlayText.value = null
                 updateHighlightedElements()
             }
@@ -159,31 +175,31 @@ class MapVM(
 
     private fun initiateDownload() {
         backgroundScope.launch(coroutineExceptionHandler) {
-            val downloadJob = async {
-                downloadManager.download { getDownloadEnvelope() }
-            }
-            downloadJob.await().onError { ex ->
+            elementsDownloadManager.download {
+                getDownloadEnvelope(ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL)
+            }.onError { ex ->
                 when (ex) {
                     is ZoomLevelRecededException,
-                    is MaxDownloadAreaExceededException,
-                    is MapApiDownloadManager.FresherDownloadCe
-                    -> {
-                        return@onError
-                    } // Ignore
+                    is FresherDownloadCe -> return@onError // Ignore
                 }
                 throw ex
             }
         }
+        backgroundScope.launch {
+            notesDownloadManager.download { getDownloadEnvelope(NOTES_MIN_DOWNLOAD_ZOOM_LEVEL) }
+        }
     }
 
     private class MapStateNotInitializedException : Exception()
+    private class ZoomLevelRecededException(override val message: String) : Exception()
 
-    private fun getDownloadEnvelope(): Result<Envelope, Exception> {
+    private fun getDownloadEnvelope(minZoomLevel: Double): Result<Envelope, Exception> {
         val lMapState = mapState ?: return Result.error(MapStateNotInitializedException())
-        if (lMapState.zoomLevel < MIN_DOWNLOAD_ZOOM_LEVEL) {
+        if (lMapState.zoomLevel < minZoomLevel) {
+            // TODO: Since this is a normal occurrence, it should not be an exception
             return Result.error(
                 ZoomLevelRecededException(
-                    "Zoom level receded below min ($lMapState.zoomLevel < ${MIN_DOWNLOAD_ZOOM_LEVEL})"
+                    "Zoom level receded below min ($lMapState.zoomLevel < ${minZoomLevel})"
                 )
             )
         }
@@ -206,7 +222,7 @@ class MapVM(
         synchronized(this) {
             lastUpdateHighlightedElementsJob?.cancel()
             val job = updateHighlightedElementsScope.launch(coroutineExceptionHandler) {
-                val tagBoxElementPairs = if (lMapState.zoomLevel < MIN_DISPLAY_ZOOM_LEVEL) {
+                val tagBoxElementPairs = if (lMapState.zoomLevel < ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
                     emptyMap() // Too zoomed out, don't display any elements
                 } else {
                     val displayedElements =
@@ -239,13 +255,13 @@ class MapVM(
     private fun getElementsToDisplay(envelope: Envelope): List<ElementToDisplayData> {
         val center = envelope.centre()
         val elementsList = mutableListOf<Map.Entry<Long, Element>>()
-        elementsList.addAll(downloadManager.elements.nodes.entries)
-        elementsList.addAll(downloadManager.elements.ways.entries)
-        if (showRelations.value == true) elementsList.addAll(downloadManager.elements.relations.entries)
+        elementsList.addAll(elementsDownloadManager.elements.nodes.entries)
+        elementsList.addAll(elementsDownloadManager.elements.ways.entries)
+        if (showRelations.value == true) elementsList.addAll(elementsDownloadManager.elements.relations.entries)
         return elementsList
             .filterNot { (_, element) -> element.tags.isNullOrEmpty() }
             .mapNotNull { (id, e) ->
-                downloadManager.getGeometry(TypedId(id, e.type))?.takeIf { g ->
+                elementsDownloadManager.getGeometry(TypedId(id, e.type))?.takeIf { g ->
                     !g.isEmpty && envelope.intersects(g.envelopeInternal) // Rough check
                 }?.let { geometry ->
                     DistanceOp.nearestPoints(
@@ -293,12 +309,16 @@ class MapVM(
         events.trySend(ExceptionEvent(exception))
     }
 
+    class NewNotesEvent(val newNotes: Notes) : Event()
+
     companion object {
         const val ENVELOPE_BUFFER_FACTOR = 1.1 // Overfetch a little around the current envelope
         const val MAX_DOWNLOAD_QPS = 1.0 // Queries per second
-        const val MAX_DOWNLOAD_AREA = 1500.0 * 1500 // m^2, 1500^2 = entirety of soho
-        const val MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
-        const val MIN_DISPLAY_ZOOM_LEVEL = MIN_DOWNLOAD_ZOOM_LEVEL
+        const val ELEMENTS_MAX_DOWNLOAD_AREA = 1500.0 * 1500 // m^2 = small city district
+        const val ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
+        const val ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL = ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL
+        const val NOTES_MIN_DOWNLOAD_ZOOM_LEVEL = 14.0
+        const val NOTES_MAX_DOWNLOAD_AREA = 8000.0 * 8000 // small city
         private val GEOMETRY_FAC = GeometryFactory()
     }
 }

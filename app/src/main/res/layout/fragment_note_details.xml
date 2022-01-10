@@ -8,7 +8,7 @@
 
         <variable
             name="vm"
-            type="net.pfiers.osmfocus.viewmodel.ElementDetailsVM" />
+            type="net.pfiers.osmfocus.viewmodel.NoteDetailsVM" />
 
         <import type="java.time.ZoneOffset" />
         <import type="net.pfiers.osmfocus.view.support.ViewFunctions" alias="vf" />
@@ -36,42 +36,50 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:text="@{String.format(`%s %d`, vm.typedId.type.nameCapitalized, vm.typedId.id)}"
-                    tools:text="Relation 146842351"
+                    android:text="@{String.format(`Note %d`, vm.id)}"
+                    tools:text="Note 146842351"
                     android:textIsSelectable="true" />
 
                 <TextView
                     style="@style/TextAppearance.AppCompat.Body1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:htmlText="@{vm.element.lastEditTimestamp == null ? @string/last_edit_date_unknown : @string/last_edit_date(vf.prettyTime(vm.element.lastEditTimestamp), vm.element.lastEditTimestamp.toString())}"
-                    tools:text="Last edited just now (2022-...)"
+                    android:htmlText="@{@string/created_date(vf.prettyTime(vm.note.creationTimestamp), vm.note.creationTimestamp.toString())}"
+                    tools:text="Created just now (2022-...)"
                     android:textIsSelectable="true" />
 
                 <TextView
                     style="@style/TextAppearance.AppCompat.Body1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:htmlText="@{vm.element.username == null ? @string/by_unknown : @string/by_x(vm.element.userProfileUrl, vm.element.username)}"
-                    tools:text="...by Jaap Appelmans"
+                    android:htmlText="@{vm.note.creator == null ? @string/by_unknown : @string/by_x(vm.note.creator.profileUrl, vm.note.creator.username)}"
+                    tools:text="...by the intangible concept of peace"
                     android:textIsSelectable="true" />
+
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Medium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/comment_description_top_margin"
+                    android:text="@string/description" />
 
                 <TextView
                     style="@style/TextAppearance.AppCompat.Body1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:htmlText="@{vm.element.changeset == null ? @string/last_edit_changeset_unknown : @string/last_edit_changeset(vm.element.changesetUrl, vm.element.changeset)}"
-                    tools:text="...as part of changeset 186743"
+                    android:htmlText="@{vm.note.creationHtml}"
+                    tools:text="Housenumber should be 23B. See mapillary.com/..."
                     android:textIsSelectable="true" />
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/tags"
+                    android:id="@+id/comments"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"
-                    tools:listitem="@layout/rv_item_tag_table"
-                    android:nestedScrollingEnabled="false" />
+                    tools:listitem="@layout/rv_item_comment"
+                    android:nestedScrollingEnabled="false"
+                    android:visibility="@{vm.note.comments.size() > 0}" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"

@@ -1,6 +1,7 @@
 package net.pfiers.osmfocus.service.jts
 
 import org.locationtech.jts.geom.*
+import org.locationtech.jts.math.Vector2D
 import java.net.URI
 import java.net.URL
 import java.util.*
@@ -34,6 +35,8 @@ fun Envelope.toPolygon(factory: GeometryFactory): Polygon =
 
 val Envelope.centerX get() = (minX + maxX) / 2.0
 val Envelope.centerY get() = (minY + maxY) / 2.0
+
+fun Envelope.toCenterVec2() = Vector2D(centerX, centerY)
 
 fun Coordinate.toOsmAndUrl() = URL("https://osmand.net/go.html?lat=$y&lon=$x&z=15")
 

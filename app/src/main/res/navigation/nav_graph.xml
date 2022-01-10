@@ -59,8 +59,29 @@
     </fragment>
     <fragment
         android:id="@+id/elementDetailContainerFragment"
-        android:name="net.pfiers.osmfocus.view.fragments.ElementDetailsContainerFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.ToolbarContainerFragment"
         android:label="Element details"
-        tools:layout="@layout/fragment_element_details_container" />
+        tools:layout="@layout/fragment_toolbar_container" >
+
+        <argument
+            android:name="containedFragment"
+            android:defaultValue="ELEMENT_DETAILS"
+            app:argType=".view.support.ContainedFragmentId"
+            />
+
+    </fragment>
+    <fragment
+        android:id="@+id/noteDetailsFragment"
+        android:name="net.pfiers.osmfocus.view.fragments.ToolbarContainerFragment"
+        android:label="Note details"
+        tools:layout="@layout/fragment_toolbar_container" >
+
+        <argument
+            android:name="containedFragment"
+            android:defaultValue="NOTE_DETAILS"
+            app:argType=".view.support.ContainedFragmentId"
+            />
+
+    </fragment>
 
 </navigation>
