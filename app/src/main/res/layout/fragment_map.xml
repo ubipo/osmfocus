@@ -91,48 +91,54 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.80" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-        <!-- TODO: Buttons are briefly shown when returning to map and zoomed in -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/actionsContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|bottom">
+                <!-- TODO: Buttons are briefly shown when returning to map and zoomed in -->
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:id="@+id/actionsContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="@{vm.tagBoxesAreShown ? Double.valueOf(1.0) : Double.valueOf(0.80)}">
 
-            <!-- locationBtn's src is changed in MapFragment because we want to be able to start the
-            animation of @drawable/ic_device_location_searching_animated after setting it -->
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/locationBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                app:maxImageSize="32dp"
-                android:clickable="true"
-                android:contentDescription="@string/map_location_btn_description"
-                android:focusable="true"
-                android:src="@drawable/ic_device_location_inactive"
-                app:layout_constraintBottom_toTopOf="@+id/settingsBtn"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:tint="#fff"
-                app:backgroundTint="@{vm.locationState == LocationState.ERROR ? @color/error : vm.locationState == LocationState.FOLLOWING ? @color/accent : @color/secondary}"
-                android:onClick="@{() -> vm.followMyLocation()}" />
+                    <!-- locationBtn's src is changed in MapFragment because we want to be able to start the
+                    animation of @drawable/ic_device_location_searching_animated after setting it -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/locationBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:clickable="true"
+                        android:contentDescription="@string/map_location_btn_description"
+                        android:focusable="true"
+                        android:onClick="@{() -> vm.followMyLocation()}"
+                        android:src="@drawable/ic_device_location_inactive"
+                        app:backgroundTint="@{vm.locationState == LocationState.ERROR ? @color/error : vm.locationState == LocationState.FOLLOWING ? @color/accent : @color/secondary}"
+                        app:maxImageSize="32dp"
+                        app:tint="#fff" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/settingsBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:contentDescription="@string/map_settings_btn_description"
-                android:focusable="true"
-                android:src="@drawable/ic_baseline_settings_24"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:tint="#fff"
-                android:onClick="@{() -> vm.showSettings()}" />
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/settingsBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:clickable="true"
+                        android:contentDescription="@string/map_settings_btn_description"
+                        android:focusable="true"
+                        android:onClick="@{() -> vm.showSettings()}"
+                        android:src="@drawable/ic_baseline_settings_24"
+                        app:tint="#fff" />
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

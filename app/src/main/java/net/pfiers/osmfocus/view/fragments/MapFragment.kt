@@ -195,7 +195,8 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 //                        locationHelper.stopLocationUpdates()
                     }
                     is ActionsVisibilityEvent -> {
-                        updateActionsVisibility(event.actionsShouldBeVisible)
+//                        binding.actionsContainer.
+//                        updateActionsVisibility(event.actionsShouldBeVisible)
                     }
                     is MapVM.NewNotesEvent -> {
                         addNotesMarkers(event.newNotes)
@@ -237,11 +238,8 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         if (mapVM.locationState.value == MapVM.LocationState.FOLLOWING) {
             map?.let { map ->
                 if (!map.isAnimating) {
-                    map.controller.animateTo(
-                        position,
-                        MOVE_TO_CURRENT_LOCATION_ZOOM,
-                        null
-                    )
+                    val newZoom = max(map.zoomLevelDouble, MOVE_TO_CURRENT_LOCATION_MIN_ZOOM)
+                    map.controller.animateTo(position, newZoom, null)
                 }
             }
         }
@@ -674,7 +672,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 
     companion object {
         const val ENVELOPE_MIN_AREA = 1e-8 // Considered a null envelope below this
-        const val MOVE_TO_CURRENT_LOCATION_ZOOM = 17.5
+        const val MOVE_TO_CURRENT_LOCATION_MIN_ZOOM = 17.5
         const val MOVE_TO_TAPPED_LOCATION_ZOOM = 20.0
         const val MAX_ZOOM_LEVEL_BEYOND_BASE_MAP = 24.0
         const val MIN_MAX_ZOOM_LEVEL = ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL + 1

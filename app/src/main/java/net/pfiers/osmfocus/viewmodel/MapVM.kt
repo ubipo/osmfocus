@@ -67,6 +67,8 @@ class MapVM(
 
     val locationState = MutableLiveData(LocationState.INACTIVE)
 
+    val tagBoxesAreShown = MutableLiveData(false)
+
     init {
         val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
         viewModelScope.launch {
@@ -236,11 +238,14 @@ class MapVM(
                 viewModelScope.launch {
                     highlightedElements.value = tagBoxElementPairs
                 }
-                events.trySend(
-                    ActionsVisibilityEvent(
-                        actionsShouldBeVisible = tagBoxElementPairs.isEmpty()
-                    )
-                )
+//                events.trySend(
+//                    ActionsVisibilityEvent(
+//                        actionsShouldBeVisible = tagBoxElementPairs.isEmpty()
+//                    )
+//                )
+                viewModelScope.launch {
+                    tagBoxesAreShown.value = tagBoxElementPairs.isEmpty()
+                }
             }
             lastUpdateHighlightedElementsJob = job
             job
@@ -317,7 +322,7 @@ class MapVM(
         const val ELEMENTS_MAX_DOWNLOAD_AREA = 1500.0 * 1500 // m^2 = small city district
         const val ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL = 18.5
         const val ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL = ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL
-        const val NOTES_MIN_DOWNLOAD_ZOOM_LEVEL = 14.0
+        const val NOTES_MIN_DOWNLOAD_ZOOM_LEVEL = 12.0
         const val NOTES_MAX_DOWNLOAD_AREA = 8000.0 * 8000 // small city
         private val GEOMETRY_FAC = GeometryFactory()
     }

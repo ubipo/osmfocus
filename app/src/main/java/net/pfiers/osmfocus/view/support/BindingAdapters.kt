@@ -5,6 +5,7 @@ import android.os.Build
 import android.text.Html
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
+import android.transition.TransitionManager
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -12,6 +13,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.widget.addTextChangedListener
 import androidx.databinding.BindingAdapter
 
@@ -89,5 +92,17 @@ object BindingAdapters {
     @BindingAdapter("android:visibility")
     fun setVisibility(view: View, show: Boolean) {
         view.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    @JvmStatic
+    @BindingAdapter("layout_constraintVertical_bias")
+    fun setConstraintVerticalBias(view: View, verticalBias: Double) {
+        if (view.parent !is ConstraintLayout) return
+        val parent = view.parent as ConstraintLayout
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(parent)
+        constraintSet.setVerticalBias(view.id, verticalBias.toFloat())
+        TransitionManager.beginDelayedTransition(parent)
+        constraintSet.applyTo(parent)
     }
 }
