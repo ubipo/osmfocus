@@ -70,7 +70,7 @@
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textIsSelectable="true"
                     android:typeface="monospace"
-                    tools:text="Yoollllllllllllllllllllllllllllllllllllllllllllllllllllllllllllooooong maaaaaan oo\n\n\\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfadssfd" />
+                    tools:text="Yoooooo llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllooooong maaaaaan oo\n\n\\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfadssfd" />
 
             </HorizontalScrollView>
 

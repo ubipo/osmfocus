@@ -17,6 +17,7 @@ import net.pfiers.osmfocus.service.basemap.BaseMapRepository
 import net.pfiers.osmfocus.service.osm.Element
 import net.pfiers.osmfocus.service.osm.Notes
 import net.pfiers.osmfocus.service.osm.TypedId
+import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.ElementsDownloadManager
 import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
 import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager.*
@@ -176,7 +177,7 @@ class MapVM(
     private val backgroundScope = CoroutineScope(Job() + Dispatchers.Default)
 
     private fun initiateDownload() {
-        backgroundScope.launch(coroutineExceptionHandler) {
+        backgroundScope.launch {
             elementsDownloadManager.download {
                 getDownloadEnvelope(ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL)
             }.onError { ex ->
@@ -223,7 +224,7 @@ class MapVM(
         val lMapState = mapState ?: return
         synchronized(this) {
             lastUpdateHighlightedElementsJob?.cancel()
-            val job = updateHighlightedElementsScope.launch(coroutineExceptionHandler) {
+            val job = updateHighlightedElementsScope.launch {
                 val tagBoxElementPairs = if (lMapState.zoomLevel < ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
                     emptyMap() // Too zoomed out, don't display any elements
                 } else {
@@ -280,7 +281,7 @@ class MapVM(
                 }
             }.sortedBy { e ->
                 center.distance(e.nearCenterCoordinate) // distanceGEO would be more accurate
-            }.toList().containedSubList(0, tbLocations.size)
+            }.toList().boundedSubList(0, tbLocations.size)
     }
 
     open class ElementToDisplayData(
@@ -309,10 +310,6 @@ class MapVM(
         }
         .noIndividualValueReuse()
         .toMap()
-
-    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
-        events.trySend(ExceptionEvent(exception))
-    }
 
     class NewNotesEvent(val newNotes: Notes) : Event()
 

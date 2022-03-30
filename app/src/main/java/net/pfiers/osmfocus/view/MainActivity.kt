@@ -1,6 +1,5 @@
 package net.pfiers.osmfocus.view
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -18,44 +17,35 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import net.openid.appauth.*
-import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.service.*
+import net.pfiers.osmfocus.service.oauth.OsmAuthRepository.Companion.osmAuthRepository
 import net.pfiers.osmfocus.service.util.createEmailIntent
 import net.pfiers.osmfocus.service.util.div
 import net.pfiers.osmfocus.view.support.EventReceiver
-import net.pfiers.osmfocus.view.support.ExceptionHandler
-import net.pfiers.osmfocus.view.support.app
+import net.pfiers.osmfocus.view.support.UncaughtExceptionHandler.Companion.uncaughtExceptionHandler
+import net.pfiers.osmfocus.view.support.timberInit
 import net.pfiers.osmfocus.viewmodel.support.*
 import timber.log.Timber
-import timber.log.Timber.DebugTree
-import java.io.File
-import java.time.Instant
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
-class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
+class MainActivity : AppCompatActivity(), EventReceiver {
     private val authService by lazy { AuthorizationService(this@MainActivity) }
-    private val osmAuthRepository by lazy { app.osmAuthRepository }
     private lateinit var osmAuthorizationResultLauncher: ActivityResultLauncher<Intent>
     private val oAuthScope = CoroutineScope(Job() + Dispatchers.IO)
     private var osmAuthorizationJob: CompletableJob? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (BuildConfig.DEBUG && Timber.forest().filterIsInstance<DebugTree>().none()) {
-            Timber.plant(DebugTree())
-        }
-
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
-            handleException(ex)
-            defaultHandler?.uncaughtException(thread, ex)
-        }
+        Log.i("AAA", "Running init")
+        timberInit()
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler)
+        Log.i("AAA", "Init done")
 
         setContentView(R.layout.activity_main)
+        val osmAuthRepository = this.osmAuthRepository
 
         osmAuthorizationResultLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -111,27 +101,6 @@ class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
         return true
     }
 
-    @SuppressLint("LogNotTimber")
-    override fun handleException(ex: Throwable) {
-        Log.e(LOGGING_TAG, "Logging uncaught exception stack trace")
-        Log.e(LOGGING_TAG, ex.stackTraceToString())
-        val logFile = File(filesDir, "stacktrace-" + Instant.now().toString())
-        logFile.printWriter().use {
-            ex.printStackTrace(it)
-        }
-        Log.e(LOGGING_TAG, "Dumped uncaught exception stack trace to ${logFile.absolutePath}")
-//        ExceptionDialogFragment.newInstance(ex).showWithDefaultTag(supportFragmentManager)
-        val intent = Intent(this, ExceptionActivity::class.java).apply {
-            putExtra(ExceptionActivity.ARG_THROWABLE_INFO, ThrowableInfo(ex))
-        }
-        startActivity(intent)
-        finish()
-    }
-
-    override val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
-        handleException(exception)
-    }
-
     override fun handleEvent(event: Event) {
         when (event) {
             is OpenUriEvent -> openUri(event.uri)
@@ -164,7 +133,6 @@ class MainActivity : AppCompatActivity(), EventReceiver, ExceptionHandler {
                     event.action(accessToken)
                 }
             }
-            is ExceptionEvent -> handleException(event.exception)
             else -> Timber.w("Unhandled event: $event")
         }
     }

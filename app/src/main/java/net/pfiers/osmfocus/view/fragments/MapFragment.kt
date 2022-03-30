@@ -34,12 +34,15 @@ import net.pfiers.osmfocus.*
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.service.LocationHelper
 import net.pfiers.osmfocus.service.basemap.BaseMap
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
 import net.pfiers.osmfocus.service.osm.ElementCentroidAndId
 import net.pfiers.osmfocus.service.osm.NoteAndId
 import net.pfiers.osmfocus.service.osm.Notes
+import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
 import net.pfiers.osmfocus.service.osmapi.OsmApiConnectionException
 import net.pfiers.osmfocus.service.settings.Defaults
+import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocation.*
@@ -84,11 +87,8 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
     private lateinit var mapLocationOnScreen: android.graphics.Point
     private val mapVM: MapVM by activityViewModels {
         createVMFactory {
-            MapVM(
-                app.settingsDataStore,
-                app.baseMapRepository,
-                app.apiConfigRepository
-            )
+            val ctx = requireContext()
+            MapVM(ctx.settingsDataStore, ctx.baseMapRepository, ctx.apiConfigRepository)
         }
     }
     private val attributionVM: AttributionVM by activityViewModels()
@@ -115,13 +115,14 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
             .mapIndexed { index, tbLoc -> tbLoc to palette[index] }
             .toMap()
 
+        val settingsDataStore = requireContext().settingsDataStore
         tbInfos = tbLocations.map { tbLoc: TbLoc ->
             val color = tbLocColors[tbLoc] ?: error("")
             val lineOverlay = TagBoxLineOverlay(color)
             val geometryOverlay = GeometryOverlay(color, geometryFactory)
             val vm: TagBoxVM = createActivityTaggedViewModel(
                 listOf(tbLoc.toString()),
-                createVMFactory { TagBoxVM(app.settingsDataStore, tbLoc, color) }
+                createVMFactory { TagBoxVM(settingsDataStore, tbLoc, color) }
             )
             val fragment = TagBoxFragment.newInstance(color, tbLoc)
             val tbInfo = TbInfo(fragment, vm, lineOverlay, geometryOverlay)
@@ -315,8 +316,9 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
 
         map.minZoomLevel = 4.0
 
+        val settingsDataStore = requireContext().settingsDataStore
         backgroundScope.launch {
-            val settings = app.settingsDataStore.data.first()
+            val settings = settingsDataStore.data.first()
             map.controller.setCenter(settings.lastLocation.toGeoPoint())
         }
 
@@ -353,8 +355,6 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         deviceLocationMarker.isEnabled = false
         map.overlayManager.add(deviceLocationMarker)
         this.deviceLocationMarker = deviceLocationMarker
-
-        val settingsDataStore = app.settingsDataStore
 
         map.addMapListener(object : MapListener {
             var previousSaveLocationJob: Job? = null
@@ -393,8 +393,8 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         })
 
         val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
-        val baseMapRepository = app.baseMapRepository
-        app.settingsDataStore.data
+        val baseMapRepository = requireContext().baseMapRepository
+        requireContext().settingsDataStore.data
             .map { s -> Pair(s.baseMapUid, s.zoomBeyondBaseMapMax) }
             .distinctUntilChanged()
             .asLiveData()

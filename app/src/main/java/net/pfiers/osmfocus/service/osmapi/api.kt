@@ -46,25 +46,26 @@ enum class OsmApiMethod { GET, POST }
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
 suspend inline fun OsmApiConfig.apiReq(
-    endpoint: String,
+    endpoint: Endpoint,
     noinline urlTransformer: (URI.() -> URI)? = null,
     noinline reqTransformer: (Request.() -> Request)? = null,
     oauthAccessToken: String? = null,
     method: OsmApiMethod = OsmApiMethod.GET
 ): Result<String, Exception> {
     val (_, resp, result) = baseUrl
-        .appendPath(endpoint)
-        .run { if (urlTransformer != null) urlTransformer(this) else this }
+        .appendPath(endpoint.path)
+        .run { urlTransformer?.invoke(this) ?: this }
         .toString()
-        .also { Timber.d("Req url: $it") }
         .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
-        .run { if (reqTransformer != null) reqTransformer(this) else this }
+        .run { reqTransformer?.invoke(this) ?: this }
         .header(HTTP_USER_AGENT, userAgent)
         .header(HTTP_ACCEPT, MIME_JSON_UTF8)
         .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
         .awaitStringResponseResult()
 
-    return result.mapError { ex: Exception ->
+    Timber.d("Response url: ${resp.url}")
+
+    return result.mapError { ex: FuelError ->
         val bubbleCause = ex.cause
         if (bubbleCause is FuelError) {
             val fuelCause = bubbleCause.cause
@@ -78,18 +79,9 @@ suspend inline fun OsmApiConfig.apiReq(
 }
 
 @ExperimentalTime
-suspend inline fun OsmApiConfig.apiReq(
-    endpoint: Endpoint,
-    noinline urlTransformer: (URI.() -> URI)? = null,
-    noinline reqTransformer: (Request.() -> Request)? = null,
-    oauthAccessToken: String? = null,
-    method: OsmApiMethod = OsmApiMethod.GET
-) = apiReq(endpoint.path, urlTransformer, reqTransformer, oauthAccessToken, method)
-
-@ExperimentalTime
 suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
     // We can't use URLEncoder.encode because it percent-encodes commas (which we don't want)
-    // TODO: Maybe fuel parameters is OK to use, then we don't need req-/urlTransformer
+    // Fuel also percent-encodes values in the parameters list
     appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
 })
 
@@ -116,4 +108,3 @@ suspend fun OsmApiConfig.createNote(
 
 //@ExperimentalTime
 //suspend fun OsmApiConfig.userDetails() = apiReq<UserDetailsRes>(Endpoint.USER_DETAILS)
-

@@ -1,13 +1,17 @@
 package net.pfiers.osmfocus.service.db
 
+import android.content.Context
 import androidx.annotation.WorkerThread
 import com.beust.klaxon.Klaxon
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.getOrElse
 import com.github.kittinunf.result.map
 import kotlinx.coroutines.*
+import net.pfiers.osmfocus.service.db.Db.Companion.db
 import net.pfiers.osmfocus.service.osm.Tag
 import net.pfiers.osmfocus.service.taginfo.*
+import net.pfiers.osmfocus.service.util.appContextSingleton
+import java.net.URI
 
 class TagInfoRepository(
     private val dao: TagMetaDao,
@@ -101,5 +105,12 @@ class TagInfoRepository(
         very important and so we don't try to fetch any new values of this key.
         Nice thing is that this is dynamic. We don't need a hardcoded denylist. */
         const val MINIMUM_HIGHEST_TAG_VALUE_FRACTION = 0.05
+
+        val Context.tagInfoRepository by appContextSingleton { appContext ->
+            TagInfoRepository(
+                appContext.db.wikiPageDao(),
+                TagInfoApiConfig(URI("https://taginfo.openstreetmap.org"), "fdsfd")
+            )
+        }
     }
 }

@@ -1,7 +1,11 @@
 package net.pfiers.osmfocus.service.basemap
 
+import android.content.Context
 import net.pfiers.osmfocus.service.db.BaseMapDefinitionDao
+import net.pfiers.osmfocus.service.db.Db
+import net.pfiers.osmfocus.service.db.Db.Companion.db
 import net.pfiers.osmfocus.service.db.UserBaseMap
+import net.pfiers.osmfocus.service.util.appContextSingleton
 
 class BaseMapRepository(
     private val dao: BaseMapDefinitionDao
@@ -21,8 +25,15 @@ class BaseMapRepository(
     suspend fun insert(userBaseMap: UserBaseMap) = dao.insert(userBaseMap)
 
     companion object {
+        @Volatile
+        private var instance: Db? = null
+
         private const val UID_PREFIX_BUILTIN = 0
         private const val UID_PREFIX_USER = 1
+
+        val Context.baseMapRepository by appContextSingleton { appContext ->
+            BaseMapRepository(appContext.db.baseMapDefinitionDao())
+        }
 
         val default get() = builtinBaseMaps.first()
 

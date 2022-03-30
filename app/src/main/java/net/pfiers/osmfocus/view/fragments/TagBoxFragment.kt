@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTagboxBinding
+import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
 import net.pfiers.osmfocus.view.support.*
@@ -37,7 +38,7 @@ class TagBoxFragment : Fragment() {
     private val tagBoxVM: TagBoxVM by activityTaggedViewModels(
         { listOf(tbLoc.toString()) },
         {
-            createVMFactory { TagBoxVM(app.settingsDataStore, tbLoc, color) }
+            createVMFactory { TagBoxVM(requireContext().settingsDataStore, tbLoc, color) }
         }
     )
 

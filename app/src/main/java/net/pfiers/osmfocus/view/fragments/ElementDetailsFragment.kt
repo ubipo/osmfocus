@@ -15,8 +15,6 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kittinunf.fuel.core.FuelError
-import com.github.kittinunf.fuel.core.HttpException
 import com.github.kittinunf.result.getOrElse
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +26,7 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentElementDetailsBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTableBinding
+import net.pfiers.osmfocus.service.db.TagInfoRepository.Companion.tagInfoRepository
 import net.pfiers.osmfocus.service.jts.toDecimalDegrees
 import net.pfiers.osmfocus.service.osm.*
 import net.pfiers.osmfocus.view.rvadapters.HeaderAdapter
@@ -35,7 +34,6 @@ import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.ElementDetailsVM
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
-import timber.log.Timber
 import java.net.*
 import java.util.*
 
@@ -48,7 +46,6 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
     }) {
         createVMFactory { ElementDetailsVM(elementCentroidAndId) }
     }
-    private val wikiPageRepository by lazy { app.wikiPageRepository }
 
     init {
         lifecycleScope.launchWhenCreated {
@@ -76,6 +73,8 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
         initBinding(container)
         binding.vm = elementDetailsVM
 
+        val tagInfoRepository = requireContext().tagInfoRepository
+
         val headerAdapter = HeaderAdapter<RvItemTagTableBinding>(
             R.layout.rv_item_tag_table_header,
             viewLifecycleOwner
@@ -91,17 +90,11 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
             tagBinding.valueText.movementMethod = LinkMovementMethod.getInstance()
 
             wikiPageLookupScope.launch {
-                val (keyWikiPages, tagWikiPages) = wikiPageRepository.getWikiPageLanguages(tag)
+                val (keyWikiPages, tagWikiPages) = tagInfoRepository.getWikiPageLanguages(tag)
                     .getOrElse { exception ->
-                        val transformedException = transformFuelError(exception)
-                        if (transformedException is TemporaryException) {
-                            Timber.e(
-                                exception,
-                                "Temporary exception getting wikiPages: ${transformedException.message}"
-                            )
-                            showSnackBar(transformedException.message)
-                        } else {
-                            exceptionHandler.handleException(exception)
+                        when (val humanized = exception.humanize()) {
+                            is KnownExceptionHumanizeResult -> showSnackBar(humanized.message)
+                            is UnknownExceptionHumanizeResult -> exceptionHandler.handleException(exception)
                         }
                         return@launch
                     }
@@ -137,20 +130,5 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
 
     companion object {
         const val ARG_ELEMENT_AND_CENTROID_AND_ID = "elementAndCentroidAndId"
-
-        // TODO: Duplicate, see osm api
-        private fun transformFuelError(exception: Exception): Exception {
-            val cause = exception.cause
-            return if (cause is FuelError) {
-                when (val fuelCause = cause.cause) {
-                    is HttpException -> TemporaryException("${fuelCause.message} for ${cause.response.url}")
-                    is UnknownHostException -> TemporaryException("${fuelCause.message}")
-                    is SocketException, is ConnectException -> TemporaryException("Connection exception")
-                    else -> exception
-                }
-            } else exception
-        }
     }
-
-    data class TemporaryException(override val message: String) : Exception()
 }

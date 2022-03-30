@@ -29,7 +29,10 @@ import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsBinding
 import net.pfiers.osmfocus.databinding.FragmentBaseMapsItemBinding
 import net.pfiers.osmfocus.service.basemap.*
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
+import net.pfiers.osmfocus.service.db.Db.Companion.db
 import net.pfiers.osmfocus.service.db.UserBaseMap
+import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
@@ -41,7 +44,7 @@ class BaseMapsFragment : BindingFragment<FragmentBaseMapsBinding>(
     FragmentBaseMapsBinding::inflate
 ) {
     private val vm: BaseMapsVM by viewModels {
-        createVMFactory { BaseMapsVM(app.db) }
+        createVMFactory { BaseMapsVM(requireContext().db) }
     }
 
     private lateinit var builtinBaseMapAdapter: BaseMapListAdapter<BuiltinBaseMap>
@@ -70,11 +73,12 @@ class BaseMapsFragment : BindingFragment<FragmentBaseMapsBinding>(
         binding.userList.isNestedScrollingEnabled = false
         binding.buildInList.isNestedScrollingEnabled = false
 
-        val repository = app.baseMapRepository
+        val baseMapRepository = requireContext().baseMapRepository
+        val settingsDataStore = requireContext().settingsDataStore
 
-        val selectedItemFlow: Flow<BaseMap> = app.settingsDataStore.data
+        val selectedItemFlow: Flow<BaseMap> = settingsDataStore.data
             .map { settings ->
-                settings.baseMapUid.ifEmpty { null }?.let { repository.get(it) }
+                settings.baseMapUid.ifEmpty { null }?.let { baseMapRepository.get(it) }
                     ?: BaseMapRepository.default
             }
 
@@ -82,7 +86,7 @@ class BaseMapsFragment : BindingFragment<FragmentBaseMapsBinding>(
 
         val updateSelectedItem = { newBaseMap: BaseMap ->
             backgroundScope.launch {
-                app.settingsDataStore.updateData { currentSettings ->
+                settingsDataStore.updateData { currentSettings ->
                     currentSettings.toBuilder()
                         .setBaseMapUid(BaseMapRepository.uidOf(newBaseMap))
                         .build()
@@ -95,7 +99,7 @@ class BaseMapsFragment : BindingFragment<FragmentBaseMapsBinding>(
             lifecycleScope,
             backgroundScope,
             binding.coordinator,
-            app.baseMapRepository,
+            baseMapRepository,
             selectedItemFlow,
             updateSelectedItem
         )
@@ -108,7 +112,7 @@ class BaseMapsFragment : BindingFragment<FragmentBaseMapsBinding>(
             lifecycleScope,
             backgroundScope,
             binding.coordinator,
-            app.baseMapRepository,
+            baseMapRepository,
             selectedItemFlow,
             updateSelectedItem
         )

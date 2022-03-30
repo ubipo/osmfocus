@@ -4,9 +4,10 @@ import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import net.pfiers.osmfocus.service.osm.*
+import net.pfiers.osmfocus.service.util.boundedSubList
 import net.pfiers.osmfocus.service.util.iso8601DateTimeInUtcToInstant
 import net.pfiers.osmfocus.service.util.osmCommentDateTimeToInstant
-import net.pfiers.osmfocus.service.util.subList
+import timber.log.Timber
 import java.time.Instant
 
 class OsmApiParseException(message: String, cause: Exception? = null) :
@@ -79,6 +80,21 @@ fun jsonToElements(
 
 data class JsonToNotesRes(val mergedUniverse: NotesMutable, val newElements: NotesMutable)
 
+open class OpeningCommentData(
+    val timestamp: Instant,
+    val usernameUidPair: UsernameUidPair?,
+    val text: String,
+    val html: String
+)
+
+class CommentData(
+    val actionStr: String,
+    timestamp: Instant,
+    usernameUidPair: UsernameUidPair?,
+    text: String,
+    html: String
+): OpeningCommentData(timestamp, usernameUidPair, text, html)
+
 fun jsonToNotes(
     json: String,
     universe: Notes = emptyMap()
@@ -109,12 +125,27 @@ fun jsonToNotes(
                 throw OsmApiParseException("Comments are not sorted by date")
             }
 
-            val openingCommentData = commentDataList.first()
-            if (openingCommentData.actionStr != "OPENED") {
-                throw OsmApiParseException("First note comment action is not OPENED (was ${openingCommentData.actionStr})")
+            val openingCommentData = if (commentDataList.isEmpty()) {
+                Timber.w("Invalid note: empty comments list, assuming empty creation description (id=$id)")
+                val fallbackCreationDate = osmCommentDateTimeToInstant(noteProperties["date_created"] as String)
+                OpeningCommentData(fallbackCreationDate, null, "", "")
+            } else {
+                val openingCommentData = commentDataList.first()
+                when (openingCommentData.actionStr) {
+                    "OPENED" -> Unit
+                    // The first comment action of some older notes is "COMMENTED"
+                    // instead of "OPENED" (e.g. https://api.openstreetmap.org/api/0.6/notes/757593.json)
+                    NoteCommentAction.COMMENTED.name -> Timber.w(
+                        "Invalid note: opening comment uses action \"COMMENTED\" instead of \"OPENED\" (id=$id)"
+                    )
+                    else -> throw OsmApiParseException(
+                        "First note comment action is not OPENED or COMMENTED (is ${openingCommentData.actionStr} instead, id=$id)"
+                    )
+                }
+                openingCommentData
             }
 
-            val comments = commentDataList.subList(1).map { d ->
+            val comments = commentDataList.boundedSubList(1).map { d ->
                 val action = NoteCommentAction.valueOf(d.actionStr)
                 Comment(d.timestamp, d.usernameUidPair, action, d.text, d.html)
             }
@@ -137,14 +168,6 @@ fun jsonToNotes(
     return JsonToNotesRes(mergedUniverse, newElements)
 }
 
-data class CommentData(
-    val timestamp: Instant,
-    val usernameUidPair: UsernameUidPair?,
-    val actionStr: String,
-    val text: String,
-    val html: String
-)
-
 fun jsonObjectToCommentData(commentObject: JsonObject): CommentData {
     val timestamp = osmCommentDateTimeToInstant(commentObject["date"] as String)
     val usernameUidPair = (commentObject["uid"] as Number?)?.toLong()?.let { uid ->
@@ -153,5 +176,5 @@ fun jsonObjectToCommentData(commentObject: JsonObject): CommentData {
     val actionStr = (commentObject["action"] as String).uppercase()
     val text = commentObject["text"] as String
     val html = commentObject["html"] as String
-    return CommentData(timestamp, usernameUidPair, actionStr, text, html)
+    return CommentData(actionStr, timestamp, usernameUidPair, text, html)
 }

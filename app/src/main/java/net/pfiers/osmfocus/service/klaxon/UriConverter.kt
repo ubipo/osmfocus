@@ -5,13 +5,10 @@ import com.beust.klaxon.JsonValue
 import java.net.URI
 
 class UriConverter : Converter {
-    override fun canConvert(cls: Class<*>): Boolean =
-        cls == URI::class.java
+    override fun canConvert(cls: Class<*>): Boolean = cls == URI::class.java
 
     override fun fromJson(jv: JsonValue): Any =
-        URI(jv.string ?: throw error("Can only convert JSON strings to URI"))
+        URI(jv.string ?: throw IllegalArgumentException("Can only convert JSON strings to URI"))
 
-    override fun toJson(value: Any): String {
-        TODO("Not yet implemented")
-    }
+    override fun toJson(value: Any): String = throw NotImplementedError()
 }

@@ -18,7 +18,10 @@ fun <K, V> Iterable<Pair<K, V>>.toLinkedMap(): LinkedHashMap<K, V> {
 fun <T> List<T>.subList(fromIndex: Int) =
     subList(fromIndex, size)
 
-fun <T> List<T>.containedSubList(fromIndex: Int, toIndex: Int) =
+fun <T> List<T>.boundedSubList(fromIndex: Int) =
+    subList(min(size, fromIndex), size)
+
+fun <T> List<T>.boundedSubList(fromIndex: Int, toIndex: Int) =
     subList(fromIndex, min(size, toIndex))
 
 fun <T, S> Collection<T>.cartesianProduct(other: Iterable<S>): List<Pair<T, S>> {

@@ -1,12 +1,13 @@
-package net.pfiers.osmfocus.service
+package net.pfiers.osmfocus.service.osmapi
 
+import android.content.Context
 import androidx.datastore.core.DataStore
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.Settings
-import net.pfiers.osmfocus.service.osmapi.OsmApiConfig
 import net.pfiers.osmfocus.service.settings.Defaults
+import net.pfiers.osmfocus.service.settings.settingsDataStore
 import java.net.URI
 
 class ApiConfigRepository(
@@ -17,6 +18,8 @@ class ApiConfigRepository(
         .distinctUntilChanged().map { apiBaseUrl -> createOsmApiConfig(apiBaseUrl) }
 
     companion object {
+        val Context.apiConfigRepository get() = ApiConfigRepository(settingsDataStore)
+
         val defaultOsmApiConfig = createOsmApiConfig(Defaults.apiBaseUrl)
 
         private fun createOsmApiConfig(baseUrl: String) =

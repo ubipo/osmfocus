@@ -1,5 +1,6 @@
 package net.pfiers.osmfocus.service.oauth
 
+import android.content.Context
 import androidx.datastore.core.DataStore
 import kotlinx.coroutines.flow.first
 import net.openid.appauth.AuthState
@@ -7,6 +8,7 @@ import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import net.pfiers.osmfocus.Settings
+import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.service.util.appendPath
 import net.pfiers.osmfocus.service.util.toAndroidUri
 import timber.log.Timber
@@ -42,6 +44,8 @@ class OsmAuthRepository(
         private const val SCOPE = "read_prefs write_notes"
         private const val CLIENT_ID = "lDja-ymcXMbyG2vpvkHdm03Sj4pR8aByUheM_HEBclA"
         private val BASE_URL = URI.create("https://www.openstreetmap.org/oauth2/")
+
+        val Context.osmAuthRepository get() = OsmAuthRepository(settingsDataStore)
 
         private val serviceConfig by lazy {
             AuthorizationServiceConfiguration(

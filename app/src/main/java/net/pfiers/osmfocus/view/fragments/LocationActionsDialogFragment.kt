@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.databinding.FragmentLocationActionsDialogBinding
+import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.LocationActionsVM
 import net.pfiers.osmfocus.viewmodel.LocationActionsVM.ShowCreateNoteDialogEvent
@@ -23,7 +24,7 @@ class LocationActionsDialogFragment : BottomSheetDialogFragment() {
     private val locationActionsVM by activityTaggedViewModels<LocationActionsVM>({
         listOf(location.toString())
     }) {
-        createVMFactory { LocationActionsVM(location, app.apiConfigRepository) }
+        createVMFactory { LocationActionsVM(location, requireContext().apiConfigRepository) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

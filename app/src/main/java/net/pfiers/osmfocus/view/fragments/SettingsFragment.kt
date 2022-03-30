@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
+import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
+import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.SettingsVM
 import net.pfiers.osmfocus.viewmodel.SettingsVM.EditTagboxLongLinesEvent
@@ -25,7 +27,10 @@ import net.pfiers.osmfocus.viewmodel.support.NavEvent
 
 class SettingsFragment : Fragment() {
     private val settingsVM: SettingsVM by viewModels {
-        createVMFactory { SettingsVM(app.settingsDataStore, app.baseMapRepository) }
+        createVMFactory {
+            val ctx = requireContext()
+            SettingsVM(ctx.settingsDataStore, ctx.baseMapRepository)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +59,7 @@ class SettingsFragment : Fragment() {
 
     private fun showEditTagboxLongLinesDialog() {
         // TODO: Window leaked on rotate
+        val settingsDataStore = requireContext().settingsDataStore
         MaterialAlertDialogBuilder(requireContext()).apply {
             setTitle(R.string.tagbox_long_lines_edit_dialog_title)
             val choices = listOf(
@@ -68,7 +74,7 @@ class SettingsFragment : Fragment() {
             setSingleChoiceItems(choiceStrings.toTypedArray(), currentChoice) { dialog, i ->
                 val (choice, _) = choices[i]
                 updateSettingsContext.launch {
-                    app.settingsDataStore.updateData { currentSettings ->
+                    settingsDataStore.updateData { currentSettings ->
                         currentSettings.toBuilder().apply {
                             tagboxLongLines = choice
                         }.build()

@@ -8,13 +8,13 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.databinding.ActivityExceptionBinding
 import net.pfiers.osmfocus.service.ThrowableInfo
 import net.pfiers.osmfocus.service.util.createEmailIntent
 import net.pfiers.osmfocus.service.util.div
 import net.pfiers.osmfocus.view.support.EventReceiver
 import net.pfiers.osmfocus.view.support.createVMFactory
+import net.pfiers.osmfocus.view.support.timberInit
 import net.pfiers.osmfocus.viewmodel.ExceptionVM
 import net.pfiers.osmfocus.viewmodel.support.*
 import timber.log.Timber
@@ -31,9 +31,7 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        }
+        timberInit()
 
         (intent.extras ?: savedInstanceState)?.let {
             throwableInfo = it.getSerializable(ARG_THROWABLE_INFO) as ThrowableInfo

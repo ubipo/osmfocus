@@ -7,7 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.service.ApiConfigRepository
+import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.createNote
 import net.pfiers.osmfocus.service.util.NonNullObservableField
 import net.pfiers.osmfocus.service.util.discard

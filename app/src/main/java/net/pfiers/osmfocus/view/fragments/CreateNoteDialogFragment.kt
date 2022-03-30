@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.databinding.FragmentCreateNoteDialogBinding
+import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.CreateNoteDialogVM
 import net.pfiers.osmfocus.viewmodel.support.CancelEvent
@@ -20,7 +21,7 @@ class CreateNoteDialogFragment : MaterialDialogFragment() {
     private val createNoteDialogVM by activityTaggedViewModels<CreateNoteDialogVM>({
         listOf(location.toString())
     }) {
-        createVMFactory { CreateNoteDialogVM(location, app.apiConfigRepository) }
+        createVMFactory { CreateNoteDialogVM(location, requireContext().apiConfigRepository) }
     }
     private val location by argument<Coordinate>(ARG_LOCATION)
 

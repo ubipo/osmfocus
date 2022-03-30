@@ -20,6 +20,7 @@
         <entry key="app/src/main/res/drawable/map_location.xml" value="0.39010416666666664" />
         <entry key="app/src/main/res/drawable/marker_device_location.xml" value="0.39010416666666664" />
         <entry key="app/src/main/res/drawable/marker_device_location_main.xml" value="0.39010416666666664" />
+        <entry key="app/src/main/res/layout/activity_exception.xml" value="0.12181303116147309" />
         <entry key="app/src/main/res/layout/fragment_about.xml" value="0.21875" />
         <entry key="app/src/main/res/layout/fragment_add_user_base_map.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_base_maps.xml" value="0.2717391304347826" />

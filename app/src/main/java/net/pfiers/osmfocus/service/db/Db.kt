@@ -7,6 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import net.pfiers.osmfocus.service.util.appContextSingleton
 
 @Database(
     version = 3,
@@ -21,8 +22,6 @@ abstract class Db : RoomDatabase() {
     abstract fun wikiPageDao(): TagMetaDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: Db? = null
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
@@ -34,19 +33,15 @@ abstract class Db : RoomDatabase() {
             }
         }
 
-        fun getDatabase(context: Context): Db {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    Db::class.java,
-                    "osmfocus"
-                )
-                    .addMigrations(MIGRATION_1_2)
-                    .fallbackToDestructiveMigration()
-                    .build()
-                INSTANCE = instance
-                instance
-            }
+        val Context.db by appContextSingleton { appContext ->
+            Room.databaseBuilder(
+                appContext,
+                Db::class.java,
+                "osmfocus"
+            )
+                .addMigrations(MIGRATION_1_2)
+                .fallbackToDestructiveMigration()
+                .build()
         }
     }
 }
