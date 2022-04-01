@@ -1,7 +1,9 @@
 package net.pfiers.osmfocus.view
 
 import android.content.Intent
+import android.graphics.text.LineBreaker
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -12,13 +14,16 @@ import net.pfiers.osmfocus.databinding.ActivityExceptionBinding
 import net.pfiers.osmfocus.service.ThrowableInfo
 import net.pfiers.osmfocus.service.util.createEmailIntent
 import net.pfiers.osmfocus.service.util.div
+import net.pfiers.osmfocus.service.util.restartWithActivity
 import net.pfiers.osmfocus.view.support.EventReceiver
 import net.pfiers.osmfocus.view.support.createVMFactory
 import net.pfiers.osmfocus.view.support.timberInit
 import net.pfiers.osmfocus.viewmodel.ExceptionVM
 import net.pfiers.osmfocus.viewmodel.support.*
 import timber.log.Timber
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class ExceptionActivity : AppCompatActivity(), EventReceiver {
     private lateinit var throwableInfo: ThrowableInfo
     private val exceptionVM: ExceptionVM by taggedViewModels(
@@ -27,6 +32,8 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
             createVMFactory { ExceptionVM(throwableInfo) }
         }
     )
+
+    lateinit var binding: ActivityExceptionBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,11 +44,15 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
             throwableInfo = it.getSerializable(ARG_THROWABLE_INFO) as ThrowableInfo
         } ?: error("${::ARG_THROWABLE_INFO.name} is required to create ${this::class.simpleName}")
 
-        val binding = ActivityExceptionBinding.inflate(layoutInflater)
+        binding = ActivityExceptionBinding.inflate(layoutInflater)
         binding.vm = exceptionVM
 
         lifecycleScope.launch {
             exceptionVM.events.receiveAsFlow().collect { handleEvent(it) }
+        }
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+            binding.errorMsgTxt.breakStrategy = LineBreaker.BREAK_STRATEGY_BALANCED
         }
 
         setContentView(binding.root)
@@ -61,6 +72,11 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
                     event.attachments
                 )
             )
+            is RestartAppEvent -> {
+                restartWithActivity(this, MainActivity::class) {
+                    putExtra(MainActivity.ARG_PREVIOUS_THROWABLE_INFO, throwableInfo)
+                }
+            }
             else -> Timber.w("Unhandled event: $event")
         }
     }

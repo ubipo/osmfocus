@@ -72,12 +72,6 @@ import kotlin.collections.HashSet
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-
-
-
-
-
-
 @ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
 @ExperimentalTime
@@ -136,7 +130,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         }.toMap()
 
         val navController = findNavController()
-        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+        lifecycleScope.launch {
             mapVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is ExceptionEvent -> {
@@ -216,7 +210,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     ActivityResultContracts.RequestPermission(),
                     locationHelper::activityResultCallback,
                 )
-                lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+                lifecycleScope.launch {
                     locationHelper.events.receiveAsFlow().collect { event ->
                         when (event) {
                             is LocationHelper.RequestPermissionEvent -> {

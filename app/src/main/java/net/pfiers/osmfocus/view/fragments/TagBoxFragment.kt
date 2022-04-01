@@ -47,7 +47,7 @@ class TagBoxFragment : Fragment() {
 
         val navController = findNavController()
 
-        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+        lifecycleScope.launch {
             tagBoxVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is NavEvent -> handleNavEvent(event, navController)

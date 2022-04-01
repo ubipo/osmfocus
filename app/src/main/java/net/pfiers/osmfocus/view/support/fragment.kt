@@ -19,9 +19,6 @@ inline fun <reified T> Fragment.activityAs(): T = let {
     else act
 }
 
-val Fragment.exceptionHandler
-    get() = activityAs<ExceptionHandler>()
-
 fun <T : DialogFragment> T.showWithDefaultTag(manager: FragmentManager) =
     show(manager, this::class.qualifiedName)
 

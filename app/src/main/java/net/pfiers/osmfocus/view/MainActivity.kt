@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,12 +38,13 @@ class MainActivity : AppCompatActivity(), EventReceiver {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i("AAA", "Running init")
+
         timberInit()
+
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler)
-        Log.i("AAA", "Init done")
 
         setContentView(R.layout.activity_main)
+
         val osmAuthRepository = this.osmAuthRepository
 
         osmAuthorizationResultLauncher = registerForActivityResult(
@@ -186,6 +186,7 @@ class MainActivity : AppCompatActivity(), EventReceiver {
     private fun openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
 
     companion object {
+        const val ARG_PREVIOUS_THROWABLE_INFO = "previous_throwable_info"
         const val EMAIL_ATTACHMENTS_URI_BASE =
             "content://net.pfiers.osmfocus.email_attachments_fileprovider"
         const val LOGGING_TAG = "net.pfiers.osmfocus"

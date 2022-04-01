@@ -1,42 +1,40 @@
 package net.pfiers.osmfocus.view.support
 
 import android.content.Context
-import android.content.Intent
-import android.os.Process
 import net.pfiers.osmfocus.service.ThrowableInfo
 import net.pfiers.osmfocus.service.util.appContextSingleton
+import net.pfiers.osmfocus.service.util.restartWithActivity
 import net.pfiers.osmfocus.view.ExceptionActivity
 import timber.log.Timber
 import java.io.File
 import java.time.Instant
-import kotlin.system.exitProcess
+import kotlin.time.ExperimentalTime
 
-class UncaughtExceptionHandler private constructor(val appContext: Context) : Thread.UncaughtExceptionHandler {
+
+@ExperimentalTime
+class UncaughtExceptionHandler private constructor(
+    val appContext: Context,
+) : Thread.UncaughtExceptionHandler {
+    var killingSelf = false
+
     override fun uncaughtException(t: Thread, e: Throwable) {
-        handleUncaughtException(e)
-    }
+        if (killingSelf) return
 
-    private fun handleUncaughtException(e: Throwable) {
         logException(e)
 
-        val intent = Intent(appContext, ExceptionActivity::class.java).apply {
-            putExtra(ExceptionActivity.ARG_THROWABLE_INFO, ThrowableInfo(e))
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
-        appContext.startActivity(intent)
+        Timber.i("Restarting into reporter dialog...")
 
-        // This is how the default handler does it:
-        // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/com/android/internal/os/RuntimeInit.java;drc=5262c0eb82471f47169bd0389965a3535913975e;l=169
-        Process.killProcess(Process.myPid())
-        exitProcess(10)
+        restartWithActivity(appContext, ExceptionActivity::class) {
+            putExtra(ExceptionActivity.ARG_THROWABLE_INFO, ThrowableInfo(e))
+        }
     }
 
-    private fun logException(ex: Throwable) {
+    private fun logException(e: Throwable) {
         Timber.e("Logging uncaught exception stack trace")
-        Timber.e(ex.stackTraceToString())
+        Timber.e(e.stackTraceToString())
         val logFile = File(appContext.filesDir, "stacktrace-" + Instant.now().toString())
         logFile.printWriter().use {
-            ex.printStackTrace(it)
+            e.printStackTrace(it)
         }
         Timber.e("Dumped uncaught exception stack trace to ${logFile.absolutePath}")
     }

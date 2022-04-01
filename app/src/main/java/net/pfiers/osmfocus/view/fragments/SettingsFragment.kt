@@ -20,7 +20,10 @@ import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.databinding.FragmentSettingsBinding
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
 import net.pfiers.osmfocus.service.settings.settingsDataStore
-import net.pfiers.osmfocus.view.support.*
+import net.pfiers.osmfocus.view.support.EventReceiver
+import net.pfiers.osmfocus.view.support.activityAs
+import net.pfiers.osmfocus.view.support.createVMFactory
+import net.pfiers.osmfocus.view.support.handleNavEvent
 import net.pfiers.osmfocus.viewmodel.SettingsVM
 import net.pfiers.osmfocus.viewmodel.SettingsVM.EditTagboxLongLinesEvent
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
@@ -36,7 +39,7 @@ class SettingsFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val navController = findNavController()
-        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+        lifecycleScope.launch {
             settingsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is NavEvent -> handleNavEvent(event, navController)

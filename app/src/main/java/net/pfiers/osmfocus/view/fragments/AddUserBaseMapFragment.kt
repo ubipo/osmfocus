@@ -28,7 +28,7 @@ class AddUserBaseMapFragment : BindingFragment<FragmentAddUserBaseMapBinding>(
         super.onCreate(savedInstanceState)
 
         val navController = findNavController()
-        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+        lifecycleScope.launch {
             addUserBaseMapVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is NavEvent -> handleNavEvent(event, navController)

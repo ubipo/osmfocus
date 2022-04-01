@@ -18,8 +18,7 @@ fun createEmailIntent(
     subject: String,
     body: String,
     attachments: Map<String, ByteArray>,
-
-    ): Intent {
+): Intent {
     val attachmentDirName = "${Instant.now().epochSecond}-${UUID.randomUUID()}"
     val attachmentDir = attachmentsDir / attachmentDirName
     attachmentDir.mkdirs()

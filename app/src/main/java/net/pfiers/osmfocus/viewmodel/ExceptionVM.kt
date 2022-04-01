@@ -38,6 +38,8 @@ class ExceptionVM(private val throwableInfo: ThrowableInfo) : ViewModel() {
 
     fun cancel() = events.trySend(CancelEvent()).discard()
 
+    fun restart() = events.trySend(RestartAppEvent()).discard()
+
     private val markdownReportBody by lazy {
         // Can't use multiline values in string templates with trimIndent() => .format()
         val issueBody = """

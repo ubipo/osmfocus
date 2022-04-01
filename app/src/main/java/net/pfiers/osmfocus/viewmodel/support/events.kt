@@ -40,6 +40,9 @@ class ActionsVisibilityEvent(val actionsShouldBeVisible: Boolean) : Event()
 // Dialog
 class CancelEvent : Event()
 
+// Exception activity
+class RestartAppEvent : Event()
+
 // OAuth
 class RunWithOsmAccessTokenEvent(val action: (accessToken: String) -> Unit, @StringRes val reason: Int) : Event()
 

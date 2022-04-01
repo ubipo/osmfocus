@@ -30,12 +30,11 @@ class LocationActionsDialogFragment : BottomSheetDialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        lifecycleScope.launch(exceptionHandler.coroutineExceptionHandler) {
+        lifecycleScope.launch {
             locationActionsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is ShowCreateNoteDialogEvent -> {
                         CreateNoteDialogFragment.newInstance(location).showWithDefaultTag(childFragmentManager)
-//                        this@LocationActionsDialogFragment.dismiss()
                     }
                     else -> activityAs<EventReceiver>().handleEvent(event)
                 }

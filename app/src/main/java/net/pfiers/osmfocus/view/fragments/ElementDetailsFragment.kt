@@ -94,7 +94,7 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
                     .getOrElse { exception ->
                         when (val humanized = exception.humanize()) {
                             is KnownExceptionHumanizeResult -> showSnackBar(humanized.message)
-                            is UnknownExceptionHumanizeResult -> exceptionHandler.handleException(exception)
+                            is UnknownExceptionHumanizeResult -> throw exception
                         }
                         return@launch
                     }
