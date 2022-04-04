@@ -80,7 +80,7 @@
             android:minHeight="0dp"
             app:layout_constrainedHeight="true"
             app:layout_constrainedWidth="true"
-            app:layout_constraintBottom_toTopOf="@id/bodyPost"
+            app:layout_constraintBottom_toTopOf="@id/dumpFileMsg"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/bodyPre">
@@ -102,6 +102,21 @@
         </ScrollView>
 
         <TextView
+            android:id="@+id/dumpFileMsg"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="24dp"
+            android:text="@{@string/stack_trace_dumped_to(vm.dumpFilePath)}"
+            android:visibility="@{vm.dumpFilePath != null}"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            app:layout_constraintBottom_toTopOf="@id/bodyPost"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/errorMsg" />
+
+        <TextView
             android:id="@+id/bodyPost"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -113,7 +128,7 @@
             app:layout_constraintBottom_toTopOf="@id/gitHubBtn"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/errorMsg" />
+            app:layout_constraintTop_toBottomOf="@id/dumpFileMsg" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/gitHubBtn"

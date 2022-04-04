@@ -26,25 +26,26 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class ExceptionActivity : AppCompatActivity(), EventReceiver {
     private lateinit var throwableInfo: ThrowableInfo
-    private val exceptionVM: ExceptionVM by taggedViewModels(
-        { listOf(throwableInfo.hashCode().toString()) },
-        {
-            createVMFactory { ExceptionVM(throwableInfo) }
-        }
-    )
-
-    lateinit var binding: ActivityExceptionBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         timberInit()
 
-        (intent.extras ?: savedInstanceState)?.let {
+        val bundle = intent.extras ?: savedInstanceState!!
+        bundle.let {
             throwableInfo = it.getSerializable(ARG_THROWABLE_INFO) as ThrowableInfo
-        } ?: error("${::ARG_THROWABLE_INFO.name} is required to create ${this::class.simpleName}")
+        }
+        val dumpFilePath = bundle.getString(ARG_DUMP_FILE_PATH)
 
-        binding = ActivityExceptionBinding.inflate(layoutInflater)
+        val exceptionVM: ExceptionVM by taggedViewModels(
+            { listOf(throwableInfo.hashCode().toString()) },
+            {
+                createVMFactory { ExceptionVM(throwableInfo, dumpFilePath) }
+            }
+        )
+
+        val binding = ActivityExceptionBinding.inflate(layoutInflater)
         binding.vm = exceptionVM
 
         lifecycleScope.launch {
@@ -84,6 +85,7 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
     private fun openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
 
     companion object {
+        const val ARG_DUMP_FILE_PATH = "dumpFilePath"
         const val ARG_THROWABLE_INFO = "exception"
     }
 }

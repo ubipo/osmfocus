@@ -9,7 +9,10 @@ import net.pfiers.osmfocus.service.util.createGitHubIssueUrl
 import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.*
 
-class ExceptionVM(private val throwableInfo: ThrowableInfo) : ViewModel() {
+class ExceptionVM(
+    private val throwableInfo: ThrowableInfo,
+    val dumpFilePath: String?
+) : ViewModel() {
     val events = createEventChannel()
     val errorMessage = ObservableField<String>(throwableInfo.message ?: throwableInfo.qualifiedName)
 
