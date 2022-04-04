@@ -1,0 +1,2 @@
+- Improve error reporter dialog
+- Improve overall stability
