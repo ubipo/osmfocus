@@ -66,7 +66,7 @@ class ExceptionVM(
             "App version" to BuildConfig.VERSION_NAME,
             "App version code" to BuildConfig.VERSION_CODE,
             "App build type" to BuildConfig.BUILD_TYPE,
-            "Android version" to Build.VERSION.SDK_INT,
+            "SDK version" to Build.VERSION.SDK_INT,
             "Device name" to deviceName,
             "Locales" to locales
         ).map { (k, v) -> "$k: $v" }.joinToString("\n")
