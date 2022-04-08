@@ -1,14 +1,11 @@
 package net.pfiers.osmfocus.service.osm
 
+import net.pfiers.osmfocus.service.util.urlEncode
 import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.util.*
 
 private const val WIKI_BASE_URL = "https://wiki.openstreetmap.org/wiki"
 private val WIKI_DEFAULT_LOCALE = Locale.ENGLISH
-
-private fun urlEncode(s: String) = URLEncoder.encode(s, StandardCharsets.UTF_8.toString())
 
 private fun toWikiPageUrl(page: String, locale: Locale = WIKI_DEFAULT_LOCALE): URI {
     val languagePrefix =

@@ -3,8 +3,10 @@ package net.pfiers.osmfocus.service.util
 import java.net.URI
 import java.net.URLDecoder
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
-fun urlEncode(string: String): String = URLEncoder.encode(string, "UTF-8")
+fun urlEncode(string: String): String = URLEncoder.encode(string, StandardCharsets.UTF_8.name())
+fun urlDecode(string: String): String = URLDecoder.decode(string, StandardCharsets.UTF_8.name())
 
 fun URI.appendPath(path: String) = URI(
     scheme, userInfo, host, port,
@@ -29,8 +31,6 @@ fun URI.appendQueryParameters(parameters: Map<String, Any>) =
     parameters.toList().fold(this, { uri, (key, value) ->
         uri.appendQueryParameter(key, value)
     })
-
-fun urlDecode(string: String): String = URLDecoder.decode(string, "UTF-8")
 
 /**
  * Adapted from https://stackoverflow.com/a/13592567/7120579
