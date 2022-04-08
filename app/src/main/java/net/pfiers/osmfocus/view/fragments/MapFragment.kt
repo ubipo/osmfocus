@@ -134,6 +134,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
             mapVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is ExceptionEvent -> {
+                        // TODO: Use humanizer
                         when (event.exception) {
                             is OsmApiConnectionException -> {
                                 Snackbar.make(
@@ -142,9 +143,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                                     Snackbar.LENGTH_LONG
                                 ).show()
                             }
-                            else -> {
-                                activityAs<ExceptionHandler>().handleException(event.exception)
-                            }
+                            else -> throw event.exception
                         }
                     }
                     is StartFollowingLocationEvent -> {
