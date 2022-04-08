@@ -1,7 +1,6 @@
 package net.pfiers.osmfocus.viewmodel
 
 import android.os.Build
-import androidx.databinding.ObservableField
 import androidx.lifecycle.ViewModel
 import net.pfiers.osmfocus.BuildConfig
 import net.pfiers.osmfocus.service.ThrowableInfo
@@ -11,10 +10,13 @@ import net.pfiers.osmfocus.viewmodel.support.*
 
 class ExceptionVM(
     private val throwableInfo: ThrowableInfo,
-    val dumpFilePath: String?
+    val dumpFilePath: String?,
+    private val locales: String
 ) : ViewModel() {
     val events = createEventChannel()
-    val errorMessage = ObservableField<String>(throwableInfo.message ?: throwableInfo.qualifiedName)
+    val errorMessage = throwableInfo.run {
+        if (message != null) "$qualifiedName: $message" else qualifiedName
+    }
 
     fun createGitHubIssue() = events.trySend(
         OpenUriEvent(
@@ -59,6 +61,17 @@ class ExceptionVM(
         createIssueHead(throwableInfo, html = false) + "\n\n" + issueBody
     }
 
+    private val infoBlock by lazy {
+        mapOf(
+            "App version" to BuildConfig.VERSION_NAME,
+            "App version code" to BuildConfig.VERSION_CODE,
+            "App build type" to BuildConfig.BUILD_TYPE,
+            "Android version" to Build.VERSION.SDK_INT,
+            "Device name" to deviceName,
+            "Locales" to locales
+        ).map { (k, v) -> "$k: $v" }.joinToString("\n")
+    }
+
     companion object {
         const val APP_NAME = "OsmFocus Reborn" // https://stackoverflow.com/a/16486596/7120579
         const val DEV_EMAIL = "pieter@pfiers.net"
@@ -76,16 +89,6 @@ class ExceptionVM(
                 $hStart Comments$hEnd
                 -- Fill here if necessary --
             """.trimIndent()
-        }
-
-        val infoBlock by lazy {
-            mapOf(
-                "App version" to BuildConfig.VERSION_NAME,
-                "App version code" to BuildConfig.VERSION_CODE,
-                "App build type" to BuildConfig.BUILD_TYPE,
-                "Android version" to Build.VERSION.SDK_INT,
-                "Device name" to deviceName
-            ).map { (k, v) -> "$k: $v" }.joinToString("\n")
         }
     }
 }

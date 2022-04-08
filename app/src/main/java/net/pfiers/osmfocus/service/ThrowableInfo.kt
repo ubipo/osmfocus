@@ -9,8 +9,8 @@ import java.util.*
  */
 class ThrowableInfo(throwable: Throwable) : Serializable {
     val message = throwable.message
-    val qualifiedName = throwable::class.qualifiedName
-    val simpleName = throwable::class.simpleName
+    val qualifiedName = throwable::class.qualifiedName ?: ANONYMOUS_NAME
+    val simpleName = throwable::class.simpleName ?: ANONYMOUS_NAME
     val stackTrace: Array<StackTraceElement> = throwable.stackTrace
     val stackTraceAsString = throwable.stackTraceToString()
 
@@ -20,4 +20,8 @@ class ThrowableInfo(throwable: Throwable) : Serializable {
             && stackTrace.contentEquals(other.stackTrace))
 
     override fun hashCode() = Objects.hash(message, qualifiedName, stackTrace)
+
+    companion object {
+        const val ANONYMOUS_NAME = "<anonymous>"
+    }
 }

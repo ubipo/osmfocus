@@ -11,193 +11,199 @@
 
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:focusableInTouchMode="true">
+        android:layout_marginTop="12dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/dumpFileMsg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bodyPre">
 
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="24dp"
-            android:text="@string/error_reporter_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-            app:layout_constraintBottom_toTopOf="@id/bodyPre"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/bodyPre"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="24dp"
-            android:text="@string/error_reporter_body_pre"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            app:layout_constraintBottom_toTopOf="@id/errorMsg"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title" />
-
-        <!--        <ScrollView-->
-        <!--            android:id="@+id/errorMsg"-->
-        <!--            android:layout_width="wrap_content"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:layout_marginStart="24dp"-->
-        <!--            android:layout_marginTop="12dp"-->
-        <!--            android:layout_marginEnd="24dp"-->
-        <!--            android:minHeight="0dp"-->
-        <!--            app:layout_constrainedHeight="true"-->
-        <!--            app:layout_constrainedWidth="true"-->
-        <!--            app:layout_constraintBottom_toTopOf="@id/bodyPost"-->
-        <!--            app:layout_constraintEnd_toEndOf="parent"-->
-        <!--            app:layout_constraintStart_toStartOf="parent"-->
-        <!--            app:layout_constraintTop_toBottomOf="@id/bodyPre">-->
-
-        <!--            <HorizontalScrollView-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="wrap_content">-->
-
-
-        <!--            </HorizontalScrollView>-->
-
-        <!--        </ScrollView>-->
-
-        <ScrollView
-            android:id="@+id/errorMsg"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="24dp"
-            android:minHeight="0dp"
-            app:layout_constrainedHeight="true"
-            app:layout_constrainedWidth="true"
-            app:layout_constraintBottom_toTopOf="@id/dumpFileMsg"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bodyPre">
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:minWidth="100dp">
 
-            <TextView
-                android:id="@+id/errorMsgTxt"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/dialogText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="#EFEFEF"
-                android:padding="6dp"
-                android:text="@{vm.errorMessage}"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:breakStrategy="high_quality"
-                android:textIsSelectable="true"
-                android:textSize="12sp"
-                android:typeface="monospace"
-                tools:text="Lllllllooooooooooooooong llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllooooong maaaaaan oo\n\n\\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfadssfd" />
+                android:paddingHorizontal="24dp"
+                android:paddingTop="24dp"
+                app:layout_constraintBottom_toTopOf="@id/gitHubBtn"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-        </ScrollView>
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/error_reporter_title"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                    app:layout_constraintBottom_toTopOf="@id/bodyPre"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/dumpFileMsg"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="24dp"
-            android:text="@{@string/stack_trace_dumped_to(vm.dumpFilePath)}"
-            android:visibility="@{vm.dumpFilePath != null}"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            app:layout_constraintBottom_toTopOf="@id/bodyPost"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/errorMsg" />
+                <TextView
+                    android:id="@+id/bodyPre"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/error_reporter_body_pre"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    app:layout_constraintBottom_toTopOf="@id/errorMsg"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/title" />
 
-        <TextView
-            android:id="@+id/bodyPost"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="24dp"
-            android:text="@string/error_reporter_body_post"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            app:layout_constraintBottom_toTopOf="@id/gitHubBtn"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/dumpFileMsg" />
+                <!--            <TextView-->
+                <!--                android:id="@+id/errorMsg"-->
+                <!--                android:layout_width="0dp"-->
+                <!--                android:layout_height="wrap_content"-->
+                <!--                android:background="#EFEFEF"-->
+                <!--                android:breakStrategy="high_quality"-->
+                <!--                android:padding="6dp"-->
+                <!--                android:text="@{vm.errorMessage}"-->
+                <!--                android:textAppearance="@style/TextAppearance.AppCompat.Body1"-->
+                <!--                android:textIsSelectable="true"-->
+                <!--                android:textSize="12sp"-->
+                <!--                android:typeface="monospace"-->
+                <!--                app:layout_constraintBottom_toTopOf="@id/dumpFileMsg"-->
+                <!--                app:layout_constraintEnd_toEndOf="parent"-->
+                <!--                app:layout_constraintStart_toStartOf="parent"-->
+                <!--                app:layout_constraintTop_toBottomOf="@id/bodyPre"-->
+                <!--                tools:ignore="UnusedAttribute"-->
+                <!--                tools:text="Lllllllooooooooooooooong llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllooooong maaaaaan oo\n\n\\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfadssfd" />-->
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/gitHubBtn"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/ripple"
-            android:clickable="true"
-            android:focusable="true"
-            android:onClick="@{() -> vm.createGitHubIssue()}"
-            android:text="@string/create_github_issue"
-            app:layout_constraintBottom_toTopOf="@id/emailBtn"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bodyPost" />
 
-        <Button
-            android:id="@+id/emailBtn"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/ripple"
-            android:clickable="true"
-            android:focusable="true"
-            android:onClick="@{() -> vm.sendEmail()}"
-            android:text="@string/send_email"
-            app:layout_constraintBottom_toTopOf="@id/dismissBtn"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/gitHubBtn" />
+                <TextView
+                    android:id="@+id/errorMsg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#EFEFEF"
+                    android:breakStrategy="high_quality"
+                    android:padding="6dp"
+                    android:text="@{vm.errorMessage}"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp"
+                    android:typeface="monospace"
+                    app:layout_constraintBottom_toTopOf="@id/dumpFileMsg"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/bodyPre"
+                    tools:ignore="UnusedAttribute"
+                    tools:text="Lllllllooooooooooooooong llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllooooong maaaaaan oo\n\n\\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfadssfd" />
 
-        <Button
-            android:id="@+id/dismissBtn"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/ripple"
-            android:clickable="true"
-            android:focusable="true"
-            android:onClick="@{() -> vm.cancel()}"
-            android:text="@string/cancel"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/emailBtn" />
+                <TextView
+                    android:id="@+id/dumpFileMsg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@{@string/stack_trace_dumped_to(vm.dumpFilePath)}"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:visibility="@{vm.dumpFilePath != null}"
+                    app:layout_constraintBottom_toTopOf="@id/bodyPost"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/errorMsg" />
 
-        <Button
-            android:id="@+id/restartButton"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/ripple"
-            android:clickable="true"
-            android:focusable="true"
-            android:onClick="@{() -> vm.restart()}"
-            android:text="@string/restart"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintTop_toBottomOf="@id/emailBtn" />
+                <TextView
+                    android:id="@+id/bodyPost"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/error_reporter_body_post"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/dumpFileMsg" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/gitHubBtn"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/ripple"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="@{() -> vm.createGitHubIssue()}"
+                android:text="@string/create_github_issue"
+                app:layout_constraintBottom_toTopOf="@id/emailBtn"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/dialogText" />
+
+            <Button
+                android:id="@+id/emailBtn"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/ripple"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="@{() -> vm.sendEmail()}"
+                android:text="@string/send_email"
+                app:layout_constraintBottom_toTopOf="@id/dismissBtn"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/gitHubBtn" />
+
+            <Button
+                android:id="@+id/dismissBtn"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/ripple"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="@{() -> vm.cancel()}"
+                android:text="@string/cancel"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/emailBtn" />
+
+            <Button
+                android:id="@+id/restartButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/ripple"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="@{() -> vm.restart()}"
+                android:text="@string/restart"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintTop_toBottomOf="@id/emailBtn" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </layout>

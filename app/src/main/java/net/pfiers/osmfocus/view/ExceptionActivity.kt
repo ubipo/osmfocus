@@ -1,11 +1,10 @@
 package net.pfiers.osmfocus.view
 
 import android.content.Intent
-import android.graphics.text.LineBreaker
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -38,10 +37,12 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
         }
         val dumpFilePath = bundle.getString(ARG_DUMP_FILE_PATH)
 
+        val locales = ConfigurationCompat.getLocales(resources.configuration).toLanguageTags()
+
         val exceptionVM: ExceptionVM by taggedViewModels(
             { listOf(throwableInfo.hashCode().toString()) },
             {
-                createVMFactory { ExceptionVM(throwableInfo, dumpFilePath) }
+                createVMFactory { ExceptionVM(throwableInfo, dumpFilePath, locales) }
             }
         )
 
@@ -50,10 +51,6 @@ class ExceptionActivity : AppCompatActivity(), EventReceiver {
 
         lifecycleScope.launch {
             exceptionVM.events.receiveAsFlow().collect { handleEvent(it) }
-        }
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-            binding.errorMsgTxt.breakStrategy = LineBreaker.BREAK_STRATEGY_BALANCED
         }
 
         setContentView(binding.root)
