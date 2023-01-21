@@ -157,17 +157,12 @@ class MapVM(
         }
 
         saveLastMapStateDebouncer.debounce {
-            Timber.d("Saving last map state...")
             val newMapState = settingsDataStore.updateData { currentSettings ->
                 currentSettings.toBuilder().apply {
                     lastLocation = bbox.center.toSettingsLocation()
                     lastZoomLevel = newZoomLevel
                 }.build()
             }
-            Timber.d("Saved last map state: " +
-                    "z: ${newMapState.lastZoomLevel}," +
-                    "lon: ${newMapState.lastLocation.longitude}, " +
-                    "lat: ${newMapState.lastLocation.latitude}")
         }
     }
 

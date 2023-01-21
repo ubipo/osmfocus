@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
+import net.pfiers.osmfocus.service.channels.createBufferedDropOldestChannel
 import net.pfiers.osmfocus.service.osm.*
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.ElementsRepository.Companion.elementsRepository
@@ -95,26 +96,40 @@ fun MapView(
             tbLoc to TagBoxState(color, null)
         }.toTypedArray())
     }
-    val updateTagBoxElements = { bbox: BoundingBox, zoomLevel: Double ->
-        if (zoomLevel < MapVM.ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
-            // Too zoomed out, don't display any elements
-            tagBoxesStates.forEach { (_, tagBoxState) -> tagBoxState.elementAndNearestPoint = null }
-        } else {
-            val elements = elementsRepository.elements.value
-            val elementAndNearestPoints = filterAndSortToWithinBbox(
-                elements, bbox, showRelations
-            ).boundedSubList(0, tbLocs.size)
-            val tbLocElements = mapTbLocsToElements(tbLocs, elementAndNearestPoints) { tbLoc ->
-                tbLoc.toEnvelopeCoordinate(bbox)
-            }
-            tagBoxesStates.forEach { (tbLoc, tagBoxState) ->
-                tagBoxState.elementAndNearestPoint = tbLocElements[tbLoc]
+    val (mapContentOffset, setMapContentOffset) = remember { mutableStateOf<Offset?>(null) }
+    val elements by elementsRepository.elements.collectAsState()
+    val runWithMapStateChannel: RunWithMapStateChannel = remember {
+        createBufferedDropOldestChannel()
+    }
+
+    val updateTagBoxElements = remember(elements, tagBoxesStates.keys) {
+        { bbox: BoundingBox, zoomLevel: Double ->
+            if (zoomLevel < MapVM.ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
+                // Too zoomed out, don't display any elements
+                tagBoxesStates.forEach { (_, tagBoxState) ->
+                    tagBoxState.elementAndNearestPoint = null
+                }
+            } else {
+                // We do not need to get the latest elements in this closure because the whole
+                // callback would be re-created by the `remember`
+                val elementAndNearestPoints = filterAndSortToWithinBbox(
+                    elements, bbox, showRelations
+                ).boundedSubList(0, tbLocs.size)
+                val tbLocElements = mapTbLocsToElements(tbLocs, elementAndNearestPoints) { tbLoc ->
+                    tbLoc.toEnvelopeCoordinate(bbox)
+                }
+                tagBoxesStates.forEach { (tbLoc, tagBoxState) ->
+                    tagBoxState.elementAndNearestPoint = tbLocElements[tbLoc]
+                }
             }
         }
     }
-    val (mapContentOffset, setMapContentOffset) = remember { mutableStateOf<Offset?>(null) }
 
-//    Text(text = "Map view")
+    LaunchedEffect(elements) {
+        runWithMapStateChannel.send { bbox, zoomLevel ->
+            updateTagBoxElements(bbox, zoomLevel)
+        }
+    }
 
     BottomSheetScaffold(
         scaffoldState = bottomSheetScaffoldState,
@@ -145,6 +160,7 @@ fun MapView(
                 mapVM = mapVM,
                 tagBoxStates = tagBoxesStates,
                 onMove = { bbox, zoomLevel, _ -> updateTagBoxElements(bbox, zoomLevel) },
+                runWithMapStateChannel = runWithMapStateChannel,
             )
 
             TagBoxGrid(

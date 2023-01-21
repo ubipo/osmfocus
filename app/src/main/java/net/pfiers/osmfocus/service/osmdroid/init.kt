@@ -14,7 +14,6 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 
-
 fun MapView.init(
     userAgent: String,
     onSingleTap: (location: Coordinate) -> Boolean = { false },

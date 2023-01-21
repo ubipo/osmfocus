@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import net.pfiers.osmfocus.service.channels.limiter
 import net.pfiers.osmfocus.service.jts.union
-import net.pfiers.osmfocus.service.limiter
 import net.pfiers.osmfocus.service.osm.*
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.service.useragent.UserAgentRepository
@@ -22,6 +22,7 @@ import net.pfiers.osmfocus.service.util.appContextSingleton
 import net.pfiers.osmfocus.viewmodel.MapVM
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
+import timber.log.Timber
 
 typealias EnvelopeDownloadHandler = () -> BoundingBox
 
@@ -94,6 +95,7 @@ class ElementsRepository(
         }.getOrElse { return Result.error(it) }
         val newBboxAreaDownloadedMutable = bboxAreaDownloaded.value.union(deduplicatedBbox)
         bboxAreaDownloadedMutable.value = newBboxAreaDownloadedMutable
+        Timber.d("Updated bboxAreaDownloaded")
         this.elementsMutable.value = newElements
 
         return Result.success(MapVM.DownloadResult.DOWNLOADED)

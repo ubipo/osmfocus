@@ -1,4 +1,4 @@
-package net.pfiers.osmfocus.service
+package net.pfiers.osmfocus.service.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

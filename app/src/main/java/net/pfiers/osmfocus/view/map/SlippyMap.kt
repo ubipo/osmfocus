@@ -4,40 +4,58 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.basemap.toTileSource
+import net.pfiers.osmfocus.service.channels.createBufferedDropOldestChannel
 import net.pfiers.osmfocus.service.osm.BoundingBox
 import net.pfiers.osmfocus.service.osm.toOsm
 import net.pfiers.osmfocus.service.osmapi.ElementsRepository.Companion.elementsRepository
+import net.pfiers.osmfocus.service.osmdroid.createOnMoveListener
 import net.pfiers.osmfocus.service.osmdroid.init
 import net.pfiers.osmfocus.service.settings.toOSM
 import net.pfiers.osmfocus.service.tagboxes.TbLoc
 import net.pfiers.osmfocus.service.useragent.UserAgentRepository.Companion.userAgentRepository
+import net.pfiers.osmfocus.service.util.collectIn
 import net.pfiers.osmfocus.view.osmdroid.CrosshairOverlay
 import net.pfiers.osmfocus.view.osmdroid.DiscoveredAreaOverlay
 import net.pfiers.osmfocus.view.osmdroid.ElementOverlay
 import net.pfiers.osmfocus.view.osmdroid.TagBoxThreadOverlay
 import net.pfiers.osmfocus.viewmodel.MapVM
+import org.osmdroid.events.MapListener
 import org.osmdroid.views.MapView as OsmDroidMap
 
-class Latch {
-    private var _flag: Boolean = false
-    val isSet get() = _flag
-    fun set() { _flag = true }
-    override fun toString(): String = "Latch(${if (isSet) "latched" else "not latched"})"
+enum class MapTask {
+    INVALIDATE,
+    UPDATE_ON_MOVE_LISTENER,
+    UPDATE_OVERLAYS,
 }
+
+/**
+ * A channel that can be used to run a block with the latest map state (bbox and zoom level).
+ * Useful for events that are triggered by anything but the map itself (e.g. new downloaded elements
+ * or a settings change).
+ */
+typealias RunWithMapStateChannel = Channel<(bbox: BoundingBox, zoomLevel: Double) -> Unit>
 
 @Composable
 fun SlippyMap(
     mapVM: MapVM,
     tagBoxStates: SnapshotStateMap<TbLoc, TagBoxState>,
-    onMove: (newBbox: BoundingBox, newZoomLevel: Double, isAnimating: Boolean) -> Unit,
+    onMove: (bbox: BoundingBox, zoomLevel: Double, isAnimating: Boolean) -> Unit,
+    runWithMapStateChannel: RunWithMapStateChannel,
 ){
     val elementsRepository = LocalContext.current.applicationContext.elementsRepository
     val composeScope = rememberCoroutineScope()
-    val shouldUpdateOverlays = Latch()
+
+    // The OsmDroid map view can only be updated from inside the update callback of AndroidView
+    // Some updates however are triggered by `remember` or `LaunchedEffect` which are not allowed
+    // to be called from inside closures. To work around this, we use this channel to asynchronously
+    // `send` tasks to be handled in the update callback.
+    val mapTasks = remember { createBufferedDropOldestChannel<MapTask>() }
+
     val tagBoxStatesAndOverlays = remember(tagBoxStates.keys) {
-        shouldUpdateOverlays.set()
         tagBoxStates.mapValues { (_, tagBoxState) ->
             TagBoxStateAndOverlays(
                 tagBoxState,
@@ -45,34 +63,38 @@ fun SlippyMap(
                 TagBoxThreadOverlay(tagBoxState.color, tagBoxState.threadCornerPoint)
             )
         }
+
     }
     val elementsAreaDownloaded by elementsRepository.bboxAreaDownloaded.collectAsState()
     val discoveredAreaOverlay = remember { DiscoveredAreaOverlay(0.2, elementsAreaDownloaded) }
-    val shouldInvalidateMap = Latch()
+
     LaunchedEffect(elementsAreaDownloaded) {
         discoveredAreaOverlay.discoveredArea = elementsAreaDownloaded
-        shouldInvalidateMap.set()
+        mapTasks.send(MapTask.INVALIDATE)
     }
 
     for (stateAndOverlays in tagBoxStatesAndOverlays.values) {
         LaunchedEffect(
-            stateAndOverlays.state.color,
+            stateAndOverlays.state.color,  // TODO: Reflect color changes
             stateAndOverlays.state.threadCornerPoint,
             stateAndOverlays.state.elementAndNearestPoint
         ) {
-            val thread = stateAndOverlays.threadOverlay
             val state = stateAndOverlays.state
-            state.elementAndNearestPoint?.let { (element, nearestPoint) ->
-                stateAndOverlays.elementOverlay.updateElement(
-                    elementsRepository.elements.value, element
-                )
-                thread.geoPoint = nearestPoint.toOsmDroid()
-            }
-            thread.isEnabled = state.elementAndNearestPoint != null
+            stateAndOverlays.elementOverlay.updateElement(
+                elementsRepository.elements.value, state.elementAndNearestPoint?.element
+            )
+            val thread = stateAndOverlays.threadOverlay
+            thread.geoPoint = state.elementAndNearestPoint?.nearestPoint?.toOsmDroid()
             thread.threadCornerPoint = state.threadCornerPoint
-            shouldInvalidateMap.set()
+            mapTasks.send(MapTask.INVALIDATE)
         }
     }
+
+    var previousOnMoveListener: MapListener? by remember {
+        mapTasks.trySend(MapTask.UPDATE_ON_MOVE_LISTENER)
+        mutableStateOf(null)
+    }
+    LaunchedEffect(onMove) { mapTasks.send(MapTask.UPDATE_ON_MOVE_LISTENER) }
 
     AndroidView(factory = { context ->
         //            val color = tbLocColors[tbLoc] ?: error("")
@@ -109,7 +131,6 @@ fun SlippyMap(
                         // User interacted with the map (wants to look at something); cancel following
                         mapVM.stopFollowingMyLocation()
                     }
-                    onMove(bbox, zoomLevel, isAnimating)
                     composeScope.launch {
                         elementsRepository.requestEnvelopeDownload(downloadHandler)
                     }
@@ -125,6 +146,9 @@ fun SlippyMap(
                 controller.setZoom(lastZoomLevel)
                 controller.setCenter(lastLocation.toOSM().toOsmDroid())
             }
+            runWithMapStateChannel.consumeAsFlow().collectIn(composeScope) { runWithMapState ->
+                runWithMapState(boundingBox.toOsm(), zoomLevelDouble)
+            }
             composeScope.launch {
                 mapVM.baseMap.collect { baseMap ->
                     // TODO: Attribution text
@@ -132,21 +156,27 @@ fun SlippyMap(
                     setTileSource(baseMap.toTileSource())
                 }
             }
-            composeScope.launch {
-                mapVM.maxZoom.collect { maxZoom ->
-                    // TODO: Check if called once at start
-                    maxZoomLevel = maxZoom
-                }
+            mapVM.maxZoom.collectIn(composeScope) { maxZoom ->
+                // TODO: Check if called once at start
+                maxZoomLevel = maxZoom
             }
         }
     }, update = { osmDroidMap ->
-        if (shouldInvalidateMap.isSet) {
-            osmDroidMap.invalidate()
-        }
-        if (shouldUpdateOverlays.isSet) {
-            osmDroidMap.overlays.removeIf { it is ElementOverlay || it is TagBoxThreadOverlay }
-            osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.elementOverlay })
-            osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.threadOverlay })
+        mapTasks.consumeAsFlow().collectIn(composeScope) { mapTask ->
+            when (mapTask) {
+                MapTask.INVALIDATE -> osmDroidMap.invalidate()
+                MapTask.UPDATE_OVERLAYS -> {
+                    osmDroidMap.overlays.removeIf { it is ElementOverlay || it is TagBoxThreadOverlay }
+                    osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.elementOverlay })
+                    osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.threadOverlay })
+                }
+                MapTask.UPDATE_ON_MOVE_LISTENER -> {
+                    osmDroidMap.removeMapListener(previousOnMoveListener)
+                    val onMoveListener = createOnMoveListener(onMove)
+                    osmDroidMap.addMapListener(onMoveListener)
+                    previousOnMoveListener = onMoveListener
+                }
+            }
         }
     })
 }

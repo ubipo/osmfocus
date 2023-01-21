@@ -10,7 +10,11 @@ import org.osmdroid.views.overlay.Overlay
 class ElementOverlay constructor(@ColorInt private val color: Int) : Overlay() {
     private var overlay: Overlay? = null
 
-    fun updateElement(universe: AnyElementsWithGeometry, element: ElementWithGeometry) {
+    fun updateElement(universe: AnyElementsWithGeometry, element: ElementWithGeometry?) {
+        if (element == null) {
+            overlay = null
+            return
+        }
         overlay = when (element) {
             is NodeWithGeometry -> NodeOverlay(element, color)
             is WayWithGeometry -> WayOverlay(universe, element, color)
