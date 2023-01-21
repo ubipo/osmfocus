@@ -1,15 +1,13 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
-import net.pfiers.osmfocus.service.jts.toGeoUri
-import net.pfiers.osmfocus.service.jts.toOsmAndUrl
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
+import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.util.toAndroidUri
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.OpenUriEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
-import org.locationtech.jts.geom.Coordinate
 
 class ElementDetailsVM(
     elementCentroidAndId: AnyElementCentroidAndId,
@@ -22,7 +20,7 @@ class ElementDetailsVM(
 
     fun showOnOpenstreetmap() = events.trySend(OpenUriEvent(typedId.url.toAndroidUri())).discard()
     fun openInOsmAnd() = centroid.let { coordinate ->
-        events.trySend(OpenUriEvent(coordinate.toOsmAndUrl().toAndroidUri())).discard()
+        events.trySend(OpenUriEvent(coordinate.toOsmAndUri().toAndroidUri())).discard()
     }
 
     fun openGeoLink() = centroid.let { coordinate ->

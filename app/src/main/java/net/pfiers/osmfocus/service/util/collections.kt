@@ -56,3 +56,25 @@ fun <A, B> Iterable<Pair<A, B>>.noIndividualValueReuse(): List<Pair<A, B>> {
 
 fun <K, V> mapOfNotNull(vararg pairs: Pair<K, V>?): Map<K, V> =
     mapOf(*pairs.filterNotNull().toTypedArray())
+
+fun <K, V> mergeMapsBy(a: Map<K, V>, b: Map<K, V>, decider: (a: V, b: V) -> V) = buildMap {
+    mergeMapsBy(a, b, decider, this::put)
+}
+
+fun <K, V> mergeMapsBy(a: Map<K, V>, b: Map<K, V>, decider: (a: V, b: V) -> V, put: (K, V) -> Unit) {
+    for (key in a.keys + b.keys) {
+        val aVal = a[key]
+        val bVal = b[key]
+        val mergedVal = when {
+            aVal == null -> bVal!!
+            bVal == null -> aVal
+            else -> decider(aVal, bVal)
+        }
+        put(key, mergedVal)
+    }
+}
+
+fun <T : Any> cycle(vararg xs: T): Sequence<T> {
+    var i = 0
+    return generateSequence { xs[i++ % xs.size] }
+}

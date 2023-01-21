@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.compose.material.ExperimentalMaterialApi
 import net.pfiers.osmfocus.service.ThrowableInfo
 import net.pfiers.osmfocus.service.util.appContextSingleton
 import net.pfiers.osmfocus.service.util.restartWithActivity
@@ -15,9 +16,10 @@ import java.time.Instant
 import kotlin.time.ExperimentalTime
 
 
+@ExperimentalMaterialApi
 @ExperimentalTime
 class UncaughtExceptionHandler private constructor(
-    val appContext: Context,
+    private val appContext: Context
 ) : Thread.UncaughtExceptionHandler {
 
     override fun uncaughtException(t: Thread, e: Throwable) {
@@ -69,8 +71,8 @@ class UncaughtExceptionHandler private constructor(
     }
 
     companion object {
-        val Context.uncaughtExceptionHandler by appContextSingleton { appContext ->
-            UncaughtExceptionHandler(appContext)
+        val Context.uncaughtExceptionHandler by appContextSingleton {
+            UncaughtExceptionHandler(this)
         }
     }
 }

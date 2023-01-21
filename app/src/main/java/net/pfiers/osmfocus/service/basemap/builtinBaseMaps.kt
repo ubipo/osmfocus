@@ -2,11 +2,12 @@ package net.pfiers.osmfocus.service.basemap
 
 import net.pfiers.osmfocus.R
 
+
 private const val ATTR_CARTO = "Base map © CARTO"
-private val MAX_ZOOM_CARTO =
-    21 // Actually 30 but that wouldn't be very courteous for a public tileserver
+private const val MAX_ZOOM_CARTO = 21 // Actually 30 but that wouldn't be very courteous for a public tileserver
 
 private fun urlCarto(name: String) = "https://a.basemaps.cartocdn.com/rastertiles/$name/"
+
 val builtinBaseMaps = listOf(
     BuiltinBaseMap(
         R.string.base_map_default,

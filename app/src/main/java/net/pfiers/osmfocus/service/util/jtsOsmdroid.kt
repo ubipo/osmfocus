@@ -21,25 +21,5 @@ fun IGeoPoint.toPoint(factory: GeometryFactory) =
 fun LineString.toGeoPointList() =
     coordinateSequence.asList().map(Coordinate::toGeoPoint)
 
-fun GeometryCollection.toGeoPointsPair(): Pair<MutableList<GeoPoint>, MutableList<List<GeoPoint>>> {
-    val geoPoints = mutableListOf<GeoPoint>()
-    val geoPointLists = mutableListOf<List<GeoPoint>>()
-    for (geometry in asList()) {
-        when (geometry) {
-            is Point -> geoPoints.add(geometry.toGeoPoint())
-            is LineString -> geoPointLists.add(geometry.toGeoPointList())
-            is GeometryCollection -> {
-                val (points, pointLists) = geometry.toGeoPointsPair()
-                geoPoints.addAll(points)
-                geoPointLists.addAll(pointLists)
-            }
-            else -> throw NotImplementedError(
-                "Converting ${geometry::class.simpleName} geometries to GeoPoints"
-            )
-        }
-    }
-    return Pair(geoPoints, geoPointLists)
-}
-
 fun BoundingBox.toEnvelope() =
     Envelope(lonWest, lonEast, latSouth, latNorth)

@@ -37,7 +37,7 @@ typealias AnyElementAndId = ElementAndId<*>
 class ElementCentroidAndId<T : Element>(
     id: Long,
     element: T,
-    val centroid: org.locationtech.jts.geom.Coordinate
+    val centroid: Coordinate
 ) : ElementAndId<T>(id, element), Serializable
 
 typealias AnyElementCentroidAndId = ElementCentroidAndId<*>

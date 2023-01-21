@@ -1,33 +1,44 @@
 package net.pfiers.osmfocus.view
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.result.ActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
-import com.github.kittinunf.result.Result
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.github.kittinunf.result.getOrElse
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
-import net.openid.appauth.*
+import net.openid.appauth.AuthorizationResponse
+import net.openid.appauth.AuthorizationService
 import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.service.*
 import net.pfiers.osmfocus.service.oauth.OsmAuthRepository.Companion.osmAuthRepository
+import net.pfiers.osmfocus.service.oauth.authResponseFromActivityResult
 import net.pfiers.osmfocus.service.util.createEmailIntent
 import net.pfiers.osmfocus.service.util.div
+import net.pfiers.osmfocus.view.map.MapView
+import net.pfiers.osmfocus.view.settings.Settings
 import net.pfiers.osmfocus.view.support.EventReceiver
 import net.pfiers.osmfocus.view.support.UncaughtExceptionHandler.Companion.uncaughtExceptionHandler
 import net.pfiers.osmfocus.view.support.timberInit
-import net.pfiers.osmfocus.viewmodel.support.*
+import net.pfiers.osmfocus.viewmodel.support.Event
+import net.pfiers.osmfocus.viewmodel.support.OpenUriEvent
+import net.pfiers.osmfocus.viewmodel.support.RunWithOsmAccessTokenEvent
+import net.pfiers.osmfocus.viewmodel.support.SendEmailEvent
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
+@ExperimentalMaterialApi
 @ExperimentalTime
 @Suppress("UnstableApiUsage")
 class MainActivity : AppCompatActivity(), EventReceiver {
@@ -43,7 +54,9 @@ class MainActivity : AppCompatActivity(), EventReceiver {
 
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler)
 
-        setContentView(R.layout.activity_main)
+//        setContentView(R.layout.activity_main)
+
+        setContent { Main() }
 
         val osmAuthRepository = this.osmAuthRepository
 
@@ -166,23 +179,6 @@ class MainActivity : AppCompatActivity(), EventReceiver {
         return true
     }
 
-    private fun authResponseFromActivityResult(result: ActivityResult): Result<AuthorizationResponse, AuthResponseException> {
-        val data = result.data
-        if (result.resultCode == Activity.RESULT_CANCELED) {
-            return Result.error(AuthResponseException("Authentication cancelled"))
-        } else if (result.resultCode != Activity.RESULT_OK || data == null) {
-            return Result.error(AuthResponseException("Authentication failed"))
-        }
-        val authResp = AuthorizationResponse.fromIntent(data)
-        val authEx = AuthorizationException.fromIntent(data)
-        if (authResp == null) {
-            val description = authEx?.errorDescription ?: "unknown error"
-            return Result.error(AuthResponseException("Authentication failed: $description"))
-        }
-
-        return Result.success(authResp)
-    }
-
     private fun openUri(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
 
     companion object {
@@ -191,6 +187,24 @@ class MainActivity : AppCompatActivity(), EventReceiver {
             "content://net.pfiers.osmfocus.email_attachments_fileprovider"
         const val LOGGING_TAG = "net.pfiers.osmfocus"
     }
+}
 
-    private class AuthResponseException(override val message: String) : Exception()
+enum class Route {
+    MAP,
+    SETTINGS,
+    ELEMENT_DETAIL,
+    NOTE_DETAIL
+}
+
+@ExperimentalTime
+@ExperimentalMaterialApi
+@Composable
+@Preview
+fun Main() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = Route.MAP.name) {
+        composable(Route.MAP.name) { MapView() }
+        composable(Route.SETTINGS.name) { Settings(/*...*/) }
+    }
 }

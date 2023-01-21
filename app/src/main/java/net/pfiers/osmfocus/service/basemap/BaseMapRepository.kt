@@ -31,8 +31,8 @@ class BaseMapRepository(
         private const val UID_PREFIX_BUILTIN = 0
         private const val UID_PREFIX_USER = 1
 
-        val Context.baseMapRepository by appContextSingleton { appContext ->
-            BaseMapRepository(appContext.db.baseMapDefinitionDao())
+        val Context.baseMapRepository by appContextSingleton {
+            BaseMapRepository(db.baseMapDefinitionDao())
         }
 
         val default get() = builtinBaseMaps.first()

@@ -36,6 +36,7 @@ import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.BaseMapsVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
+import net.pfiers.osmfocus.viewmodel.support.createVMFactory
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 

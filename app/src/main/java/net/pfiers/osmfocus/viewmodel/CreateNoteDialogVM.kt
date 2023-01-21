@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
+import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.createNote
 import net.pfiers.osmfocus.service.util.NonNullObservableField
@@ -15,7 +16,6 @@ import net.pfiers.osmfocus.service.util.value
 import net.pfiers.osmfocus.viewmodel.support.CancelEvent
 import net.pfiers.osmfocus.viewmodel.support.RunWithOsmAccessTokenEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
-import org.locationtech.jts.geom.Coordinate
 import timber.log.Timber
 import kotlin.time.ExperimentalTime
 

@@ -3,18 +3,19 @@ package net.pfiers.osmfocus.view.osmdroid
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.annotation.ColorInt
+import net.pfiers.osmfocus.service.osm.AnyElementsWithGeometry
+import net.pfiers.osmfocus.service.osm.WayWithGeometry
 import net.pfiers.osmfocus.service.util.draw
-import net.pfiers.osmfocus.service.util.toGeoPointList
-import org.locationtech.jts.geom.LineString
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-class LineStringOverlay(
-    lineString: LineString,
+class WayOverlay(
+    universe: AnyElementsWithGeometry,
+    way: WayWithGeometry,
     @ColorInt color: Int
 ) : Overlay() {
     private val paint = Paint()
-    private val geoPoints = lineString.toGeoPointList()
+    private val geoPoints = way.getNodes(universe).map { it.coordinate.toOsmDroid() }
 
     override fun draw(canvas: Canvas, projection: Projection) {
         geoPoints.draw(projection, canvas, paint)

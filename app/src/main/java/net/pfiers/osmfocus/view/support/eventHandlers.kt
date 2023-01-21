@@ -3,7 +3,7 @@ package net.pfiers.osmfocus.view.support
 import android.os.Bundle
 import androidx.navigation.NavController
 import net.pfiers.osmfocus.R
-import net.pfiers.osmfocus.view.fragments.ElementDetailsFragment
+//import net.pfiers.osmfocus.view.fragments.ElementDetailsFragment
 import net.pfiers.osmfocus.view.fragments.NoteDetailsFragment
 import net.pfiers.osmfocus.viewmodel.support.*
 
@@ -12,10 +12,10 @@ fun handleNavEvent(event: NavEvent, navController: NavController) {
         is ShowElementDetailsEvent -> navController.navigate(
             R.id.elementDetailContainerFragment,
             Bundle().apply {
-                putSerializable(
-                    ElementDetailsFragment.ARG_ELEMENT_AND_CENTROID_AND_ID,
-                    event.elementCentroidAndId
-                )
+//                putSerializable(
+//                    ElementDetailsFragment.ARG_ELEMENT_AND_CENTROID_AND_ID,
+//                    event.elementCentroidAndId
+//                )
             }
         )
         is ShowNoteDetailsEvent -> navController.navigate(

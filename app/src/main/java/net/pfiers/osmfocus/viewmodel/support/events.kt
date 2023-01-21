@@ -2,6 +2,7 @@ package net.pfiers.osmfocus.viewmodel.support
 
 import android.net.Uri
 import androidx.annotation.StringRes
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
@@ -36,6 +37,9 @@ class NavigateUpEvent : NavEvent()
 class StartFollowingLocationEvent : Event()
 class StopFollowingLocationEvent : Event()
 class ActionsVisibilityEvent(val actionsShouldBeVisible: Boolean) : Event()
+//class DownloadPossibleEvent(val downloadEnvelopeFuture: CompletableDeferred<Envelope>) : Event()
+class DownloadPossibleEvent(val downloadJob: CompletableJob): Event()
+class DownloadFinishedEvent: Event()
 
 // Dialog
 class CancelEvent : Event()

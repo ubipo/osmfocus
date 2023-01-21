@@ -7,12 +7,10 @@ import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentNoteDetailsBinding
 import net.pfiers.osmfocus.databinding.RvItemCommentBinding
-import net.pfiers.osmfocus.service.jts.toDecimalDegrees
 import net.pfiers.osmfocus.service.osm.Comment
 import net.pfiers.osmfocus.service.osm.NoteAndId
 import net.pfiers.osmfocus.service.osm.NoteCommentAction
@@ -21,6 +19,7 @@ import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
 import net.pfiers.osmfocus.view.support.*
 import net.pfiers.osmfocus.viewmodel.NoteDetailsVM
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
+import net.pfiers.osmfocus.viewmodel.support.createVMFactory
 
 class NoteDetailsFragment : BindingFragment<FragmentNoteDetailsBinding>(
     FragmentNoteDetailsBinding::inflate
@@ -39,7 +38,7 @@ class NoteDetailsFragment : BindingFragment<FragmentNoteDetailsBinding>(
                     is NoteDetailsVM.CopyCoordinateEvent -> {
                         copyToClipboard(
                             event.coordinate.toDecimalDegrees(),
-                            getString(R.string.copy_coordinates_clipboard_label),
+                            getString(R.string.coordinates),
                             binding.copyCoordinatesText
                         )
                     }

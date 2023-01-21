@@ -13,15 +13,9 @@ import java.time.Instant
 class OsmApiParseException(message: String, cause: Exception? = null) :
     RuntimeException(message, cause)
 
-data class JsonToElementsRes(val mergedUniverse: ElementsMutable, val newElements: ElementsMutable)
-
-fun jsonToElements(
-    json: String,
-    universe: Elements = Elements()
-): JsonToElementsRes {
-    val mergedUniverse = ElementsMutable(universe)
-    val newElements = ElementsMutable()
-
+fun ElementsConstructorContext<OsmApiElement>.jsonToElements(
+    json: String
+) {
     val root = Parser.default().parse(StringBuilder(json))
     try {
         val rootObj = root as JsonObject
@@ -40,21 +34,17 @@ fun jsonToElements(
             val username = elementObj["user"] as String
             when (type) {
                 "node" -> {
-                    val lat = elementObj["lat"] as Double
                     val lon = elementObj["lon"] as Double
-                    val node = Node(
-                        version, tags, Coordinate(lat, lon), changeset, timestamp, username
-                    )
-                    mergedUniverse.setMerging(id, node)
-                    newElements[id] = node
+                    val lat = elementObj["lat"] as Double
+                    put(OsmApiNode(
+                        id, version, tags, Coordinate(lon, lat), changeset, timestamp, username
+                    ))
                 }
                 "way" -> {
                     val wayNodes = (elementObj["nodes"] as JsonArray<*>).map { e ->
                         (e as Number).toLong()
                     }
-                    val way = Way(version, tags, wayNodes, changeset, timestamp, username)
-                    mergedUniverse.setMerging(id, way)
-                    newElements[id] = way
+                    put(OsmApiWay(id, version, tags, wayNodes, changeset, timestamp, username))
                 }
                 "relation" -> {
                     val members = (elementObj["members"] as JsonArray<*>).map { e ->
@@ -64,9 +54,9 @@ fun jsonToElements(
                         val role = memberObj["role"] as String
                         RelationMember(TypedId(ref, memberType), role)
                     }
-                    val relation = Relation(version, tags, members, changeset, timestamp, username)
-                    mergedUniverse.setMerging(id, relation)
-                    newElements[id] = relation
+                    put(
+                        OsmApiRelation(id, version, tags, members, changeset, timestamp, username)
+                    )
                 }
                 else -> throw OsmApiParseException("Unrecognised element type: $type")
             }
@@ -74,8 +64,6 @@ fun jsonToElements(
     } catch (ccEx: ClassCastException) {
         throw OsmApiParseException("Undefined property or property with wrong type", ccEx)
     }
-
-    return JsonToElementsRes(mergedUniverse, newElements)
 }
 
 data class JsonToNotesRes(val mergedUniverse: NotesMutable, val newElements: NotesMutable)
@@ -93,7 +81,7 @@ class CommentData(
     usernameUidPair: UsernameUidPair?,
     text: String,
     html: String
-): OpeningCommentData(timestamp, usernameUidPair, text, html)
+) : OpeningCommentData(timestamp, usernameUidPair, text, html)
 
 fun jsonToNotes(
     json: String,
@@ -138,9 +126,10 @@ fun jsonToNotes(
                     )
                 }
                 openingCommentData
-            }?: run {
+            } ?: run {
                 Timber.w("Invalid note: empty comments list, assuming empty creation description (id=$id)")
-                val fallbackCreationDate = osmCommentDateTimeToInstant(noteProperties["date_created"] as String)
+                val fallbackCreationDate =
+                    osmCommentDateTimeToInstant(noteProperties["date_created"] as String)
                 // TODO: Get username/uid from note itself?
                 OpeningCommentData(fallbackCreationDate, null, "", "")
             }

@@ -10,4 +10,6 @@ abstract class BaseMap {
     abstract fun getName(context: Context): String
     abstract fun areItemsTheSame(other: BaseMap): Boolean
     abstract fun areContentsTheSame(other: BaseMap): Boolean
+
+    val maxZoomOrDefault get() = maxZoom ?: 19
 }

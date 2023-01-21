@@ -20,12 +20,16 @@ import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentTagBoxBinding
 import net.pfiers.osmfocus.databinding.RvItemTagTagboxBinding
 import net.pfiers.osmfocus.service.settings.settingsDataStore
-import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
+import net.pfiers.osmfocus.service.tagboxes.TbLoc
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
-import net.pfiers.osmfocus.view.support.*
+import net.pfiers.osmfocus.view.support.EventReceiver
+import net.pfiers.osmfocus.view.support.activityAs
+import net.pfiers.osmfocus.view.support.argument
+import net.pfiers.osmfocus.view.support.handleNavEvent
 import net.pfiers.osmfocus.viewmodel.TagBoxVM
 import net.pfiers.osmfocus.viewmodel.support.NavEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
+import net.pfiers.osmfocus.viewmodel.support.createVMFactory
 
 @ExperimentalStdlibApi
 class TagBoxFragment : Fragment() {

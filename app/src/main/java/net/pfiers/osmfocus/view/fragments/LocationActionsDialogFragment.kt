@@ -6,16 +6,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.databinding.FragmentLocationActionsDialogBinding
+import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
-import net.pfiers.osmfocus.view.support.*
+import net.pfiers.osmfocus.view.support.EventReceiver
+import net.pfiers.osmfocus.view.support.activityAs
+import net.pfiers.osmfocus.view.support.argument
+import net.pfiers.osmfocus.view.support.showWithDefaultTag
 import net.pfiers.osmfocus.viewmodel.LocationActionsVM
 import net.pfiers.osmfocus.viewmodel.LocationActionsVM.ShowCreateNoteDialogEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
-import org.locationtech.jts.geom.Coordinate
+import net.pfiers.osmfocus.viewmodel.support.createVMFactory
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime

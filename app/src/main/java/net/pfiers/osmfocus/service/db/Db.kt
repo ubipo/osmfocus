@@ -33,9 +33,9 @@ abstract class Db : RoomDatabase() {
             }
         }
 
-        val Context.db by appContextSingleton { appContext ->
+        val Context.db by appContextSingleton {
             Room.databaseBuilder(
-                appContext,
+                this,
                 Db::class.java,
                 "osmfocus"
             )

@@ -5,7 +5,7 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 // Modelled after androidx.datastore.DataStoreDelegateKt.dataStore
-fun <T> appContextSingleton(creator: (Context) -> T): ReadOnlyProperty<Context, T> {
+fun <T> appContextSingleton(creator: Context.() -> T): ReadOnlyProperty<Context, T> {
     return AppContextSingletonDelegate(creator)
 }
 

@@ -1,7 +1,9 @@
-package net.pfiers.osmfocus.service.tagboxlocation
+package net.pfiers.osmfocus.service.tagboxes
 
 import android.os.Parcel
 import android.os.Parcelable
+import net.pfiers.osmfocus.service.osm.BoundingBox
+import net.pfiers.osmfocus.service.osm.Coordinate
 
 
 /**
@@ -44,6 +46,19 @@ data class TbLoc(
         dest.writeInt(x.ordinal)
         dest.writeInt(y.ordinal)
     }
+
+    fun toEnvelopeCoordinate(bbox: BoundingBox) = Coordinate(
+        when (x) {
+            X.LEFT -> bbox.minLon
+            X.MIDDLE -> bbox.center.lon
+            X.RIGHT -> bbox.maxLon
+        },
+        when (y) {
+            Y.TOP -> bbox.maxLat
+            Y.MIDDLE -> bbox.center.lat
+            Y.BOTTOM -> bbox.minLat
+        }
+    )
 
     companion object CREATOR : Parcelable.Creator<TbLoc> {
         override fun createFromParcel(parcel: Parcel): TbLoc = TbLoc(parcel)

@@ -106,9 +106,9 @@ class TagInfoRepository(
         Nice thing is that this is dynamic. We don't need a hardcoded denylist. */
         const val MINIMUM_HIGHEST_TAG_VALUE_FRACTION = 0.05
 
-        val Context.tagInfoRepository by appContextSingleton { appContext ->
+        val Context.tagInfoRepository by appContextSingleton {
             TagInfoRepository(
-                appContext.db.wikiPageDao(),
+                db.wikiPageDao(),
                 TagInfoApiConfig(URI("https://taginfo.openstreetmap.org"), "fdsfd")
             )
         }

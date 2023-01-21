@@ -3,7 +3,6 @@ package net.pfiers.osmfocus.service.jts
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.CoordinateSequence
 
-
 class CoordinateSequenceList(
     private val coordinateSequence: CoordinateSequence
 ) : AbstractList<Coordinate>(), RandomAccess {

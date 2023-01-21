@@ -4,16 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
-import net.pfiers.osmfocus.databinding.FragmentCreateNoteDialogBinding
+import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
-import net.pfiers.osmfocus.view.support.*
+import net.pfiers.osmfocus.view.support.EventReceiver
+import net.pfiers.osmfocus.view.support.MaterialDialogFragment
+import net.pfiers.osmfocus.view.support.activityAs
+import net.pfiers.osmfocus.view.support.argument
 import net.pfiers.osmfocus.viewmodel.CreateNoteDialogVM
 import net.pfiers.osmfocus.viewmodel.support.CancelEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
-import org.locationtech.jts.geom.Coordinate
+import net.pfiers.osmfocus.viewmodel.support.createVMFactory
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -40,11 +43,14 @@ class CreateNoteDialogFragment : MaterialDialogFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        val binding = FragmentCreateNoteDialogBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = this // https://stackoverflow.com/questions/54766112/getviewlifecycleowner-in-dialogfragment-leads-to-crash
-        binding.vm = createNoteDialogVM
-        return binding.root
+    ): View = ComposeView(requireContext()).apply {
+//        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+//        setContent { CreateNoteDialog() }
+//
+//        val binding = FragmentCreateNoteDialogBinding.inflate(inflater, container, false)
+//        binding.lifecycleOwner = this // https://stackoverflow.com/questions/54766112/getviewlifecycleowner-in-dialogfragment-leads-to-crash
+//        binding.vm = createNoteDialogVM
+//        return binding.root
     }
 
     companion object {
@@ -60,3 +66,11 @@ class CreateNoteDialogFragment : MaterialDialogFragment() {
         }
     }
 }
+
+//@Composable
+//@Preview
+//fun CreateNoteDialog() {
+//    Column {
+//        Text(stringResource(R.string.create_note), style = MaterialTheme.typography.headlineLarge)
+//    }
+//}

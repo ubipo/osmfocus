@@ -22,7 +22,7 @@ import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRe
 import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.view.support.EventReceiver
 import net.pfiers.osmfocus.view.support.activityAs
-import net.pfiers.osmfocus.view.support.createVMFactory
+import net.pfiers.osmfocus.viewmodel.support.createVMFactory
 import net.pfiers.osmfocus.view.support.handleNavEvent
 import net.pfiers.osmfocus.viewmodel.SettingsVM
 import net.pfiers.osmfocus.viewmodel.SettingsVM.EditTagboxLongLinesEvent

@@ -1,11 +1,11 @@
 package net.pfiers.osmfocus.viewmodel
 
 import androidx.lifecycle.ViewModel
+import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository
 import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
-import org.locationtech.jts.geom.Coordinate
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime

@@ -8,7 +8,7 @@
 
     <target
         android:name="pizzaCrust"
-        android:animation="@animator/marker_device_location_animation" />
+        android:animation="@animator/ic_device_location_searching_animation" />
 
 
 </animated-vector>

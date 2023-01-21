@@ -15,12 +15,10 @@ fun GeoPoint.draw(projection: Projection, canvas: Canvas, paint: Paint) {
 fun Iterable<GeoPoint>.draw(projection: Projection, canvas: Canvas, paint: Paint) {
     canvas.drawPath(map { point ->
         projection.toPixels(point, null)
-    }.toPath(), paint)
+    }.drawToPath(), paint)
 }
 
-fun List<Point>.toPath(): Path {
-    val path = Path()
-
+fun List<Point>.drawToPath(path: Path = Path()): Path {
     val startPoint = first()
     path.moveTo(startPoint.x.toFloat(), startPoint.y.toFloat())
     for (point in subList(1)) {

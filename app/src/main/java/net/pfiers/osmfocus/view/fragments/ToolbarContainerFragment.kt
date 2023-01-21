@@ -8,13 +8,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import net.pfiers.osmfocus.databinding.FragmentToolbarContainerBinding
 import net.pfiers.osmfocus.view.support.BindingFragment
-import net.pfiers.osmfocus.view.support.ContainedFragmentId
-import net.pfiers.osmfocus.view.support.argument
 
 class ToolbarContainerFragment : BindingFragment<FragmentToolbarContainerBinding>(
     FragmentToolbarContainerBinding::inflate
 ) {
-    private val containedFragmentId by argument<ContainedFragmentId>(ARG_CONTAINED_FRAGMENT)
+//    private val containedFragmentId by argument<ContainedFragmentId>(ARG_CONTAINED_FRAGMENT)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,14 +27,14 @@ class ToolbarContainerFragment : BindingFragment<FragmentToolbarContainerBinding
         super.onStart()
 
         childFragmentManager.findFragmentById(binding.containedFragment.id) ?: run {
-            val containedFragment = containedFragmentId.constructor().apply {
-                arguments = Bundle(this@ToolbarContainerFragment.requireArguments()).apply {
-                    remove(ARG_CONTAINED_FRAGMENT)
-                }
-            }
-            childFragmentManager.beginTransaction()
-                .add(binding.containedFragment.id, containedFragment)
-                .commit()
+//            val containedFragment = containedFragmentId.constructor().apply {
+//                arguments = Bundle(this@ToolbarContainerFragment.requireArguments()).apply {
+//                    remove(ARG_CONTAINED_FRAGMENT)
+//                }
+//            }
+//            childFragmentManager.beginTransaction()
+//                .add(binding.containedFragment.id, containedFragment)
+//                .commit()
         }
     }
 

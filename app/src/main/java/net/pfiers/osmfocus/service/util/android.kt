@@ -1,9 +1,12 @@
 package net.pfiers.osmfocus.service.util
 
 import android.content.res.Resources
+import android.graphics.Point
 import android.location.Location
 import android.net.Uri
 import android.util.TypedValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntSize
 import androidx.databinding.Observable
 import androidx.databinding.ObservableField
 import org.osmdroid.util.GeoPoint
@@ -70,3 +73,7 @@ fun Float.toDp(res: Resources) = TypedValue.applyDimension(
     this,
     res.displayMetrics
 )
+
+fun Offset.toPoint() = Point(x.toInt(), y.toInt())
+
+fun Point.plus(size: IntSize) = Point(x + size.width, y + size.height)

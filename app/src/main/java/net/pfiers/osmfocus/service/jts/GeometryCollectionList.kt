@@ -6,11 +6,11 @@ import org.locationtech.jts.geom.GeometryCollection
 
 class GeometryCollectionList<G : Geometry>(
     private val geometryCollection: GeometryCollection,
-    dontCheckTypes: Boolean = false
+    doNotCheckTypes: Boolean = false
 ) : AbstractList<G>(), RandomAccess {
     init {
         @Suppress("USELESS_IS_CHECK")
-        if (!dontCheckTypes && any { it !is G })
+        if (!doNotCheckTypes && any { it !is G })
             throw IllegalArgumentException(
                 "<geometryCollection> must only contain Geometries of type <G>"
             )

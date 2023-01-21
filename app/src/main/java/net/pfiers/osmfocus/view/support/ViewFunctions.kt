@@ -5,9 +5,8 @@ import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
 import androidx.annotation.ColorInt
-import net.pfiers.osmfocus.service.jts.toDecimalDegrees
-import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
-import org.locationtech.jts.geom.Coordinate
+import net.pfiers.osmfocus.service.osm.Coordinate
+import net.pfiers.osmfocus.service.tagboxes.TbLoc
 import org.ocpsoft.prettytime.PrettyTime
 import java.time.Instant
 

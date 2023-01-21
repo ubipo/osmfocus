@@ -9,15 +9,12 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.mapError
-import net.pfiers.osmfocus.service.*
+import net.pfiers.osmfocus.service.osm.BoundingBox
+import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.util.*
-import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.Envelope
-import timber.log.Timber
 import java.net.URI
 import java.net.UnknownHostException
 import java.util.*
-import kotlin.time.ExperimentalTime
 
 enum class Endpoint(val path: String) {
     MAP("map"),
@@ -26,6 +23,14 @@ enum class Endpoint(val path: String) {
 }
 
 const val OSM_API_PARAM_BBOX = "bbox"
+
+private fun Double.decimalFmt() = "%.5f".format(Locale.ROOT, this)
+
+fun BoundingBox.toApiBboxStr() =
+    listOf(minLon, minLat, maxLon, maxLat).joinToString(",") { it.decimalFmt() }
+
+fun Coordinate.toApiQueryParameters() =
+    mapOf("lat" to lat, "lon" to lon).mapValues { (_, v) -> v.decimalFmt() }
 
 data class OsmApiConfig(
     val baseUrl: URI,
@@ -43,8 +48,6 @@ class OsmApiConnectionException(
 
 enum class OsmApiMethod { GET, POST }
 
-@ExperimentalTime
-@Suppress("UnstableApiUsage")
 suspend inline fun OsmApiConfig.apiReq(
     endpoint: Endpoint,
     noinline urlTransformer: (URI.() -> URI)? = null,
@@ -63,8 +66,6 @@ suspend inline fun OsmApiConfig.apiReq(
         .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
         .awaitStringResponseResult()
 
-    Timber.d("Response url: ${resp.url}")
-
     return result.mapError { ex: FuelError ->
         val bubbleCause = ex.cause
         if (bubbleCause is FuelError) {
@@ -78,19 +79,16 @@ suspend inline fun OsmApiConfig.apiReq(
     }
 }
 
-@ExperimentalTime
-suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
+suspend fun OsmApiConfig.sendMapReq(envelope: BoundingBox) = apiReq(Endpoint.MAP, {
     // We can't use URLEncoder.encode because it percent-encodes commas (which we don't want)
     // Fuel also percent-encodes values in the parameters list
     appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
 })
 
-@ExperimentalTime
-suspend fun OsmApiConfig.notes(envelope: Envelope) = apiReq(Endpoint.NOTES, {
+suspend fun OsmApiConfig.sendNotesReq(envelope: BoundingBox) = apiReq(Endpoint.NOTES, {
     appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
 })
 
-@ExperimentalTime
 suspend fun OsmApiConfig.createNote(
     location: Coordinate,
     text: String,

@@ -28,9 +28,9 @@ fun URI.appendQueryParameter(key: String, value: String) = appendQueryParameter(
 fun URI.appendQueryParameter(key: String, value: Any) = appendQueryParameter(key, value.toString())
 
 fun URI.appendQueryParameters(parameters: Map<String, Any>) =
-    parameters.toList().fold(this, { uri, (key, value) ->
+    parameters.toList().fold(this) { uri, (key, value) ->
         uri.appendQueryParameter(key, value)
-    })
+    }
 
 /**
  * Adapted from https://stackoverflow.com/a/13592567/7120579

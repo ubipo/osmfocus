@@ -8,9 +8,10 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-class TagBoxLineOverlay(
+
+class TagBoxThreadOverlay(
     @ColorInt color: Int,
-    var startPoint: Point? = null,
+    var threadCornerPoint: Point? = null,
     var geoPoint: GeoPoint? = null
 ) : Overlay() {
     private val paint = Paint().apply {
@@ -20,7 +21,7 @@ class TagBoxLineOverlay(
 
     override fun draw(canvas: Canvas?, projection: Projection?) {
         if (canvas == null || projection == null) return
-        val lStartPoint = startPoint ?: return
+        val lStartPoint = threadCornerPoint ?: return
         val lGeoPoint = geoPoint ?: return
         val endPoint = projection.toPixels(lGeoPoint, null)
         canvas.drawLine(
