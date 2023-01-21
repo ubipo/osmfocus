@@ -18,8 +18,14 @@ import net.pfiers.osmfocus.view.osmdroid.DiscoveredAreaOverlay
 import net.pfiers.osmfocus.view.osmdroid.ElementOverlay
 import net.pfiers.osmfocus.view.osmdroid.TagBoxThreadOverlay
 import net.pfiers.osmfocus.viewmodel.MapVM
-import timber.log.Timber
 import org.osmdroid.views.MapView as OsmDroidMap
+
+class Latch {
+    private var _flag: Boolean = false
+    val isSet get() = _flag
+    fun set() { _flag = true }
+    override fun toString(): String = "Latch(${if (isSet) "latched" else "not latched"})"
+}
 
 @Composable
 fun SlippyMap(
@@ -29,9 +35,12 @@ fun SlippyMap(
 ){
     val elementsRepository = LocalContext.current.applicationContext.elementsRepository
     val composeScope = rememberCoroutineScope()
-    val tagBoxOverlays = remember(tagBoxStates) {
+    val shouldUpdateOverlays = Latch()
+    val tagBoxStatesAndOverlays = remember(tagBoxStates.keys) {
+        shouldUpdateOverlays.set()
         tagBoxStates.mapValues { (_, tagBoxState) ->
-            tagBoxState to Pair(
+            TagBoxStateAndOverlays(
+                tagBoxState,
                 ElementOverlay(tagBoxState.color),
                 TagBoxThreadOverlay(tagBoxState.color, tagBoxState.threadCornerPoint)
             )
@@ -39,25 +48,30 @@ fun SlippyMap(
     }
     val elementsAreaDownloaded by elementsRepository.bboxAreaDownloaded.collectAsState()
     val discoveredAreaOverlay = remember { DiscoveredAreaOverlay(0.2, elementsAreaDownloaded) }
-    var shouldInvalidateMap = false
+    val shouldInvalidateMap = Latch()
     LaunchedEffect(elementsAreaDownloaded) {
         discoveredAreaOverlay.discoveredArea = elementsAreaDownloaded
-        shouldInvalidateMap = true
+        shouldInvalidateMap.set()
     }
 
-    LaunchedEffect(tagBoxStates) {
-        tagBoxOverlays.forEach { (tbLoc, stateAndOverlays) ->
-            val (tagBoxState, overlays) = stateAndOverlays
-            val (elementOverlay, tagBoxThreadOverlay) = overlays
-            Timber.d("Updating tagbox $tbLoc: $tagBoxState")
-            tagBoxState.elementAndNearestPoint?.let { (element, nearestPoint) ->
-                elementOverlay.updateElement(elementsRepository.elements.value, element)
-                tagBoxThreadOverlay.geoPoint = nearestPoint.toOsmDroid()
+    for (stateAndOverlays in tagBoxStatesAndOverlays.values) {
+        LaunchedEffect(
+            stateAndOverlays.state.color,
+            stateAndOverlays.state.threadCornerPoint,
+            stateAndOverlays.state.elementAndNearestPoint
+        ) {
+            val thread = stateAndOverlays.threadOverlay
+            val state = stateAndOverlays.state
+            state.elementAndNearestPoint?.let { (element, nearestPoint) ->
+                stateAndOverlays.elementOverlay.updateElement(
+                    elementsRepository.elements.value, element
+                )
+                thread.geoPoint = nearestPoint.toOsmDroid()
             }
-            tagBoxThreadOverlay.isEnabled = tagBoxState.elementAndNearestPoint != null
-            tagBoxThreadOverlay.threadCornerPoint = tagBoxState.threadCornerPoint
+            thread.isEnabled = state.elementAndNearestPoint != null
+            thread.threadCornerPoint = state.threadCornerPoint
+            shouldInvalidateMap.set()
         }
-        shouldInvalidateMap = true
     }
 
     AndroidView(factory = { context ->
@@ -102,9 +116,6 @@ fun SlippyMap(
                     false
                 },
             )
-            val (geometryOverlays, tagBoxThreadOverlays) = tagBoxOverlays.values.map { it.second }.unzip()
-            overlays.addAll(geometryOverlays)
-            overlays.addAll(tagBoxThreadOverlays)
             overlays.add(CrosshairOverlay())
             overlays.add(discoveredAreaOverlay)
             composeScope.launch {
@@ -129,8 +140,13 @@ fun SlippyMap(
             }
         }
     }, update = { osmDroidMap ->
-        if (shouldInvalidateMap) {
+        if (shouldInvalidateMap.isSet) {
             osmDroidMap.invalidate()
+        }
+        if (shouldUpdateOverlays.isSet) {
+            osmDroidMap.overlays.removeIf { it is ElementOverlay || it is TagBoxThreadOverlay }
+            osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.elementOverlay })
+            osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.threadOverlay })
         }
     })
 }
