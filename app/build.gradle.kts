@@ -4,7 +4,6 @@ val kotlinVersion: String by rootProject.extra
 val composeVersion: String by rootProject.extra
 val navVersion = "2.4.2"
 
-val a = this
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -269,7 +268,6 @@ dependencies {
     implementation("net.openid:appauth:0.10.0")
 
     // Testing
-//    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
