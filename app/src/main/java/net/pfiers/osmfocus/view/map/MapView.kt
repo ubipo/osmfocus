@@ -25,7 +25,6 @@ import net.pfiers.osmfocus.view.support.PaletteId
 import net.pfiers.osmfocus.view.support.generatePalettes
 import net.pfiers.osmfocus.viewmodel.MapVM
 import net.pfiers.osmfocus.viewmodel.support.viewModel
-import timber.log.Timber
 import kotlin.time.ExperimentalTime
 
 
@@ -97,7 +96,6 @@ fun MapView(
         }.toTypedArray())
     }
     val updateTagBoxElements = { bbox: BoundingBox, zoomLevel: Double ->
-        Timber.d("Updating tag box elements")
         if (zoomLevel < MapVM.ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
             // Too zoomed out, don't display any elements
             tagBoxesStates.forEach { (_, tagBoxState) -> tagBoxState.elementAndNearestPoint = null }
@@ -106,7 +104,6 @@ fun MapView(
             val elementAndNearestPoints = filterAndSortToWithinBbox(
                 elements, bbox, showRelations
             ).boundedSubList(0, tbLocs.size)
-            Timber.d("Got ${elements.size} elements and filtered to ${elementAndNearestPoints.size}")
             val tbLocElements = mapTbLocsToElements(tbLocs, elementAndNearestPoints) { tbLoc ->
                 tbLoc.toEnvelopeCoordinate(bbox)
             }

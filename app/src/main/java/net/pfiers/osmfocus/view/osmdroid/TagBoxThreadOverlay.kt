@@ -8,7 +8,6 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.Projection
 import org.osmdroid.views.overlay.Overlay
 
-
 class TagBoxThreadOverlay(
     @ColorInt color: Int,
     var threadCornerPoint: Point? = null,
