@@ -1,6 +1,10 @@
-import com.google.protobuf.gradle.*
-import org.gradle.kotlin.dsl.protobuf
+import com.google.protobuf.gradle.id
 
+val kotlinVersion: String by rootProject.extra
+val composeVersion: String by rootProject.extra
+val navVersion = "2.4.2"
+
+val a = this
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -10,13 +14,13 @@ plugins {
 }
 
 android {
-    compileSdk = 31
-    buildToolsVersion = "30.0.3"
+    compileSdk = 33
+    buildToolsVersion = "33.0.1"
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
-        targetSdk = 31
+        targetSdk = 33
         versionCode = 150
         versionName = "1.5.0"
 
@@ -41,6 +45,11 @@ android {
 
     buildFeatures {
         dataBinding = true
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = composeVersion
     }
 
     kotlinOptions {
@@ -111,17 +120,21 @@ android {
             "org/apache/http/client/version.properties"
         ))
     }
+    namespace = "net.pfiers.osmfocus"
 }
 
 //sourceSets.getByName("main") {
 //    java.srcDir("${protobuf.protobuf.generatedFilesBaseDir}/main/javalite")
 //}
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+}
 
 protobuf {
     protobuf.apply {
         protoc {
-            artifact = "com.google.protobuf:protoc:4.0.0-rc-2"
+            artifact = "com.google.protobuf:protoc:21.0-rc-1"
         }
         plugins {
             id("javalite") {
@@ -143,33 +156,65 @@ protobuf {
 
 configurations {
     all {
-        exclude(group = "junit", module = "junit")
+//        exclude(group = "junit", module = "junit")
         exclude(group = "commons-logging", module = "commons-logging")
         exclude(group = "org.apache.httpcomponents")
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("org.hamcrest:hamcrest-core:1.1")).using(module("junit:junit:4.10"))
+        }
     }
 }
 
 dependencies {
-    val implementation by configurations
 
-    val kotlinVersion = rootProject.extra["kotlin"] as String?
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    // Core
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("com.android.support:multidex:1.0.3")
-    implementation("androidx.core:core-ktx:1.6.0")
-    implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.1")
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.annotation:annotation:1.5.0")
+    implementation("com.google.android.material:material:1.7.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+
+    // Jetpack compose
+    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation("androidx.compose.runtime:runtime-livedata:$composeVersion")
+    implementation("androidx.compose.ui:ui:$composeVersion")
+    implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
+    implementation("androidx.compose.foundation:foundation:$composeVersion")
+    implementation("androidx.navigation:navigation-compose:$navVersion")
+    implementation("androidx.compose.animation:animation:$composeVersion")
+    debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
+
+    // Jetpack compose material
+    implementation("androidx.compose.material:material:$composeVersion")
+    implementation("androidx.compose.material3:material3:1.1.0-alpha03")
+    implementation("androidx.compose.material:material-icons-core:$composeVersion")
+    implementation("androidx.compose.material:material-icons-extended:$composeVersion")
+
+    // Preferences
+    implementation("androidx.preference:preference-ktx:1.2.0")
+
+    // Compat / legacy
+    implementation("androidx.appcompat:appcompat:1.5.1")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
+
+    // Androidx views
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
-    implementation("com.google.android.material:material:1.4.0")
-    implementation("androidx.annotation:annotation:1.2.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+
+    // Jetpack / lifecycle
+    val lifecycleVersion = "2.4.1"
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
+
+    // Standard library extensions
+    val arrowVersion = "1.1.3"
+    implementation("io.arrow-kt:arrow-core:$arrowVersion")
 
     // Spatial
     val jtsVersion = "1.18.1"
@@ -193,17 +238,15 @@ dependencies {
     implementation("com.beust:klaxon:5.4")
 
     // Navigation
-    val navVersion = "2.3.4"
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.fragment:fragment-ktx:1.4.0")
+    implementation("androidx.preference:preference-ktx:1.2.0")
+    implementation("androidx.fragment:fragment-ktx:1.5.5")
 
     // Room DB
     val roomVersion = "2.4.0-alpha05"
     implementation("androidx.room:room-runtime:$roomVersion")
-
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
 //    androidTestImplementation("androidx.room:room-testing:$roomVersion")
@@ -220,14 +263,18 @@ dependencies {
     implementation("org.ocpsoft.prettytime:prettytime:5.0.0.Final")
 
     // Logging
-    implementation("com.jakewharton.timber:timber:4.7.1")
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Auth
     implementation("net.openid:appauth:0.10.0")
 
     // Testing
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
-//    testImplementation("junit:junit:4.13.1")
+//    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
 //    androidTestImplementation("androidx.test.ext:junit:1.1.2")
 //    androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }

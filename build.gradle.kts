@@ -1,7 +1,6 @@
 buildscript {
-    extra.apply {
-        set("kotlin", "1.5.30")
-    }
+    val kotlinVersion: String by extra("1.6.21")
+    val composeVersion: String by extra("1.2.0-rc02")
 
     repositories {
         google()
@@ -11,9 +10,9 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:7.0.2")
-        classpath(kotlin("gradle-plugin", version = project.extra["kotlin"] as String?))
-        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.17")
+        classpath("com.android.tools.build:gradle:7.4.0")
+        classpath(kotlin("gradle-plugin", version = kotlinVersion))
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.9.2")
     }
 }
 
@@ -21,7 +20,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven("https://kotlin.bintray.com/kotlinx/")
+//        maven("https://kotlin.bintray.com/kotlinx/")
     }
 }
 
