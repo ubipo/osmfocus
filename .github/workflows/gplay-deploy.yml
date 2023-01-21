@@ -4,12 +4,10 @@ on:
   release:
     types:
       - published
-  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
 
@@ -29,7 +27,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7
+          ruby-version: 3.2
           bundler-cache: true
 
       - name: Fastlane deploy
