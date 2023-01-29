@@ -37,6 +37,8 @@ class BoundingBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double
     }
     val cartesianPlaneWidth by lazy { maxLon - minLon }
     val cartesianPlaneHeight by lazy { maxLat - minLat }
+    val invertedLongitudes by lazy { minLon > maxLon }
+    val invertedLatitudes by lazy { minLat > maxLat }
 
     /**
      * Sequence of the four segments of this bounding box in counter-clockwise order starting from

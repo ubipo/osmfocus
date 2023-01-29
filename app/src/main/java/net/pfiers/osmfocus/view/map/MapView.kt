@@ -3,19 +3,22 @@ package net.pfiers.osmfocus.view.map
 import android.graphics.Point
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
 import net.pfiers.osmfocus.service.channels.createBufferedDropOldestChannel
 import net.pfiers.osmfocus.service.osm.*
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
+import net.pfiers.osmfocus.service.osmapi.BboxDownloadHandler
 import net.pfiers.osmfocus.service.osmapi.ElementsRepository.Companion.elementsRepository
 import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.service.tagboxes.AllTbLocs
@@ -26,6 +29,8 @@ import net.pfiers.osmfocus.view.support.PaletteId
 import net.pfiers.osmfocus.view.support.generatePalettes
 import net.pfiers.osmfocus.viewmodel.MapVM
 import net.pfiers.osmfocus.viewmodel.support.viewModel
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.time.ExperimentalTime
 
 
@@ -83,11 +88,13 @@ fun MapView(
     }
 ) {
     val elementsRepository = LocalContext.current.elementsRepository
+    val composeScope = rememberCoroutineScope()
     val showRelations by mapVM.showRelations.observeAsState(true)
     val tbLocs = AllTbLocs
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
     )
+    val snackBarScaffoldState = rememberScaffoldState()
     val locationActionData by mapVM.locationActionData.observeAsState()
     val palette = generatePalettes(LocalContext.current)[PaletteId.PALETTE_VIBRANT]!!
     val tagBoxesStates = remember {
@@ -127,50 +134,89 @@ fun MapView(
 
     LaunchedEffect(elements) {
         runWithMapStateChannel.send { bbox, zoomLevel ->
-            updateTagBoxElements(bbox, zoomLevel)
+            composeScope.launch { updateTagBoxElements(bbox, zoomLevel) }
         }
     }
 
-    BottomSheetScaffold(
-        scaffoldState = bottomSheetScaffoldState,
-        sheetContent = {
-//            locationActionData?.let { (location, action) ->
-//                when (action) {
-//                    MapVM.LocationAction.CHOOSE -> LocationActions(
-//                        location = location,
-//                        onCreateNote = { mapVM.createNote(location) },
-//                    )
-//                    MapVM.LocationAction.CREATE_NOTE -> {
-//
-//                    }
-//                }
-//            } ?:
-            Box(modifier = Modifier.defaultMinSize(minHeight = 1.dp))
-        },
-        sheetPeekHeight = if (locationActionData == null) 0.dp else BottomSheetScaffoldDefaults.SheetPeekHeight,
-    ) {
-        Box(
-            modifier = Modifier
-                .onGloballyPositioned { layoutCoordinates ->
-                    setMapContentOffset(layoutCoordinates.positionInWindow())
+    // downloadHandler is used as a token in the elementsRepository to override previous
+    // download requests (for an area that the user has already moved away from)
+    // Therefore, define it once per map and reuse it instead of defining it inline
+    val downloadHandler = remember { BboxDownloadHandler(
+        getBbox = suspend { suspendCoroutine { composeScope.launch {
+            runWithMapStateChannel.send { bbox, _ -> it.resume(bbox) }
+        } } },
+        handleException = { ex -> composeScope.launch {
+            snackBarScaffoldState.snackbarHostState.showSnackbar("Problem downloading elements: $ex")
+        } },
+    ) }
+
+    LaunchedEffect(downloadHandler) {
+        elementsRepository.requestEnvelopeDownload(downloadHandler)
+    }
+
+    Scaffold(
+        scaffoldState = snackBarScaffoldState,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    composeScope.launch {
+                        snackBarScaffoldState.snackbarHostState.showSnackbar("Not implemented yet")
+                    }
                 },
-            contentAlignment = Alignment.Center
-        ) {
-            SlippyMap(
-                mapVM = mapVM,
-                tagBoxStates = tagBoxesStates,
-                onMove = { bbox, zoomLevel, _ -> updateTagBoxElements(bbox, zoomLevel) },
-                runWithMapStateChannel = runWithMapStateChannel,
-            )
+                backgroundColor = MaterialTheme.colors.primary,
+                contentColor = MaterialTheme.colors.onPrimary,
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Add")
+            }
+        },
+        content = { innerPadding ->
+            BottomSheetScaffold(
+                scaffoldState = bottomSheetScaffoldState,
+                sheetContent = {
+                    //            locationActionData?.let { (location, action) ->
+                    //                when (action) {
+                    //                    MapVM.LocationAction.CHOOSE -> LocationActions(
+                    //                        location = location,
+                    //                        onCreateNote = { mapVM.createNote(location) },
+                    //                    )
+                    //                    MapVM.LocationAction.CREATE_NOTE -> {
+                    //
+                    //                    }
+                    //                }
+                    //            } ?:
+                    Box(modifier = Modifier.defaultMinSize(minHeight = 1.dp))
+                },
+                sheetPeekHeight = if (locationActionData == null) 0.dp else BottomSheetScaffoldDefaults.SheetPeekHeight,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .onGloballyPositioned { layoutCoordinates ->
+                            setMapContentOffset(layoutCoordinates.positionInWindow())
+                        }
+                ) {
+                    LinearProgressIndicator()
 
-            TagBoxGrid(
-                tagBoxesStates = tagBoxesStates,
-                mapContentOffset = mapContentOffset,
-            )
+                    SlippyMap(
+                        mapVM = mapVM,
+                        tagBoxStates = tagBoxesStates,
+                        onMove = { bbox, zoomLevel, _ ->
+                            updateTagBoxElements(bbox, zoomLevel)
+                            composeScope.launch {
+                                elementsRepository.requestEnvelopeDownload(downloadHandler)
+                            }
+                         },
+                        runWithMapStateChannel = runWithMapStateChannel,
+                    )
 
-            CircularProgressIndicator()
+                    TagBoxGrid(
+                        tagBoxesStates = tagBoxesStates,
+                        mapContentOffset = mapContentOffset,
+                    )
+                }
+            }
         }
-    }
+    )
 
 //    locationActionData?.let { (location, action) ->
 //        if (action == MapVM.LocationAction.CREATE_NOTE) {
@@ -180,31 +226,3 @@ fun MapView(
 //        }
 //    }
 }
-
-//    private suspend fun updateHighlightedElements(tagBoxElementPairs: Map<TbLoc, MapVM.ElementToDisplayData>) {
-//        for (tbLoc in tbLocations) {
-//            val elementToDisplay = tagBoxElementPairs[tbLoc]
-//            val tbInfo = tbInfos[tbLoc] ?: error("") // TODO: Make error unrepresentable
-//            val overlaysEnabled = elementToDisplay !== null
-//
-//            val prevElem = tbInfo.vm.elementCentroidAndId.value?.element
-//            if (prevElem != elementToDisplay?.element) {
-//                lifecycleScope.launch {
-//                    tbInfo.vm.elementCentroidAndId.value = elementToDisplay?.run {
-//                        ElementCentroidAndId(id, element, geometry.centroid.coordinate)
-//                    }
-//                }.join()
-//            }
-//
-//            tbInfo.lineOverlay.isEnabled = overlaysEnabled
-//            tbInfo.geometryOverlay.isEnabled = overlaysEnabled
-//
-//            if (elementToDisplay != null) {
-//                /* Setting lineOverlay.startPoint is handled by the
-//                layout change listener added in addTagBoxFragmentContainers. */
-//                tbInfo.lineOverlay.geoPoint = elementToDisplay.nearCenterCoordinate.toGeoPoint()
-//                tbInfo.geometryOverlay.geometry = elementToDisplay.
-//            }
-//        }
-//        map?.invalidate()
-//    }

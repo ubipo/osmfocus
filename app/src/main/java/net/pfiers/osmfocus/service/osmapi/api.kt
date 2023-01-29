@@ -12,6 +12,8 @@ import com.github.kittinunf.result.mapError
 import net.pfiers.osmfocus.service.osm.BoundingBox
 import net.pfiers.osmfocus.service.osm.Coordinate
 import net.pfiers.osmfocus.service.util.*
+import timber.log.Timber
+import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.UnknownHostException
 import java.util.*
@@ -37,25 +39,26 @@ data class OsmApiConfig(
     val userAgent: String
 )
 
-/** Indicates any connection exception related to an osm API
- * request that doesn't warrant retrying (without user
- * intervention), like `UnknownHostException`s.
- */
-class OsmApiConnectionException(
-    message: String?,
-    cause: Exception
-) : Exception(message, cause)
+enum class OsmApiErrorType {
+    UNKNOWN_HOST,
+    TIMEOUT,
+    SERVER_ERROR,
+}
+
+data class OsmApiConnectionError(
+    val type: OsmApiErrorType
+) : Exception("OsmApi connection error: $type")
 
 enum class OsmApiMethod { GET, POST }
 
-suspend inline fun OsmApiConfig.apiReq(
+suspend fun OsmApiConfig.apiReq(
     endpoint: Endpoint,
-    noinline urlTransformer: (URI.() -> URI)? = null,
-    noinline reqTransformer: (Request.() -> Request)? = null,
+    urlTransformer: (URI.() -> URI)? = null,
+    reqTransformer: (Request.() -> Request)? = null,
     oauthAccessToken: String? = null,
     method: OsmApiMethod = OsmApiMethod.GET
 ): Result<String, Exception> {
-    val (_, resp, result) = baseUrl
+    val (req, resp, result) = baseUrl
         .appendPath(endpoint.path)
         .run { urlTransformer?.invoke(this) ?: this }
         .toString()
@@ -69,13 +72,21 @@ suspend inline fun OsmApiConfig.apiReq(
     return result.mapError { ex: FuelError ->
         val bubbleCause = ex.cause
         if (bubbleCause is FuelError) {
-            val fuelCause = bubbleCause.cause
+            val fuelCause = bubbleCause.cause ?: return@mapError ex
+            Timber.e("OsmApi error for endpoint ${endpoint}:\n " +
+                    "bubbleCause: ${bubbleCause::class.qualifiedName} ${bubbleCause.message}\n" +
+                    "fuelCause: ${fuelCause::class.qualifiedName} ${fuelCause.message}\n" +
+                    "${req.method} ${resp.url} ${resp.statusCode}\n" +
+                    "body first 200 chars: ${resp.data.toString(Charsets.UTF_8).take(200)}")
             val is500 = resp.statusCode % 500 == 0
-            if (fuelCause is UnknownHostException || (fuelCause is HttpException && is500)) {
-                return@mapError OsmApiConnectionException(fuelCause.message, fuelCause as Exception)
+            val type = when {
+                fuelCause is UnknownHostException -> OsmApiErrorType.UNKNOWN_HOST
+                fuelCause is SocketTimeoutException -> OsmApiErrorType.TIMEOUT
+                fuelCause is HttpException && is500 -> OsmApiErrorType.SERVER_ERROR
+                else -> null
             }
-        }
-        ex
+            if (type != null) OsmApiConnectionError(type) else ex
+        } else { ex }
     }
 }
 

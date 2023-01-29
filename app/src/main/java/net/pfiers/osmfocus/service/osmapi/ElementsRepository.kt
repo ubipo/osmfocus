@@ -24,7 +24,10 @@ import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
 import timber.log.Timber
 
-typealias EnvelopeDownloadHandler = () -> BoundingBox
+data class BboxDownloadHandler(
+    val getBbox: suspend () -> BoundingBox,
+    val handleException: (OsmApiConnectionError) -> Unit
+)
 
 enum class EnvelopeDownloadState {
     IDLE, QUEUED, DOWNLOADING
@@ -34,11 +37,11 @@ class ElementsRepository(
     private val userAgentRepository: UserAgentRepository,
     private val apiConfigRepository: ApiConfigRepository
 ) {
-    private val scope = CoroutineScope(Dispatchers.IO) // Choose proper scope
+    private val scope = CoroutineScope(Dispatchers.IO) // TODO: Choose proper scope
     private val bboxDownloadState = MutableStateFlow(EnvelopeDownloadState.IDLE)
     private val bboxDownloadLimiter = limiter(MapVM.MIN_DOWNLOAD_DELAY, scope)
     // Deduplicated FIFO queue of download handlers
-    private val bboxDownloadQueue = LinkedHashSet<EnvelopeDownloadHandler>()
+    private val bboxDownloadQueue = LinkedHashSet<BboxDownloadHandler>()
     private val bboxDownloadQueueMutex = Mutex()
     // Does not need to be protected by mutex as it is already protected by the envelopeDownloadLimiter
     private val bboxAreaDownloadedMutable = MutableStateFlow(MultiPolygon(emptyArray(), GeometryFactory()))
@@ -57,30 +60,45 @@ class ElementsRepository(
                     ticket.complete()
                     continue
                 }
-                val envelope = handler()
+                val bbox = handler.getBbox()
                 bboxDownloadState.value = EnvelopeDownloadState.DOWNLOADING
-                // TODO: Handle result
-                val result = downloadEnvelope(envelope)
-                val anotherDownloadIsQueued = bboxDownloadQueue.isNotEmpty()
-                bboxDownloadState.value = if (anotherDownloadIsQueued) {
-                    EnvelopeDownloadState.QUEUED
-                } else EnvelopeDownloadState.IDLE
+                downloadBbox(bbox).fold(
+                    success = {
+                        // TODO: Duplicate state: downloadQueue + limiter ticket
+                        val anotherDownloadIsQueued = bboxDownloadQueue.isNotEmpty()
+                        bboxDownloadState.value = if (anotherDownloadIsQueued) {
+                            EnvelopeDownloadState.QUEUED
+                        } else EnvelopeDownloadState.IDLE
+                    },
+                    failure = { ex ->
+                        when (ex) {
+                            is OsmApiConnectionError -> handler.handleException(ex)
+                            else -> throw ex
+                        }
+                        bboxDownloadState.value = EnvelopeDownloadState.IDLE
+                    }
+                )
                 ticket.complete()
             }
         }
     }
 
-    suspend fun requestEnvelopeDownload(handler: EnvelopeDownloadHandler) {
+    suspend fun requestEnvelopeDownload(handler: BboxDownloadHandler) {
         bboxDownloadQueueMutex.withLock { bboxDownloadQueue.add(handler) }
         bboxDownloadLimiter.requestRun()
     }
 
-    private suspend fun downloadEnvelope(bbox: BoundingBox): Result<MapVM.DownloadResult, Exception> {
+    private suspend fun downloadBbox(bbox: BoundingBox): Result<MapVM.DownloadResult, Exception> {
         val apiConfig = apiConfigRepository.osmApiConfigFlow.first()
         val limitedBbox = bbox.limitToArea(MapVM.ELEMENTS_MAX_DOWNLOAD_AREA)
         val deduplicatedBbox = limitedBbox.difference(bboxAreaDownloaded.value)
         if (deduplicatedBbox.areaGeo() < MINIMUM_DOWNLOAD_AREA) {
             return Result.success(MapVM.DownloadResult.DOWNLOADED) // TODO: Wrong result
+        }
+        if (deduplicatedBbox.invertedLongitudes || deduplicatedBbox.invertedLatitudes) {
+            // OSM API does not support inverted longitudes or latitudes
+            // TODO: Maybe split into multiple requests along the 180th meridian / poles
+            return Result.success(MapVM.DownloadResult.DOWNLOADED)
         }
         val newElements = withContext(Dispatchers.IO) {
             val mapApiRes = apiConfig.sendMapReq(deduplicatedBbox).getOrElse {
@@ -91,11 +109,11 @@ class ElementsRepository(
                     jsonToElements(mapApiRes)
                 }
             }
+            Timber.d("Downloaded new elements, universe now has ${newElements.size} elements")
             Result.success(newElements)
         }.getOrElse { return Result.error(it) }
         val newBboxAreaDownloadedMutable = bboxAreaDownloaded.value.union(deduplicatedBbox)
         bboxAreaDownloadedMutable.value = newBboxAreaDownloadedMutable
-        Timber.d("Updated bboxAreaDownloaded")
         this.elementsMutable.value = newElements
 
         return Result.success(MapVM.DownloadResult.DOWNLOADED)

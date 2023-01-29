@@ -12,7 +12,6 @@ import net.pfiers.osmfocus.service.channels.createBufferedDropOldestChannel
 import net.pfiers.osmfocus.service.osm.BoundingBox
 import net.pfiers.osmfocus.service.osm.toOsm
 import net.pfiers.osmfocus.service.osmapi.ElementsRepository.Companion.elementsRepository
-import net.pfiers.osmfocus.service.osmdroid.createOnMoveListener
 import net.pfiers.osmfocus.service.osmdroid.init
 import net.pfiers.osmfocus.service.settings.toOSM
 import net.pfiers.osmfocus.service.tagboxes.TbLoc
@@ -23,12 +22,10 @@ import net.pfiers.osmfocus.view.osmdroid.DiscoveredAreaOverlay
 import net.pfiers.osmfocus.view.osmdroid.ElementOverlay
 import net.pfiers.osmfocus.view.osmdroid.TagBoxThreadOverlay
 import net.pfiers.osmfocus.viewmodel.MapVM
-import org.osmdroid.events.MapListener
 import org.osmdroid.views.MapView as OsmDroidMap
 
 enum class MapTask {
     INVALIDATE,
-    UPDATE_ON_MOVE_LISTENER,
     UPDATE_OVERLAYS,
 }
 
@@ -90,34 +87,8 @@ fun SlippyMap(
         }
     }
 
-    var previousOnMoveListener: MapListener? by remember {
-        mapTasks.trySend(MapTask.UPDATE_ON_MOVE_LISTENER)
-        mutableStateOf(null)
-    }
-    LaunchedEffect(onMove) { mapTasks.send(MapTask.UPDATE_ON_MOVE_LISTENER) }
-
     AndroidView(factory = { context ->
-        //            val color = tbLocColors[tbLoc] ?: error("")
-//
-//
-//            val vm: TagBoxVM = createActivityTaggedViewModel(
-//                listOf(tbLoc.toString()),
-//                createVMFactory { TagBoxVM(settingsDataStore, tbLoc, color) }
-//            )
-//            val fragment = TagBoxFragment.newInstance(color, tbLoc)
-//            val tbInfo = TbInfo(fragment, vm, lineOverlay, geometryOverlay)
-//            lifecycleScope.launch {
-//                fragment.events.receiveAsFlow().collect { tagBoxHitRectChange ->
-//                    tbInfo.hitRect = tagBoxHitRectChange.hitRect
-//                    updateLineOverlayStartPoint(tbLoc)
-//                }
-//            }
-
         OsmDroidMap(context).apply {
-            // downloadHandler is used as a token in the elementsRepository to override previous
-            // download requests (for an area that the user has already moved away from)
-            // Therefore, define it once per map and reuse it instead of defining it inline
-            val downloadHandler = { boundingBox.toOsm() }
             init(
                 userAgent = context.userAgentRepository.userAgent,
                 onLongTap = { location ->
@@ -131,9 +102,7 @@ fun SlippyMap(
                         // User interacted with the map (wants to look at something); cancel following
                         mapVM.stopFollowingMyLocation()
                     }
-                    composeScope.launch {
-                        elementsRepository.requestEnvelopeDownload(downloadHandler)
-                    }
+                    onMove(bbox, zoomLevel, isAnimating)
                     false
                 },
             )
@@ -169,12 +138,6 @@ fun SlippyMap(
                     osmDroidMap.overlays.removeIf { it is ElementOverlay || it is TagBoxThreadOverlay }
                     osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.elementOverlay })
                     osmDroidMap.overlays.addAll(tagBoxStatesAndOverlays.values.map { it.threadOverlay })
-                }
-                MapTask.UPDATE_ON_MOVE_LISTENER -> {
-                    osmDroidMap.removeMapListener(previousOnMoveListener)
-                    val onMoveListener = createOnMoveListener(onMove)
-                    osmDroidMap.addMapListener(onMoveListener)
-                    previousOnMoveListener = onMoveListener
                 }
             }
         }
