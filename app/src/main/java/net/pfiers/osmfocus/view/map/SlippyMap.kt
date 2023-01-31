@@ -42,7 +42,7 @@ fun SlippyMap(
     tagBoxStates: SnapshotStateMap<TbLoc, TagBoxState>,
     onMove: (bbox: BoundingBox, zoomLevel: Double, isAnimating: Boolean) -> Unit,
     runWithMapStateChannel: RunWithMapStateChannel,
-){
+) {
     val elementsRepository = LocalContext.current.applicationContext.elementsRepository
     val composeScope = rememberCoroutineScope()
 
@@ -53,14 +53,15 @@ fun SlippyMap(
     val mapTasks = remember { createBufferedDropOldestChannel<MapTask>() }
 
     val tagBoxStatesAndOverlays = remember(tagBoxStates.keys) {
-        tagBoxStates.mapValues { (_, tagBoxState) ->
+        val statesAndOverlays = tagBoxStates.mapValues { (_, tagBoxState) ->
             TagBoxStateAndOverlays(
                 tagBoxState,
                 ElementOverlay(tagBoxState.color),
                 TagBoxThreadOverlay(tagBoxState.color, tagBoxState.threadCornerPoint)
             )
         }
-
+        composeScope.launch { mapTasks.send(MapTask.UPDATE_OVERLAYS) }
+        statesAndOverlays
     }
     val elementsAreaDownloaded by elementsRepository.bboxAreaDownloaded.collectAsState()
     val discoveredAreaOverlay = remember { DiscoveredAreaOverlay(0.2, elementsAreaDownloaded) }
