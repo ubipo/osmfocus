@@ -150,6 +150,9 @@ fun MapView(
         } },
     ) }
 
+    // Trigger a download on first composition
+    // An initial download might have already been triggered by the initial setCenter()
+    // call of SlippyMap, but that doesn't happen when there's no saved location yet
     LaunchedEffect(downloadHandler) {
         elementsRepository.requestEnvelopeDownload(downloadHandler)
     }

@@ -78,7 +78,13 @@ class BoundingBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double
         Coordinate(maxLon, maxLat).toJTS()
     ))
 
-    fun difference(other: Geometry) = toJTSPolygon().difference(other).envelopeInternal.toOsm()
+    fun difference(other: Geometry): BoundingBox {
+        val diffed = toJTSPolygon().difference(other)
+        // Taking the envelope of an empty JTS geometry results in an inverted envelope, which is
+        // invalid for JTS but valid for us (spanning 180th meridian) => check for this
+        if (diffed.isEmpty) return EMPTY
+        return diffed.envelopeInternal.toOsm()
+    }
 
     override fun equals(other: Any?) = this === other || (
         other is BoundingBox &&
@@ -89,6 +95,10 @@ class BoundingBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double
     override fun hashCode() = Objects.hash(minLon, minLat, maxLon, maxLat)
 
     override fun toString() = "BoundingBox(minLon=$minLon, minLat=$minLat, maxLon=$maxLon, maxLat=$maxLat)"
+
+    companion object {
+        val EMPTY = BoundingBox(0.0, 0.0, 0.0, 0.0)
+    }
 }
 
 fun org.osmdroid.util.BoundingBox.toOsm() = BoundingBox(

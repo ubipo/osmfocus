@@ -98,6 +98,7 @@ class ElementsRepository(
         if (deduplicatedBbox.invertedLongitudes || deduplicatedBbox.invertedLatitudes) {
             // OSM API does not support inverted longitudes or latitudes
             // TODO: Maybe split into multiple requests along the 180th meridian / poles
+            // For now, just don't attempt
             return Result.success(MapVM.DownloadResult.DOWNLOADED)
         }
         val newElements = withContext(Dispatchers.IO) {

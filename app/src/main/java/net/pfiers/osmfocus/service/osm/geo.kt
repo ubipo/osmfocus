@@ -28,6 +28,7 @@ fun Coordinate.projectAtAngle(distance: Meter, angle: Double, geodesic: Geodesic
 }
 
 fun BoundingBox.areaGeo(geodesic: Geodesic = Geodesic.WGS84): MetersSquared {
+    if (this == BoundingBox.EMPTY) return 0.0
     val areaPoly = PolygonArea(geodesic, false)
     areaPoly.AddPoint(minLat, minLon)
     areaPoly.AddPoint(minLat, maxLon)
