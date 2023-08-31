@@ -68,8 +68,7 @@ import timber.log.Timber
 import java.lang.Double.max
 import java.util.*
 import java.util.concurrent.*
-import kotlin.collections.HashSet
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @ExperimentalStdlibApi
@@ -359,7 +358,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     synchronized(this@MapFragment) {
                         previousSaveLocationJob?.cancel()
                         previousSaveLocationJob = backgroundScope.launch {
-                            delay(Duration.seconds(0.5).inWholeMilliseconds)
+                            delay(0.5.seconds.inWholeMilliseconds)
                             settingsDataStore.updateData { currentSettings ->
                                 currentSettings.toBuilder()
                                     .setLastLocation(map.mapCenter.toSettingsLocation())
@@ -376,7 +375,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     synchronized(this@MapFragment) {
                         previousSaveZoomJob?.cancel()
                         previousSaveZoomJob = backgroundScope.launch {
-                            delay(Duration.seconds((0.5)))
+                            delay(0.5.seconds)
                             mapVM.setZoomLevel(event.zoomLevel)
                         }
                     }

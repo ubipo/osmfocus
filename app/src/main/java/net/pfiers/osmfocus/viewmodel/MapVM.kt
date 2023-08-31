@@ -45,7 +45,7 @@ class MapVM(
     private val elementsDownloadManager = ElementsDownloadManager(
         ApiConfigRepository.defaultOsmApiConfig, MAX_DOWNLOAD_QPS, ELEMENTS_MAX_DOWNLOAD_AREA, GEOMETRY_FAC
     )
-    val overlayText = MutableLiveData<@StringRes Int?>()
+    val overlayText = MutableLiveData<@receiver:StringRes Int?>()
     val downloadState = MutableLiveData(elementsDownloadManager.state)
     val showRelations = settingsDataStore.data.map { settings ->
         settings.showRelations

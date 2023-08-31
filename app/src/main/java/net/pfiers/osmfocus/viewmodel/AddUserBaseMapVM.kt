@@ -22,12 +22,12 @@ class AddUserBaseMapVM(
 ) : ViewModel() {
     val events = createEventChannel()
     val name = NonNullObservableField("")
-    val nameErrorRes = ObservableField<@StringRes Int>()
+    val nameErrorRes = ObservableField<@receiver:StringRes Int>()
     val baseUrl = NonNullObservableField("")
-    val baseUrlErrorRes = ObservableField<@StringRes Int>()
+    val baseUrlErrorRes = ObservableField<@receiver:StringRes Int>()
     val fileEnding = NonNullObservableField("")
     val maxZoomString = NonNullObservableField("")
-    val maxZoomErrorRes = ObservableField<@StringRes Int>()
+    val maxZoomErrorRes = ObservableField<@receiver:StringRes Int>()
 
     fun onNameFocusChange(hasFocus: Boolean) {
         val shouldShowError = !hasFocus && name.value.isNotEmpty()

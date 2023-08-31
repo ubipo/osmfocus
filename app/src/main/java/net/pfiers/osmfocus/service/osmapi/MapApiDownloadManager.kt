@@ -22,7 +22,7 @@ import net.sf.geographiclib.Geodesic
 import org.locationtech.jts.geom.Envelope
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
-import java.util.concurrent.TimeUnit
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
 
@@ -56,7 +56,7 @@ class MapApiDownloadManager(
     private val elementGeometries = HashMap<TypedId, Geometry>()
 
     private var downloadedArea: Geometry = geometryFactory.createGeometryCollection()
-    private val minDurBetweenDownloads = (1.0 / maxQps).toDuration(TimeUnit.SECONDS)
+    private val minDurBetweenDownloads = (1.0 / maxQps).toDuration(DurationUnit.SECONDS)
 
     fun getGeometry(typedId: TypedId): Geometry? {
         return elementGeometries[typedId] ?: run {
@@ -143,7 +143,7 @@ class MapApiDownloadManager(
         // 1. Check for timeout (to not overload the API)
         lastReqTime?.let { lastReqTime ->
             val elapsed =
-                (System.currentTimeMillis() - lastReqTime).toDuration(TimeUnit.MILLISECONDS)
+                (System.currentTimeMillis() - lastReqTime).toDuration(DurationUnit.MILLISECONDS)
             if (elapsed < minDurBetweenDownloads) {
                 _state = State.TIMEOUT
                 val timeUntilNext = minDurBetweenDownloads - elapsed
