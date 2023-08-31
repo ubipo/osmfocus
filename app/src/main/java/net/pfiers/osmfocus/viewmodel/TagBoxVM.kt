@@ -2,7 +2,11 @@ package net.pfiers.osmfocus.viewmodel
 
 import androidx.annotation.ColorInt
 import androidx.datastore.core.DataStore
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.map
 import kotlinx.coroutines.flow.map
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
@@ -19,7 +23,7 @@ class TagBoxVM constructor(
 ) : ViewModel() {
     val events = createEventChannel()
     val elementCentroidAndId = MutableLiveData<AnyElementCentroidAndId>(null)
-    val tags: LiveData<Tags?> = Transformations.map(elementCentroidAndId) { newElementInfo ->
+    val tags: LiveData<Tags?> = elementCentroidAndId.map { newElementInfo ->
         newElementInfo?.let {
             it.e.tags!!
         }

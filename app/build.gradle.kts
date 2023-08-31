@@ -1,5 +1,8 @@
-import com.google.protobuf.gradle.*
-import org.gradle.kotlin.dsl.protobuf
+//import com.google.protobuf.gradle.builtins
+//import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.id
+//import com.google.protobuf.gradle.plugins
+//import com.google.protobuf.gradle.protoc
 
 plugins {
     id("com.android.application")
@@ -10,13 +13,13 @@ plugins {
 }
 
 android {
-    compileSdk = 31
-    buildToolsVersion = "30.0.3"
+    compileSdk = 34
+//    buildToolsVersion = "30.0.3"
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
-        targetSdk = 31
+        targetSdk = 34
         versionCode = 150
         versionName = "1.5.0"
 
@@ -34,8 +37,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -44,7 +47,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     signingConfigs {
@@ -111,6 +114,7 @@ android {
             "org/apache/http/client/version.properties"
         ))
     }
+    namespace = "net.pfiers.osmfocus"
 }
 
 //sourceSets.getByName("main") {
@@ -121,8 +125,9 @@ android {
 protobuf {
     protobuf.apply {
         protoc {
-            artifact = "com.google.protobuf:protoc:4.0.0-rc-2"
+            artifact = "com.google.protobuf:protoc:3.24.2"
         }
+
         plugins {
             id("javalite") {
                 artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0"
@@ -156,20 +161,20 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("com.android.support:multidex:1.0.3")
-    implementation("androidx.core:core-ktx:1.6.0")
-    implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.1")
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.3.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
-    implementation("androidx.recyclerview:recyclerview:1.2.1")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation("androidx.recyclerview:recyclerview:1.3.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
-    implementation("com.google.android.material:material:1.4.0")
-    implementation("androidx.annotation:annotation:1.2.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+    implementation("com.google.android.material:material:1.9.0")
+    implementation("androidx.annotation:annotation:1.6.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 
     // Spatial
     val jtsVersion = "1.18.1"
@@ -193,15 +198,15 @@ dependencies {
     implementation("com.beust:klaxon:5.4")
 
     // Navigation
-    val navVersion = "2.3.4"
+    val navVersion = "2.7.1"
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.fragment:fragment-ktx:1.4.0")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.fragment:fragment-ktx:1.6.1")
 
     // Room DB
-    val roomVersion = "2.4.0-alpha05"
+    val roomVersion = "2.6.0-beta01"
     implementation("androidx.room:room-runtime:$roomVersion")
 
     implementation("androidx.room:room-ktx:$roomVersion")
@@ -212,7 +217,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-lite:3.0.1")
 
     // Datastore
-    val datastoreVersion = "1.0.0-alpha08"
+    val datastoreVersion = "1.1.0-alpha04"
     implementation("androidx.datastore:datastore:$datastoreVersion")
     implementation("androidx.datastore:datastore-rxjava3:$datastoreVersion")
 

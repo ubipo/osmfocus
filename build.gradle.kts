@@ -1,6 +1,6 @@
 buildscript {
     extra.apply {
-        set("kotlin", "1.6.0")
+        set("kotlin", "1.8.0")
     }
 
     repositories {
@@ -11,9 +11,9 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:7.0.2")
+        classpath("com.android.tools.build:gradle:8.1.1")
         classpath(kotlin("gradle-plugin", version = project.extra["kotlin"] as String?))
-        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.17")
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.9.1")
     }
 }
 
