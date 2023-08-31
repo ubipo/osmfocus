@@ -7,7 +7,7 @@
 
     <data>
 
-        <import type="net.pfiers.osmfocus.Settings.TagboxLongLines" />
+<!--        <import type="net.pfiers.osmfocus.Settings.TagboxLongLines" />-->
 
         <variable
             name="vm"
@@ -15,275 +15,284 @@
 
     </data>
 
-    <ScrollView
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:text="TODO">
+    </TextView>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+<!--    TODO: Fix binding errors -->
+<!--    <ScrollView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content">-->
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="@{() -> vm.editBaseMaps()}">
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:orientation="vertical">-->
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/appCompatImageView2"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="@color/secondary"
-                    app:contentPadding="5dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearanceOverlay="@style/SettingsListItemIconOverlay"
-                    app:srcCompat="@drawable/ic_map_24" />
+<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="72dp"-->
+<!--                android:clickable="true"-->
+<!--                android:focusable="true"-->
+<!--                android:onClick="@{() -> vm.editBaseMaps()}">-->
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/appCompatImageView2"
-                    app:layout_constraintTop_toTopOf="parent">
+<!--                <com.google.android.material.imageview.ShapeableImageView-->
+<!--                    android:id="@+id/appCompatImageView2"-->
+<!--                    android:layout_width="40dp"-->
+<!--                    android:layout_height="40dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:layout_marginBottom="16dp"-->
+<!--                    android:background="@color/secondary"-->
+<!--                    app:contentPadding="5dp"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    app:shapeAppearanceOverlay="@style/SettingsListItemIconOverlay"-->
+<!--                    app:srcCompat="@drawable/ic_map_24" />-->
 
-                    <TextView
-                        android:id="@+id/textView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/setting_title_base_map"
-                        android:textAppearance="?attr/textAppearanceListItem" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="0dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:orientation="vertical"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toEndOf="@+id/appCompatImageView2"-->
+<!--                    app:layout_constraintTop_toTopOf="parent">-->
 
-                    <TextView
-                        android:id="@+id/textView2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@{vm.baseMap.getName(context)}"
-                        android:textAppearance="?attr/textAppearanceListItemSecondary" />
+<!--                    <TextView-->
+<!--                        android:id="@+id/textView"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@string/setting_title_base_map"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItem" />-->
 
-                </LinearLayout>
+<!--                    &lt;!&ndash; TODO: below was: android:text="@{vm.baseMap.getName(context)}" &ndash;&gt;-->
+<!--                    <TextView-->
+<!--                        android:id="@+id/textView2"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="TODO"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItemSecondary" />-->
 
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/appCompatImageView"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:tint="#252525"
-                    app:srcCompat="@drawable/ic_baseline_settings_24" />
+<!--                </LinearLayout>-->
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+<!--                <androidx.appcompat.widget.AppCompatImageView-->
+<!--                    android:id="@+id/appCompatImageView"-->
+<!--                    android:layout_width="24dp"-->
+<!--                    android:layout_height="24dp"-->
+<!--                    android:layout_marginEnd="16dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintEnd_toEndOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    android:tint="#252525"-->
+<!--                    app:srcCompat="@drawable/ic_baseline_settings_24" />-->
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="@{() -> vm.editTagboxLongLines()}">
+<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/tagBoxLongLinesIcon"
-                    style="@style/SettingsListItemIcon"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_wrap_text" />
+<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="72dp"-->
+<!--                android:clickable="true"-->
+<!--                android:focusable="true"-->
+<!--                android:onClick="@{() -> vm.editTagboxLongLines()}">-->
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/tagBoxLongLinesIcon"
-                    app:layout_constraintTop_toTopOf="parent">
+<!--                <com.google.android.material.imageview.ShapeableImageView-->
+<!--                    android:id="@+id/tagBoxLongLinesIcon"-->
+<!--                    style="@style/SettingsListItemIcon"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    app:srcCompat="@drawable/ic_wrap_text" />-->
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/setting_title_tagbox_long_lines"
-                        android:textAppearance="?attr/textAppearanceListItem" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="0dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:orientation="vertical"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toEndOf="@+id/tagBoxLongLinesIcon"-->
+<!--                    app:layout_constraintTop_toTopOf="parent">-->
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@{vm.tagboxLongLines == TagboxLongLines.ELLIPSIZE ? @string/setting_tagbox_long_lines_ellipsize : @string/setting_tagbox_long_lines_wrap}"
-                        android:textAppearance="?attr/textAppearanceListItemSecondary" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@string/setting_title_tagbox_long_lines"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItem" />-->
 
-                </LinearLayout>
+<!--&lt;!&ndash;                    TODO: below was:                         android:text="@{vm.tagboxLongLines == TagboxLongLines.ELLIPSIZE ? @string/setting_tagbox_long_lines_ellipsize : @string/setting_tagbox_long_lines_wrap}"&ndash;&gt;-->
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="TODO"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItemSecondary" />-->
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+<!--                </LinearLayout>-->
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="@{() -> vm.toggleShowRelations()}">
+<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/showRelationsIcon"
-                    style="@style/SettingsListItemIcon"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_relation" />
+<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="72dp"-->
+<!--                android:clickable="true"-->
+<!--                android:focusable="true"-->
+<!--                android:onClick="@{() -> vm.toggleShowRelations()}">-->
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/showRelationsIcon"
-                    app:layout_constraintTop_toTopOf="parent">
+<!--                <com.google.android.material.imageview.ShapeableImageView-->
+<!--                    android:id="@+id/showRelationsIcon"-->
+<!--                    style="@style/SettingsListItemIcon"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    app:srcCompat="@drawable/ic_relation" />-->
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/setting_show_relations"
-                        android:textAppearance="?attr/textAppearanceListItem" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="0dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:orientation="vertical"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toEndOf="@+id/showRelationsIcon"-->
+<!--                    app:layout_constraintTop_toTopOf="parent">-->
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@{vm.relationsShown ? @string/setting_show_relations_shown : @string/setting_show_relations_hidden}"
-                        android:textAppearance="?attr/textAppearanceListItemSecondary" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@string/setting_show_relations"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItem" />-->
 
-                </LinearLayout>
-                
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:checked="@{vm.relationsShown}"
-                    android:clickable="false"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@{vm.relationsShown ? @string/setting_show_relations_shown : @string/setting_show_relations_hidden}"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItemSecondary" />-->
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+<!--                </LinearLayout>-->
+<!--                -->
+<!--                <com.google.android.material.switchmaterial.SwitchMaterial-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:checked="@{vm.relationsShown}"-->
+<!--                    android:clickable="false"-->
+<!--                    android:layout_marginEnd="16dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintEnd_toEndOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent" />-->
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="@{() -> vm.toggleZoomBeyondBaseMapMax()}">
+<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/zoomBeyondBaseMapMaxIcon"
-                    style="@style/SettingsListItemIcon"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_baseline_zoom_in_24" />
+<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="72dp"-->
+<!--                android:clickable="true"-->
+<!--                android:focusable="true"-->
+<!--                android:onClick="@{() -> vm.toggleZoomBeyondBaseMapMax()}">-->
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/zoomBeyondBaseMapMaxIcon"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/zoomBeyondBaseMapMaxSwitch">
+<!--                <com.google.android.material.imageview.ShapeableImageView-->
+<!--                    android:id="@+id/zoomBeyondBaseMapMaxIcon"-->
+<!--                    style="@style/SettingsListItemIcon"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    app:srcCompat="@drawable/ic_baseline_zoom_in_24" />-->
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/setting_zoom_beyond_base_map_max"
-                        android:textAppearance="?attr/textAppearanceListItem" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="0dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:orientation="vertical"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toEndOf="@+id/zoomBeyondBaseMapMaxIcon"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    app:layout_constraintEnd_toStartOf="@+id/zoomBeyondBaseMapMaxSwitch">-->
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="Testietest"
-                        android:text="@{vm.zoomBeyondBaseMapMax ? @string/setting_zoom_beyond_base_map_max_enabled : @string/setting_zoom_beyond_base_map_max_disabled}"
-                        android:textAppearance="?attr/textAppearanceListItemSecondary" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@string/setting_zoom_beyond_base_map_max"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItem" />-->
 
-                </LinearLayout>
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        tools:text="Testietest"-->
+<!--                        android:text="@{vm.zoomBeyondBaseMapMax ? @string/setting_zoom_beyond_base_map_max_enabled : @string/setting_zoom_beyond_base_map_max_disabled}"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItemSecondary" />-->
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/zoomBeyondBaseMapMaxSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:checked="@{vm.zoomBeyondBaseMapMax}"
-                    android:clickable="false"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginStart="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+<!--                </LinearLayout>-->
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+<!--                <com.google.android.material.switchmaterial.SwitchMaterial-->
+<!--                    android:id="@+id/zoomBeyondBaseMapMaxSwitch"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:checked="@{vm.zoomBeyondBaseMapMax}"-->
+<!--                    android:clickable="false"-->
+<!--                    android:layout_marginEnd="16dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintEnd_toEndOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent" />-->
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="@{() -> vm.showAbout()}">
+<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/aboutIcon"
-                    style="@style/SettingsListItemIcon"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_baseline_info_24" />
+<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="72dp"-->
+<!--                android:clickable="true"-->
+<!--                android:focusable="true"-->
+<!--                android:onClick="@{() -> vm.showAbout()}">-->
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/aboutIcon"
-                    app:layout_constraintTop_toTopOf="parent">
+<!--                <com.google.android.material.imageview.ShapeableImageView-->
+<!--                    android:id="@+id/aboutIcon"-->
+<!--                    style="@style/SettingsListItemIcon"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toTopOf="parent"-->
+<!--                    app:srcCompat="@drawable/ic_baseline_info_24" />-->
 
-                    <TextView
-                        android:id="@+id/about"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/about"
-                        android:textAppearance="?attr/textAppearanceListItem" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="0dp"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:layout_marginBottom="8dp"-->
+<!--                    android:orientation="vertical"-->
+<!--                    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                    app:layout_constraintStart_toEndOf="@+id/aboutIcon"-->
+<!--                    app:layout_constraintTop_toTopOf="parent">-->
 
-                    <TextView
-                        android:id="@+id/aboutSecond"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/about_second_line"
-                        android:textAppearance="?attr/textAppearanceListItemSecondary" />
+<!--                    <TextView-->
+<!--                        android:id="@+id/about"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@string/about"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItem" />-->
 
-                </LinearLayout>
+<!--                    <TextView-->
+<!--                        android:id="@+id/aboutSecond"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="@string/about_second_line"-->
+<!--                        android:textAppearance="?attr/textAppearanceListItemSecondary" />-->
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+<!--                </LinearLayout>-->
 
-        </LinearLayout>
+<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
 
-    </ScrollView>
+<!--        </LinearLayout>-->
+
+<!--    </ScrollView>-->
 
 </layout>

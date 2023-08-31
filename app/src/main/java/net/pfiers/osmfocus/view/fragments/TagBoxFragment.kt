@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.R
@@ -82,7 +81,8 @@ class TagBoxFragment : Fragment() {
             val (key, value) = tag
             listItemBinding.key = key
             listItemBinding.value = value
-            listItemBinding.longLinesHandling = tagBoxVM.longLinesHandling
+// TODO: Disabled due to binding errors
+        //            listItemBinding.longLinesHandling = tagBoxVM.longLinesHandling
         }
         binding.tags.itemAnimator = null
         binding.tags.adapter = adapter

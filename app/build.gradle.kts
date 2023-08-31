@@ -2,7 +2,7 @@ import com.google.protobuf.gradle.id
 
 val kotlinVersion: String by rootProject.extra
 val composeVersion: String by rootProject.extra
-val navVersion = "2.4.2"
+val navVersion = "2.7.1"
 
 plugins {
     id("com.android.application")
@@ -13,13 +13,13 @@ plugins {
 }
 
 android {
-    compileSdk = 33
+    compileSdk = 34
     buildToolsVersion = "33.0.1"
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 150
         versionName = "1.5.0"
 
@@ -169,16 +169,16 @@ dependencies {
     // Core
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("com.android.support:multidex:1.0.3")
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.annotation:annotation:1.5.0")
-    implementation("com.google.android.material:material:1.7.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.annotation:annotation:1.6.0")
+    implementation("com.google.android.material:material:1.9.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
     // Jetpack compose
-    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.compose.runtime:runtime-livedata:$composeVersion")
     implementation("androidx.compose.ui:ui:$composeVersion")
     implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
@@ -194,19 +194,19 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:$composeVersion")
 
     // Preferences
-    implementation("androidx.preference:preference-ktx:1.2.0")
+    implementation("androidx.preference:preference-ktx:1.2.1")
 
     // Compat / legacy
-    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
 
     // Androidx views
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.recyclerview:recyclerview:1.2.1")
+    implementation("androidx.recyclerview:recyclerview:1.3.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
 
     // Jetpack / lifecycle
-    val lifecycleVersion = "2.4.1"
+    val lifecycleVersion = "2.6.1"
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
@@ -240,11 +240,11 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
-    implementation("androidx.preference:preference-ktx:1.2.0")
-    implementation("androidx.fragment:fragment-ktx:1.5.5")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.fragment:fragment-ktx:1.6.1")
 
     // Room DB
-    val roomVersion = "2.4.0-alpha05"
+    val roomVersion = "2.6.0-beta01"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
@@ -254,7 +254,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-lite:3.0.1")
 
     // Datastore
-    val datastoreVersion = "1.0.0-alpha08"
+    val datastoreVersion = "1.1.0-alpha04"
     implementation("androidx.datastore:datastore:$datastoreVersion")
     implementation("androidx.datastore:datastore-rxjava3:$datastoreVersion")
 

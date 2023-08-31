@@ -35,12 +35,12 @@ class ViewBindingListAdapter<T, B : ViewDataBinding>(
      * Not suitable for e.g. database entries. OK for dataclasses.
      */
     private class EqualsItemCallback<T> : DiffUtil.ItemCallback<T>() {
-        override fun areItemsTheSame(a: T, b: T): Boolean = a == b
+        override fun areItemsTheSame(oldItem: T & Any, newItem: T & Any): Boolean = a == b
 
         /**
          * Only called when areItemsTheSame() returns true => a == b => contents must be equal
          */
-        override fun areContentsTheSame(a: T, b: T): Boolean = true
+        override fun areContentsTheSame(oldItem: T & Any, newItem: T & Any): Boolean = true
     }
 
     class ViewHolder<T, B : ViewDataBinding>(

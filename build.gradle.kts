@@ -1,6 +1,6 @@
 buildscript {
-    val kotlinVersion: String by extra("1.6.21")
-    val composeVersion: String by extra("1.2.0-rc02")
+    val kotlinVersion: String by extra("1.9.0")
+    val composeVersion: String by extra("1.5.0")
 
     repositories {
         google()
@@ -10,9 +10,9 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.0")
+        classpath("com.android.tools.build:gradle:8.1.1")
         classpath(kotlin("gradle-plugin", version = kotlinVersion))
-        classpath("com.google.protobuf:protobuf-gradle-plugin:0.9.2")
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.9.1")
     }
 }
 
