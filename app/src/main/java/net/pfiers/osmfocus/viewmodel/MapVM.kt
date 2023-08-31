@@ -185,7 +185,7 @@ class MapVM(
                     is ZoomLevelRecededException,
                     is FresherDownloadCe -> return@onError // Ignore
                 }
-                throw ex
+                events.trySend(ExceptionEvent(ex)).discard()
             }
         }
         backgroundScope.launch {

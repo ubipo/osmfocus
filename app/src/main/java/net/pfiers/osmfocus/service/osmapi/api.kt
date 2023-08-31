@@ -14,6 +14,7 @@ import net.pfiers.osmfocus.service.util.*
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
 import timber.log.Timber
+import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.UnknownHostException
 import java.util.*
@@ -38,7 +39,8 @@ data class OsmApiConfig(
  */
 class OsmApiConnectionException(
     message: String?,
-    cause: Exception
+    cause: Exception,
+    shouldOfferRetry: Boolean = false
 ) : Exception(message, cause)
 
 enum class OsmApiMethod { GET, POST }
@@ -70,8 +72,16 @@ suspend inline fun OsmApiConfig.apiReq(
         if (bubbleCause is FuelError) {
             val fuelCause = bubbleCause.cause
             val is500 = resp.statusCode % 500 == 0
-            if (fuelCause is UnknownHostException || (fuelCause is HttpException && is500)) {
+            if (fuelCause is UnknownHostException) {
+                return@mapError OsmApiConnectionException(
+                    fuelCause.message, fuelCause, shouldOfferRetry = true
+                )
+            } else if (fuelCause is HttpException && is500) {
                 return@mapError OsmApiConnectionException(fuelCause.message, fuelCause as Exception)
+            } else if (fuelCause is SocketTimeoutException) {
+                return@mapError OsmApiConnectionException(
+                    "Connection timed out", fuelCause, shouldOfferRetry = true
+                )
             }
         }
         ex
