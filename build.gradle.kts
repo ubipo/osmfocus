@@ -1,6 +1,6 @@
 buildscript {
     extra.apply {
-        set("kotlin", "1.5.30")
+        set("kotlin", "1.6.0")
     }
 
     repositories {
