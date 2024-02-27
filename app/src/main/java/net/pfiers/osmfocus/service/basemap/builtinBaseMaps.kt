@@ -11,7 +11,7 @@ val builtinBaseMaps = listOf(
     BuiltinBaseMap(
         R.string.base_map_default,
         "Base map © OpenStreetMap Foundation",
-        "https://a.tile.openstreetmap.org/",
+        "https://tile.openstreetmap.org/",
         19
     ),
     BuiltinBaseMap(
