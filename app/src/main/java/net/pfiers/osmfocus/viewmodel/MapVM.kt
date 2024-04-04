@@ -50,6 +50,12 @@ class MapVM(
     val showRelations = settingsDataStore.data.map { settings ->
         settings.showRelations
     }.asLiveData()
+    val showNodes = settingsDataStore.data.map { settings ->
+        settings.showNodes
+    }.asLiveData()
+    val showWays = settingsDataStore.data.map { settings ->
+        settings.showWays
+    }.asLiveData()
     val savedZoomLevel = settingsDataStore.data.map { settings ->
         settings.lastZoomLevel
     }.asLiveData()
@@ -261,8 +267,8 @@ class MapVM(
     private fun getElementsToDisplay(envelope: Envelope): List<ElementToDisplayData> {
         val center = envelope.centre()
         val elementsList = mutableListOf<Map.Entry<Long, Element>>()
-        elementsList.addAll(elementsDownloadManager.elements.nodes.entries)
-        elementsList.addAll(elementsDownloadManager.elements.ways.entries)
+        if (showNodes.value == true) elementsList.addAll(elementsDownloadManager.elements.nodes.entries)
+        if (showWays.value == true) elementsList.addAll(elementsDownloadManager.elements.ways.entries)
         if (showRelations.value == true) elementsList.addAll(elementsDownloadManager.elements.relations.entries)
         return elementsList
             .filterNot { (_, element) -> element.tags.isNullOrEmpty() }
