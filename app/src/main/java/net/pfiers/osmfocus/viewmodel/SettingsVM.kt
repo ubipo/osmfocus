@@ -25,6 +25,8 @@ class SettingsVM(
     }
     val tagboxLongLines = settingsLd { settings -> settings.tagboxLongLines }
     val relationsShown = settingsLd { settings -> settings.showRelations }
+    val nodesShown = settingsLd { settings -> settings.showNodes }
+    val waysShown = settingsLd { settings -> settings.showWays }
     val zoomBeyondBaseMapMax = settingsLd { settings -> settings.zoomBeyondBaseMapMax }
 
     fun editBaseMaps() = events.trySend(EditBaseMapsEvent()).discard()
@@ -35,6 +37,22 @@ class SettingsVM(
         settingsDataStore.updateData { currentSettings ->
             currentSettings.toBuilder().apply {
                 showRelations = !currentSettings.showRelations
+            }.build()
+        }
+    }.discard()
+
+    fun toggleShowNodes() = viewModelScope.launch {
+        settingsDataStore.updateData { currentSettings ->
+            currentSettings.toBuilder().apply {
+                showNodes = !currentSettings.showNodes
+            }.build()
+        }
+    }.discard()
+
+    fun toggleShowWays() = viewModelScope.launch {
+        settingsDataStore.updateData { currentSettings ->
+            currentSettings.toBuilder().apply {
+                showWays = !currentSettings.showWays
             }.build()
         }
     }.discard()

@@ -112,6 +112,12 @@
     <string name="setting_show_relations">Show relations</string>
     <string name="setting_show_relations_shown">Shown</string>
     <string name="setting_show_relations_hidden">Hidden</string>
+    <string name="setting_show_nodes">Show nodes</string>
+    <string name="setting_show_nodes_shown">Shown</string>
+    <string name="setting_show_nodes_hidden">Hidden</string>
+    <string name="setting_show_ways">Show ways</string>
+    <string name="setting_show_ways_shown">Shown</string>
+    <string name="setting_show_ways_hidden">Hidden</string>
     <string name="too_zoomed_out">Zoom in to view data</string>
     <string name="setting_zoom_beyond_base_map_max_enabled">Enabled</string>
     <string name="setting_zoom_beyond_base_map_max_disabled">Disabled</string>

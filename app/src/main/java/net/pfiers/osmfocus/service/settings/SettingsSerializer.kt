@@ -19,6 +19,8 @@ class SettingsSerializer : Serializer<Settings> {
         lastZoomLevel = Defaults.zoomLevel
         tagboxLongLines = Defaults.tagBoxLongLines
         showRelations = Defaults.showRelations
+        showNodes = Defaults.showNodes
+        showWays = Defaults.showWays
         zoomBeyondBaseMapMax = Defaults.zoomBeyondBaseMapMax
     }.build()
 

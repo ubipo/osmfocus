@@ -263,6 +263,8 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         binding.vm = mapVM
 
         mapVM.showRelations.observe(viewLifecycleOwner) { }
+        mapVM.showNodes.observe(viewLifecycleOwner) { }
+        mapVM.showWays.observe(viewLifecycleOwner) { }
 
         mapVM.downloadState.observe(viewLifecycleOwner) { state ->
             val icon = when (state) {
