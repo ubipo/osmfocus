@@ -31,4 +31,7 @@ message Settings {
 
   string osmAuthState = 8;
 
+  bool showNodes = 10;
+
+  bool showWays = 11;
 }

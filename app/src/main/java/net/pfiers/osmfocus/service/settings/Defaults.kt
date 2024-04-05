@@ -9,5 +9,7 @@ object Defaults {
     const val apiBaseUrl = "https://api.openstreetmap.org/api/0.6"
     val tagBoxLongLines = Settings.TagboxLongLines.ELLIPSIZE
     const val showRelations = false
+    const val showWays = true
+    const val showNodes = true
     const val zoomBeyondBaseMapMax = false
 }
