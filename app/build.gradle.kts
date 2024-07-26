@@ -1,8 +1,4 @@
-//import com.google.protobuf.gradle.builtins
-//import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.id
-//import com.google.protobuf.gradle.plugins
-//import com.google.protobuf.gradle.protoc
 
 plugins {
     id("com.android.application")
@@ -19,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 151
         versionName = "1.5.1"
 
@@ -44,10 +40,14 @@ android {
 
     buildFeatures {
         dataBinding = true
+        buildConfig = true
     }
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+        freeCompilerArgs += listOf(
+            "-Xcontext-receivers",
+        )
     }
 
     signingConfigs {
