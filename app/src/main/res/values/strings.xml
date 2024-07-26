@@ -189,4 +189,5 @@
     <string name="unknown_action_anonymous">Action \'%1$s\'</string>
     <string name="description">Description</string>
     <string name="restart">Restart</string>
+    <string name="retry">Retry</string>
 </resources>

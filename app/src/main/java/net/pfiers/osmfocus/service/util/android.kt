@@ -6,6 +6,10 @@ import android.net.Uri
 import android.util.TypedValue
 import androidx.databinding.Observable
 import androidx.databinding.ObservableField
+import androidx.databinding.ViewDataBinding
+import com.google.android.material.snackbar.Snackbar
+import net.pfiers.osmfocus.R
+import net.pfiers.osmfocus.view.support.BindingFragment
 import org.osmdroid.util.GeoPoint
 import java.net.URI
 import java.net.URL
@@ -70,3 +74,9 @@ fun Float.toDp(res: Resources) = TypedValue.applyDimension(
     this,
     res.displayMetrics
 )
+
+fun <T : ViewDataBinding> BindingFragment<T>.showSnackBar(text: String, retry: (() -> Unit)? = null) =
+    Snackbar.make(binding.root, text, if (retry == null) Snackbar.LENGTH_LONG else Snackbar.LENGTH_INDEFINITE).apply {
+        retry?.let { retry -> setAction(R.string.retry) { retry() } }
+        show()
+    }
