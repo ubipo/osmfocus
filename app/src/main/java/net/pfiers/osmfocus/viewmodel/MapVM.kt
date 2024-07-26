@@ -8,7 +8,6 @@ import androidx.lifecycle.*
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.onError
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.*
@@ -182,7 +181,7 @@ class MapVM(
 
     private val backgroundScope = CoroutineScope(Job() + Dispatchers.Default)
 
-    private fun initiateDownload() {
+    fun initiateDownload() {
         backgroundScope.launch {
             elementsDownloadManager.download {
                 getDownloadEnvelope(ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL)

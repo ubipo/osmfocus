@@ -2,19 +2,23 @@ package net.pfiers.osmfocus.service.taginfo
 
 import com.beust.klaxon.FieldRenamer
 import com.beust.klaxon.Klaxon
-import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.mapError
-import net.pfiers.osmfocus.service.*
 import net.pfiers.osmfocus.service.klaxon.InstantConverter
 import net.pfiers.osmfocus.service.klaxon.UriConverter
 import net.pfiers.osmfocus.service.osm.Tag
-import net.pfiers.osmfocus.service.osmapi.*
-import net.pfiers.osmfocus.service.util.*
+import net.pfiers.osmfocus.service.util.HTTP_ACCEPT
+import net.pfiers.osmfocus.service.util.HTTP_USER_AGENT
+import net.pfiers.osmfocus.service.util.MIME_JSON_UTF8
+import net.pfiers.osmfocus.service.util.appendQueryParameter
+import net.pfiers.osmfocus.service.util.appendQueryParameters
+import net.pfiers.osmfocus.service.util.div
+import net.pfiers.osmfocus.service.util.httpGet
+import net.pfiers.osmfocus.service.util.mapOfNotNull
+import net.pfiers.osmfocus.service.util.toHttpWrapped
 import java.net.URI
-import java.net.UnknownHostException
 
 private fun createKlaxon() = Klaxon()
     .converter(InstantConverter())
@@ -25,11 +29,6 @@ private fun createKlaxon() = Klaxon()
     })
 
 private const val API_V4_BASE_PATH = "/api/4"
-
-class TagInfoApiConnectionException(
-    message: String?,
-    cause: UnknownHostException
-) : Exception(message, cause)
 
 enum class SortOrder(val paramValue: String) {
     DESCENDING("desc"),
@@ -48,18 +47,9 @@ private suspend inline fun <reified T : BasicRes> TagInfoApiConfig.apiReq(
         .httpGet()
         .header(HTTP_USER_AGENT, userAgent)
         .header(HTTP_ACCEPT, MIME_JSON_UTF8)
-        .awaitStringResponseResult().third as Result<String, Exception>)
+        .awaitStringResponseResult().third)
+        .mapError { error -> error.toHttpWrapped() }
         .map { createKlaxon().parse<T>(it) ?: throw Exception("Empty JSON response") }
-        .mapError { ex ->
-            val bubbleCause = ex.cause
-            if (ex is FuelError && bubbleCause is FuelError) {
-                val fuelCause = bubbleCause.cause
-                if (fuelCause is UnknownHostException) {
-                    return@mapError TagInfoApiConnectionException(fuelCause.message, fuelCause)
-                }
-            }
-            ex
-        }
 }
 
 suspend fun TagInfoApiConfig.keyValues(

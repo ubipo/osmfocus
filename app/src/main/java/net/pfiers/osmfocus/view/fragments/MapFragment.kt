@@ -4,7 +4,10 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.graphics.Bitmap
 import android.graphics.Rect
-import android.graphics.drawable.*
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.AnimatedVectorDrawable
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -26,11 +29,19 @@ import androidx.navigation.fragment.findNavController
 import com.github.kittinunf.result.map
 import com.github.kittinunf.result.onError
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import net.pfiers.osmfocus.*
+import net.pfiers.osmfocus.BuildConfig
+import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentMapBinding
 import net.pfiers.osmfocus.service.LocationHelper
 import net.pfiers.osmfocus.service.basemap.BaseMap
@@ -40,23 +51,50 @@ import net.pfiers.osmfocus.service.osm.NoteAndId
 import net.pfiers.osmfocus.service.osm.Notes
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
-import net.pfiers.osmfocus.service.osmapi.OsmApiConnectionException
 import net.pfiers.osmfocus.service.settings.Defaults
 import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.service.settings.toGeoPoint
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
-import net.pfiers.osmfocus.service.tagboxlocation.*
-import net.pfiers.osmfocus.service.util.*
+import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
+import net.pfiers.osmfocus.service.tagboxlocation.tagBoxLineStart
+import net.pfiers.osmfocus.service.tagboxlocation.tbLocations
+import net.pfiers.osmfocus.service.util.WrappedHttpException
+import net.pfiers.osmfocus.service.util.showSnackBar
+import net.pfiers.osmfocus.service.util.toCoordinate
+import net.pfiers.osmfocus.service.util.toDp
+import net.pfiers.osmfocus.service.util.toEnvelope
+import net.pfiers.osmfocus.service.util.toGeoPoint
+import net.pfiers.osmfocus.service.util.value
 import net.pfiers.osmfocus.view.osmdroid.CrosshairOverlay
 import net.pfiers.osmfocus.view.osmdroid.GeometryOverlay
 import net.pfiers.osmfocus.view.osmdroid.TagBoxLineOverlay
-import net.pfiers.osmfocus.view.support.*
-import net.pfiers.osmfocus.viewmodel.*
+import net.pfiers.osmfocus.view.support.BindingFragment
+import net.pfiers.osmfocus.view.support.EventReceiver
+import net.pfiers.osmfocus.view.support.PaletteId
+import net.pfiers.osmfocus.view.support.activityAs
+import net.pfiers.osmfocus.view.support.applyConstraints
+import net.pfiers.osmfocus.view.support.createVMFactory
+import net.pfiers.osmfocus.view.support.generatePalettes
+import net.pfiers.osmfocus.view.support.getDrawable
+import net.pfiers.osmfocus.view.support.handleNavEvent
+import net.pfiers.osmfocus.view.support.showWithDefaultTag
+import net.pfiers.osmfocus.viewmodel.AttributionVM
+import net.pfiers.osmfocus.viewmodel.MapVM
 import net.pfiers.osmfocus.viewmodel.MapVM.Companion.ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL
-import net.pfiers.osmfocus.viewmodel.support.*
-import org.locationtech.jts.geom.*
+import net.pfiers.osmfocus.viewmodel.TagBoxVM
+import net.pfiers.osmfocus.viewmodel.support.ActionsVisibilityEvent
+import net.pfiers.osmfocus.viewmodel.support.ExceptionEvent
+import net.pfiers.osmfocus.viewmodel.support.NavEvent
+import net.pfiers.osmfocus.viewmodel.support.ShowNoteDetailsEvent
+import net.pfiers.osmfocus.viewmodel.support.StartFollowingLocationEvent
+import net.pfiers.osmfocus.viewmodel.support.StopFollowingLocationEvent
+import net.pfiers.osmfocus.viewmodel.support.createActivityTaggedViewModel
+import org.locationtech.jts.geom.GeometryFactory
 import org.osmdroid.config.Configuration
-import org.osmdroid.events.*
+import org.osmdroid.events.MapEventsReceiver
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
 import org.osmdroid.tileprovider.tilesource.XYTileSource
 import org.osmdroid.util.GeoPoint
@@ -66,8 +104,6 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import timber.log.Timber
 import java.lang.Double.max
-import java.util.*
-import java.util.concurrent.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -109,7 +145,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
             .toMap()
 
         val settingsDataStore = requireContext().settingsDataStore
-        tbInfos = tbLocations.map { tbLoc: TbLoc ->
+        tbInfos = tbLocations.associateWith { tbLoc: TbLoc ->
             val color = tbLocColors[tbLoc] ?: error("")
             val lineOverlay = TagBoxLineOverlay(color)
             val geometryOverlay = GeometryOverlay(color, geometryFactory)
@@ -125,24 +161,23 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     updateLineOverlayStartPoint(tbLoc)
                 }
             }
-            Pair(tbLoc, tbInfo)
-        }.toMap()
+            tbInfo
+        }
 
         val navController = findNavController()
         lifecycleScope.launch {
             mapVM.events.receiveAsFlow().collect { event ->
                 when (event) {
                     is ExceptionEvent -> {
-                        // TODO: Use humanizer
-                        when (event.exception) {
-                            is OsmApiConnectionException -> {
-                                Snackbar.make(
-                                    binding.map,
-                                    event.exception.message ?: "OSM API Connection Exception",
-                                    Snackbar.LENGTH_LONG
-                                ).show()
-                            }
-                            else -> throw event.exception
+                        val exception = event.exception
+                        Timber.e(exception, "While getting tag info for $tag")
+                        if (exception is WrappedHttpException) {
+                            showSnackBar(
+                                "Loading elements failed because ${exception.becauseMessage}",
+                                retry = ({ mapVM.initiateDownload() }).takeIf { exception.shouldOfferRetry }
+                            )
+                        } else {
+                            showSnackBar("Loading elements failed")
                         }
                     }
                     is StartFollowingLocationEvent -> {

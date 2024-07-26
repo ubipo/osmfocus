@@ -1,7 +1,5 @@
 package net.pfiers.osmfocus.service.osmapi
 
-import com.github.kittinunf.fuel.core.FuelError
-import com.github.kittinunf.fuel.core.HttpException
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.extensions.authentication
 import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
@@ -9,15 +7,15 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.mapError
-import net.pfiers.osmfocus.service.*
-import net.pfiers.osmfocus.service.util.*
+import net.pfiers.osmfocus.service.util.HTTP_ACCEPT
+import net.pfiers.osmfocus.service.util.HTTP_USER_AGENT
+import net.pfiers.osmfocus.service.util.MIME_JSON_UTF8
+import net.pfiers.osmfocus.service.util.appendPath
+import net.pfiers.osmfocus.service.util.appendQueryParameter
+import net.pfiers.osmfocus.service.util.toHttpWrapped
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Envelope
-import timber.log.Timber
-import java.net.SocketTimeoutException
 import java.net.URI
-import java.net.UnknownHostException
-import java.util.*
 import kotlin.time.ExperimentalTime
 
 enum class Endpoint(val path: String) {
@@ -33,60 +31,26 @@ data class OsmApiConfig(
     val userAgent: String
 )
 
-/** Indicates any connection exception related to an osm API
- * request that doesn't warrant retrying (without user
- * intervention), like `UnknownHostException`s.
- */
-class OsmApiConnectionException(
-    message: String?,
-    cause: Exception,
-    shouldOfferRetry: Boolean = false
-) : Exception(message, cause)
-
 enum class OsmApiMethod { GET, POST }
 
 @ExperimentalTime
-@Suppress("UnstableApiUsage")
 suspend inline fun OsmApiConfig.apiReq(
     endpoint: Endpoint,
     noinline urlTransformer: (URI.() -> URI)? = null,
     noinline reqTransformer: (Request.() -> Request)? = null,
     oauthAccessToken: String? = null,
     method: OsmApiMethod = OsmApiMethod.GET
-): Result<String, Exception> {
-    val (_, resp, result) = baseUrl
-        .appendPath(endpoint.path)
-        .run { urlTransformer?.invoke(this) ?: this }
-        .toString()
-        .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
-        .run { reqTransformer?.invoke(this) ?: this }
-        .header(HTTP_USER_AGENT, userAgent)
-        .header(HTTP_ACCEPT, MIME_JSON_UTF8)
-        .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
-        .awaitStringResponseResult()
-
-    Timber.d("Response url: ${resp.url}")
-
-    return result.mapError { ex: FuelError ->
-        val bubbleCause = ex.cause
-        if (bubbleCause is FuelError) {
-            val fuelCause = bubbleCause.cause
-            val is500 = resp.statusCode % 500 == 0
-            if (fuelCause is UnknownHostException) {
-                return@mapError OsmApiConnectionException(
-                    fuelCause.message, fuelCause, shouldOfferRetry = true
-                )
-            } else if (fuelCause is HttpException && is500) {
-                return@mapError OsmApiConnectionException(fuelCause.message, fuelCause as Exception)
-            } else if (fuelCause is SocketTimeoutException) {
-                return@mapError OsmApiConnectionException(
-                    "Connection timed out", fuelCause, shouldOfferRetry = true
-                )
-            }
-        }
-        ex
-    }
-}
+): Result<String, Exception> = baseUrl
+    .appendPath(endpoint.path)
+    .run { urlTransformer?.invoke(this) ?: this }
+    .toString()
+    .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
+    .run { reqTransformer?.invoke(this) ?: this }
+    .header(HTTP_USER_AGENT, userAgent)
+    .header(HTTP_ACCEPT, MIME_JSON_UTF8)
+    .run { if (oauthAccessToken != null) authentication().bearer(oauthAccessToken) else this }
+    .awaitStringResponseResult().third
+    .mapError { error -> error.toHttpWrapped() }
 
 @ExperimentalTime
 suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
