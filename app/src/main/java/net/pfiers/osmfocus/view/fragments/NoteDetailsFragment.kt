@@ -4,10 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.databinding.FragmentNoteDetailsBinding
@@ -18,9 +18,32 @@ import net.pfiers.osmfocus.service.osm.NoteAndId
 import net.pfiers.osmfocus.service.osm.NoteCommentAction
 import net.pfiers.osmfocus.service.osm.profileUrl
 import net.pfiers.osmfocus.view.rvadapters.ViewBindingListAdapter
-import net.pfiers.osmfocus.view.support.*
+import net.pfiers.osmfocus.view.support.BindingFragment
+import net.pfiers.osmfocus.view.support.EventReceiver
+import net.pfiers.osmfocus.view.support.activityAs
+import net.pfiers.osmfocus.view.support.argument
+import net.pfiers.osmfocus.view.support.copyToClipboard
+import net.pfiers.osmfocus.view.support.createVMFactory
 import net.pfiers.osmfocus.viewmodel.NoteDetailsVM
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
+
+typealias ActionKnown = NoteCommentAction.Known
+typealias ActionUnknown = NoteCommentAction.Unknown
+
+context(Fragment)
+private val Comment.actionTextHtml: String get() {
+    val username = usernameUidPair?.username
+    val userText = getString(R.string.comment_user, username.profileUrl, username)
+    val (actionStrRes, actionAnonStrRes) = when (action) {
+        ActionKnown.REOPENED -> R.string.reopened to R.string.reopened_anonymous
+        ActionKnown.CLOSED -> R.string.closed to R.string.closed_anonymous
+        ActionKnown.COMMENTED -> R.string.commented to R.string.commented_anonymous
+        ActionKnown.HIDDEN -> R.string.hidden to R.string.hidden_anonymous
+        is ActionUnknown -> R.string.unknown_action to R.string.unknown_action_anonymous
+    }
+    if (username == null) return getString(actionAnonStrRes)
+    return getString(actionStrRes, userText)
+}
 
 class NoteDetailsFragment : BindingFragment<FragmentNoteDetailsBinding>(
     FragmentNoteDetailsBinding::inflate
@@ -60,19 +83,8 @@ class NoteDetailsFragment : BindingFragment<FragmentNoteDetailsBinding>(
             R.layout.rv_item_comment,
             viewLifecycleOwner
         ) { comment, commentBinding ->
-            val username = comment.usernameUidPair?.username
-            commentBinding.username = username
-            data class ActionStringId(val known: Int, val anonymous: Int)
-            val actionStringIds = when (comment.action) {
-                NoteCommentAction.REOPENED -> ActionStringId(R.string.reopened, R.string.reopened_anonymous)
-                NoteCommentAction.CLOSED -> ActionStringId(R.string.closed, R.string.closed_anonymous)
-                NoteCommentAction.COMMENTED -> ActionStringId(R.string.commented, R.string.commented_anonymous)
-            }
-            commentBinding.actionTextHtml = if (username == null) {
-                getString(actionStringIds.anonymous)
-            } else {
-                getString(actionStringIds.known, username.profileUrl, username)
-            }
+            commentBinding.username = comment.usernameUidPair?.username
+            commentBinding.actionTextHtml = comment.actionTextHtml
             commentBinding.timestamp = comment.timestamp
             commentBinding.html = comment.html
         }

@@ -176,24 +176,17 @@
     <string name="osm_login_confirm_dialog_cancel">Cancel</string>
     <string name="create">Create</string>
 
-    <string name="reopened"><![CDATA[
-         Reopened by <a href="%1$s">%2$s</a>
-    ]]></string>
-    <string name="reopened_anonymous"><![CDATA[
-         Reopened by <i>anonymous</i>
-    ]]></string>
-    <string name="closed"><![CDATA[
-         Closed by <a href="%1$s">%2$s</a>
-    ]]></string>
-    <string name="closed_anonymous"><![CDATA[
-         Closed by <i>anonymous</i>
-    ]]></string>
-    <string name="commented"><![CDATA[
-         Comment from <a href="%1$s">%2$s</a>
-    ]]></string>
-    <string name="commented_anonymous"><![CDATA[
-         Comment from <i>anonymous</i>
-    ]]></string>
+    <string name="comment_user"><![CDATA[<a href="%1$s">%2$s</a>]]></string>
+    <string name="reopened">Reopened by %1$s</string>
+    <string name="reopened_anonymous">Reopened</string>
+    <string name="closed">Closed by %1$s</string>
+    <string name="closed_anonymous">Closed</string>
+    <string name="commented">Comment from %1$s</string>
+    <string name="commented_anonymous"><![CDATA[Comment from <i>anonymous</i>]]></string>
+    <string name="hidden">Hidden by %1$s</string>
+    <string name="hidden_anonymous">Hidden</string>
+    <string name="unknown_action">Action \'%1$s\' by %2$s</string>
+    <string name="unknown_action_anonymous">Action \'%1$s\'</string>
     <string name="description">Description</string>
     <string name="restart">Restart</string>
 </resources>
