@@ -20,15 +20,18 @@ open class Elements(
         skipStubMembers: Boolean = false
     ) = when (typedId.type) {
         ElementType.NODE -> nodes
-            .getOrElse(typedId.id, { throw NoSuchElementException() })
+            .getOrElse(typedId.id) { throw NoSuchElementException() }
             .toGeometry(this, geometryFactory, skipStubMembers)
         ElementType.WAY -> ways
-            .getOrElse(typedId.id, { throw NoSuchElementException() })
+            .getOrElse(typedId.id) { throw NoSuchElementException() }
             .toGeometry(this, geometryFactory, skipStubMembers)
         ElementType.RELATION -> relations
-            .getOrElse(typedId.id, { throw NoSuchElementException() })
+            .getOrElse(typedId.id) { throw NoSuchElementException() }
             .toGeometry(this, geometryFactory, skipStubMembers)
     }
+
+    val size get() = nodes.size + ways.size + relations.size
+    val isEmpty get() = size == 0
 }
 
 class ElementsMutable(elements: Elements = Elements()) : Elements() {
