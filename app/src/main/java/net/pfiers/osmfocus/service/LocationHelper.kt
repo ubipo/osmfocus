@@ -7,12 +7,21 @@ import android.location.Criteria
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.util.toGeoPoint
 import net.pfiers.osmfocus.viewmodel.support.Event
@@ -102,9 +111,10 @@ class LocationHelper(private val context: Context) {
                 val bestAvailableProvider =
                     getBestProvider() ?: return Result.error(LocationUnavailableException())
                 val locationFuture = CompletableDeferred<Location>()
-                platformGetCurrentLocation(bestAvailableProvider) { loc: Location ->
-                    events.trySend(LocationEvent(loc))
-                    locationFuture.complete(loc)
+                platformGetCurrentLocation(bestAvailableProvider) { location ->
+                    if (location == null) return@platformGetCurrentLocation
+                    events.trySend(LocationEvent(location))
+                    locationFuture.complete(location)
                     Unit
                 }
                 locationFuture.await()
@@ -115,7 +125,7 @@ class LocationHelper(private val context: Context) {
     @SuppressLint("MissingPermission")
     private fun platformGetCurrentLocation(
         provider: String,
-        callback: (location: Location) -> Unit
+        callback: (location: Location?) -> Unit
     ) {
         Handler(handlerThread.looper).post {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
