@@ -25,7 +25,7 @@ import net.pfiers.osmfocus.service.util.osmCommentDateTimeToInstant
 import timber.log.Timber
 import java.time.Instant
 
-class OsmApiParseException(message: String, cause: Exception? = null) :
+class OsmApiParseException(message: String, cause: Exception) :
     RuntimeException(message, cause)
 
 data class JsonToElementsRes(val mergedUniverse: ElementsMutable, val newElements: ElementsMutable)
@@ -36,21 +36,21 @@ fun jsonToElements(
 ): JsonToElementsRes {
     val mergedUniverse = ElementsMutable(universe)
     val newElements = ElementsMutable()
+    var lastException: Exception? = null
 
     val root = Parser.default().parse(StringBuilder(json))
-    try {
-        val rootObj = root as JsonObject
-        val elementsJson = rootObj["elements"] as JsonArray<*>
-        for (elementAny in elementsJson) {
-            val elementObj = elementAny as JsonObject
-            val type = elementObj["type"] as String
-            val id = (elementObj["id"] as Number).toLong()
+    val rootObj = root as JsonObject
+    val elementsJson = rootObj["elements"] as JsonArray<*>
+    for (elementAny in elementsJson) {
+        val elementObj = elementAny as JsonObject
+        val type = elementObj["type"] as String?
+        val id = (elementObj["id"] as Number).toLong()
 
+        try {
             val version = elementObj["version"] as Int
             val tags = elementObj["tags"]?.let { t ->
                 (t as JsonObject).toMap().mapValues { (_, v) -> v as String }
-            }
-                ?: emptyMap() // This is a quirk (response size saving measure) of the OSM API: an undefined tags object means 'no tags'
+            } ?: emptyMap() // This is a quirk (response size saving measure) of the OSM API: an undefined tags object means 'no tags'
             val changeset = (elementObj["changeset"] as Number).toLong()
             val timestamp = iso8601DateTimeInUtcToInstant(elementObj["timestamp"] as String)
             val username = elementObj["user"] as String
@@ -90,9 +90,14 @@ fun jsonToElements(
 
                 else -> Timber.w("Unrecognised element type: $type (id=$id)")
             }
+        } catch (exception: Exception) {
+            lastException = exception
+            Timber.e("Exception while parsing note (id=$id)")
         }
-    } catch (ccEx: ClassCastException) {
-        throw OsmApiParseException("Undefined property or property with wrong type", ccEx)
+    }
+
+    if (newElements.isEmpty && lastException != null) {
+        throw OsmApiParseException("No elements successfully parsed", lastException)
     }
 
     return JsonToElementsRes(mergedUniverse, newElements)
@@ -120,77 +125,79 @@ fun jsonToNotes(
     universe: Notes = emptyMap()
 ): JsonToNotesRes {
     val mergedUniverse = NotesMutable(universe)
-    val newElements = NotesMutable()
+    val newNotes = NotesMutable()
+    var lastException: Exception? = null
 
     val root = Parser.default().parse(StringBuilder(json))
-    try {
-        val rootObj = root as JsonObject
-        val noteFeatures = rootObj["features"] as JsonArray<*>
-        for (noteFeatureAny in noteFeatures) {
-            val noteFeature = noteFeatureAny as JsonObject
-            val noteProperties = noteFeature["properties"] as JsonObject
-            val id = (noteProperties["id"] as Number).toLong()
+    val rootObj = root as JsonObject
+    val noteFeatures = rootObj["features"] as JsonArray<*>
+    for (noteFeatureAny in noteFeatures) {
+        val noteFeature = noteFeatureAny as JsonObject
+        val noteProperties = noteFeature["properties"] as JsonObject
+        val id = (noteProperties["id"] as Number).toLong()
 
-            try {
-                val noteGeometry = noteFeature["geometry"] as JsonObject
-                val coordinateArray = noteGeometry["coordinates"] as JsonArray<*>
-                val coordinate =
-                    Coordinate(coordinateArray[1] as Double, coordinateArray[0] as Double)
+        try {
+            val noteGeometry = noteFeature["geometry"] as JsonObject
+            val coordinateArray = noteGeometry["coordinates"] as JsonArray<*>
+            val coordinate =
+                Coordinate(coordinateArray[1] as Double, coordinateArray[0] as Double)
 
-                val commentDataList =
-                    (noteProperties["comments"] as JsonArray<*>).map { commentAny ->
-                        jsonObjectToCommentData(commentAny as JsonObject)
-                    }
-                val sorted = commentDataList.sortedBy { comment -> comment.timestamp }
-                if (sorted != commentDataList) {
-                    Timber.d("Note comments are not sorted by date (id=$id)")
+            val commentDataList =
+                (noteProperties["comments"] as JsonArray<*>).map { commentAny ->
+                    jsonObjectToCommentData(commentAny as JsonObject)
                 }
-                val openingCommentData = sorted.firstOrNull()?.let { openingCommentData ->
-                    when (openingCommentData.action) {
-                        NoteCommentAction.Unknown("OPENED") -> Unit
-                        // e.g. https://api.openstreetmap.org/api/0.6/notes/757593.json
-                        NoteCommentAction.Known.COMMENTED -> Timber.d(
-                            "Old-style note: opening comment uses action \"COMMENTED\" instead of \"OPENED\" (id=$id)"
-                        )
-                        // e.g. https://api.openstreetmap.org/api/0.6/notes/1866523.json
-                        NoteCommentAction.Known.CLOSED -> Timber.d(
-                            "Note with purged history: opening comment is \"CLOSED\" (id=$id)"
-                        )
-
-                        else -> Timber.d(
-                            "Unexpected first note comment action (${openingCommentData.action.value} instead, id=$id)"
-                        )
-                    }
-                    openingCommentData
-                } ?: run {
-                    Timber.d("Invalid note: empty comments list, assuming empty creation description (id=$id)")
-                    val fallbackCreationDate =
-                        osmCommentDateTimeToInstant(noteProperties["date_created"] as String)
-                    OpeningCommentData(fallbackCreationDate, null, "", "")
-                }
-                val comments = commentDataList.boundedSubList(1).map { d ->
-                    Comment(d.timestamp, d.usernameUidPair, d.action, d.text, d.html)
-                }
-
-                val note = Note(
-                    coordinate,
-                    comments,
-                    openingCommentData.usernameUidPair,
-                    openingCommentData.timestamp,
-                    openingCommentData.text,
-                    openingCommentData.html
-                )
-                mergedUniverse.setMerging(id, note)
-                newElements[id] = note
-            } catch (exception: Exception) {
-                Timber.w("Exception while parsing note (id=$id)")
+            val sorted = commentDataList.sortedBy { comment -> comment.timestamp }
+            if (sorted != commentDataList) {
+                Timber.d("Note comments are not sorted by date (id=$id)")
             }
+            val openingCommentData = sorted.firstOrNull()?.let { openingCommentData ->
+                when (openingCommentData.action) {
+                    NoteCommentAction.Unknown("OPENED") -> Unit
+                    // e.g. https://api.openstreetmap.org/api/0.6/notes/757593.json
+                    NoteCommentAction.Known.COMMENTED -> Timber.d(
+                        "Old-style note: opening comment uses action \"COMMENTED\" instead of \"OPENED\" (id=$id)"
+                    )
+                    // e.g. https://api.openstreetmap.org/api/0.6/notes/1866523.json
+                    NoteCommentAction.Known.CLOSED -> Timber.d(
+                        "Note with purged history: opening comment is \"CLOSED\" (id=$id)"
+                    )
+
+                    else -> Timber.d(
+                        "Unexpected first note comment action (${openingCommentData.action.value} instead, id=$id)"
+                    )
+                }
+                openingCommentData
+            } ?: run {
+                Timber.d("Invalid note: empty comments list, assuming empty creation description (id=$id)")
+                val fallbackCreationDate =
+                    osmCommentDateTimeToInstant(noteProperties["date_created"] as String)
+                OpeningCommentData(fallbackCreationDate, null, "", "")
+            }
+            val comments = commentDataList.boundedSubList(1).map { d ->
+                Comment(d.timestamp, d.usernameUidPair, d.action, d.text, d.html)
+            }
+
+            val note = Note(
+                coordinate,
+                comments,
+                openingCommentData.usernameUidPair,
+                openingCommentData.timestamp,
+                openingCommentData.text,
+                openingCommentData.html
+            )
+            mergedUniverse.setMerging(id, note)
+            newNotes[id] = note
+        } catch (exception: Exception) {
+            lastException = exception
+            Timber.e("Exception while parsing note (id=$id)")
         }
-    } catch (ccEx: ClassCastException) {
-        throw OsmApiParseException("Undefined property or property with wrong type", ccEx)
     }
 
-    return JsonToNotesRes(mergedUniverse, newElements)
+    if (newNotes.isEmpty() && lastException != null) {
+        throw OsmApiParseException("No notes successfully parsed", lastException)
+    }
+
+    return JsonToNotesRes(mergedUniverse, newNotes)
 }
 
 fun jsonObjectToCommentData(commentObject: JsonObject): CommentData {
