@@ -6,10 +6,9 @@ import net.pfiers.osmfocus.service.jts.toOsmAndUrl
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.service.util.discard
 import net.pfiers.osmfocus.service.util.toAndroidUri
-import net.pfiers.osmfocus.viewmodel.support.Event
+import net.pfiers.osmfocus.viewmodel.support.CopyCoordinateEvent
 import net.pfiers.osmfocus.viewmodel.support.OpenUriEvent
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
-import org.locationtech.jts.geom.Coordinate
 
 class ElementDetailsVM(
     elementCentroidAndId: AnyElementCentroidAndId,
@@ -21,17 +20,7 @@ class ElementDetailsVM(
     private val centroid = elementCentroidAndId.centroid
 
     fun showOnOpenstreetmap() = events.trySend(OpenUriEvent(typedId.url.toAndroidUri())).discard()
-    fun openInOsmAnd() = centroid.let { coordinate ->
-        events.trySend(OpenUriEvent(coordinate.toOsmAndUrl().toAndroidUri())).discard()
-    }
-
-    fun openGeoLink() = centroid.let { coordinate ->
-        events.trySend(OpenUriEvent(coordinate.toGeoUri().toAndroidUri())).discard()
-    }
-
-    fun copyCoordinate() = centroid.let { coordinate ->
-        events.trySend(CopyCoordinateEvent(coordinate)).discard()
-    }
-
-    class CopyCoordinateEvent(val coordinate: Coordinate) : Event()
+    fun openInOsmAnd() = events.trySend(OpenUriEvent(centroid.toOsmAndUrl().toAndroidUri())).discard()
+    fun openGeoLink() = events.trySend(OpenUriEvent(centroid.toGeoUri().toAndroidUri())).discard()
+    fun copyCoordinate() = events.trySend(CopyCoordinateEvent(centroid)).discard()
 }

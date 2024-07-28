@@ -25,6 +25,7 @@ import net.pfiers.osmfocus.view.support.argument
 import net.pfiers.osmfocus.view.support.copyToClipboard
 import net.pfiers.osmfocus.view.support.createVMFactory
 import net.pfiers.osmfocus.viewmodel.NoteDetailsVM
+import net.pfiers.osmfocus.viewmodel.support.CopyCoordinateEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 
 typealias ActionKnown = NoteCommentAction.Known
@@ -59,7 +60,7 @@ class NoteDetailsFragment : BindingFragment<FragmentNoteDetailsBinding>(
         lifecycleScope.launchWhenCreated {
             noteDetailsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
-                    is NoteDetailsVM.CopyCoordinateEvent -> {
+                    is CopyCoordinateEvent -> {
                         copyToClipboard(
                             event.coordinate.toDecimalDegrees(),
                             getString(R.string.copy_coordinates_clipboard_label),
