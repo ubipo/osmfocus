@@ -42,6 +42,7 @@ import net.pfiers.osmfocus.view.support.argument
 import net.pfiers.osmfocus.view.support.copyToClipboard
 import net.pfiers.osmfocus.view.support.createVMFactory
 import net.pfiers.osmfocus.viewmodel.ElementDetailsVM
+import net.pfiers.osmfocus.viewmodel.support.CopyCoordinateEvent
 import net.pfiers.osmfocus.viewmodel.support.activityTaggedViewModels
 import timber.log.Timber
 import java.net.URI
@@ -64,7 +65,7 @@ class ElementDetailsFragment : BindingFragment<FragmentElementDetailsBinding>(
         lifecycleScope.launchWhenCreated {
             elementDetailsVM.events.receiveAsFlow().collect { event ->
                 when (event) {
-                    is ElementDetailsVM.CopyCoordinateEvent -> {
+                    is CopyCoordinateEvent -> {
                         copyToClipboard(
                             event.coordinate.toDecimalDegrees(),
                             getString(R.string.copy_coordinates_clipboard_label),

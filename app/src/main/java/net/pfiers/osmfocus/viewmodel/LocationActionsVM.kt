@@ -3,6 +3,7 @@ package net.pfiers.osmfocus.viewmodel
 import androidx.lifecycle.ViewModel
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository
 import net.pfiers.osmfocus.service.util.discard
+import net.pfiers.osmfocus.viewmodel.support.CopyCoordinateEvent
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import org.locationtech.jts.geom.Coordinate
@@ -15,7 +16,7 @@ class LocationActionsVM(
 ) : ViewModel() {
     val events = createEventChannel()
 
-    fun copyCoordinates() = Unit
+    fun copyCoordinates() = events.trySend(CopyCoordinateEvent(location)).discard()
 
 //    private val createNoteScope = CoroutineScope(Dispatchers.IO + Job())
 //    private fun createNote(accessToken: String? = null): Unit = if (accessToken == null) {
@@ -41,6 +42,5 @@ class LocationActionsVM(
 
     fun createNote() = events.trySend(ShowCreateNoteDialogEvent()).discard()
 
-    class CloseLocationActionsEvent : Event()
     class ShowCreateNoteDialogEvent : Event()
 }

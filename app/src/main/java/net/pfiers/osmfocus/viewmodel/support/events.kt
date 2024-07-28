@@ -6,12 +6,14 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import net.pfiers.osmfocus.service.osm.AnyElementCentroidAndId
 import net.pfiers.osmfocus.service.osm.NoteAndId
+import org.locationtech.jts.geom.Coordinate
 
 abstract class Event
 
 // General
 class OpenUriEvent(val uri: Uri) : Event()
 class CopyEvent(val label: String, val text: String) : Event()
+class CopyCoordinateEvent(val coordinate: Coordinate) : Event()
 class SendEmailEvent(
     val address: String,
     val subject: String,
