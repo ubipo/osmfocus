@@ -16,8 +16,9 @@ android {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
         targetSdk = 35
-        versionCode = 160
-        versionName = "1.6.0"
+        val versionTriple = Triple(1, 6, 1)
+        versionName = versionTriple.toList().joinToString(".")
+        versionCode = versionTriple.toList().joinToString("") { "%03d".format(it) }.toInt()
 
         multiDexEnabled = true
 
