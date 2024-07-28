@@ -58,36 +58,37 @@
 
         </LinearLayout>
 
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="56dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:orientation="horizontal">-->
+
+<!--            <androidx.appcompat.widget.AppCompatImageView-->
+<!--                android:layout_width="32dp"-->
+<!--                android:layout_height="32dp"-->
+<!--                android:layout_gravity="center_vertical"-->
+<!--                app:srcCompat="@drawable/ic_baseline_location"-->
+<!--                app:tint="@color/greyIcon" />-->
+
+<!--            <TextView-->
+<!--                android:layout_marginStart="32dp"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                style="@style/TextAppearance.MaterialComponents.Body1"-->
+<!--                android:layout_gravity="center_vertical"-->
+<!--                android:text="Yo holmes, smell ya later" />-->
+
+<!--        </LinearLayout>-->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:orientation="horizontal">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="center_vertical"
-                app:srcCompat="@drawable/ic_baseline_location"
-                app:tint="@color/greyIcon" />
-
-            <TextView
-                android:layout_marginStart="32dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/TextAppearance.MaterialComponents.Body1"
-                android:layout_gravity="center_vertical"
-                android:text="Yo holmes, smell ya later" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:onClick="@{() -> vm.copyCoordinates()}">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:layout_width="32dp"
