@@ -27,6 +27,7 @@ class SettingsVM(
     val relationsShown = settingsLd { settings -> settings.showRelations }
     val nodesShown = settingsLd { settings -> settings.showNodes }
     val waysShown = settingsLd { settings -> settings.showWays }
+    val mapRotationGestureEnabled = settingsLd { settings -> settings.mapRotationGestureEnabled }
     val zoomBeyondBaseMapMax = settingsLd { settings -> settings.zoomBeyondBaseMapMax }
 
     fun editBaseMaps() = events.trySend(EditBaseMapsEvent()).discard()
@@ -56,6 +57,15 @@ class SettingsVM(
             }.build()
         }
     }.discard()
+
+    fun toggleMapRotationGestureEnabled() = viewModelScope.launch {
+        settingsDataStore.updateData { currentSettings ->
+            currentSettings.toBuilder().apply {
+                mapRotationGestureEnabled = !currentSettings.mapRotationGestureEnabled
+            }.build()
+        }
+    }.discard()
+
 
     fun toggleZoomBeyondBaseMapMax() = viewModelScope.launch {
         settingsDataStore.updateData { currentSettings ->

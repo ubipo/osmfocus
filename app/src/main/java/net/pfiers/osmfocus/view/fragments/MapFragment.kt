@@ -33,9 +33,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -102,10 +101,12 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import timber.log.Timber
 import java.lang.Double.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+
 
 @ExperimentalStdlibApi
 @Suppress("UnstableApiUsage")
@@ -369,6 +370,9 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         )
         map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
         map.overlays.add(CrosshairOverlay())
+        val rotationGestureOverlay = RotationGestureOverlay(map)
+        rotationGestureOverlay.isEnabled = false
+        map.overlays.add(rotationGestureOverlay)
         map.setMultiTouchControls(true)
 
         map.overlays.add(0, MapEventsOverlay(this))
@@ -424,19 +428,22 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
         val baseMapGetterScope = CoroutineScope(Job() + Dispatchers.IO)
         val baseMapRepository = requireContext().baseMapRepository
         requireContext().settingsDataStore.data
-            .map { s -> Pair(s.baseMapUid, s.zoomBeyondBaseMapMax) }
-            .distinctUntilChanged()
+            .distinctUntilChangedBy { s -> listOf(s.baseMapUid, s.zoomBeyondBaseMapMax, s.zoomBeyondBaseMapMax) }
             .asLiveData()
-            .observe(viewLifecycleOwner) { (baseMapUid, zoomBeyondBaseMapMax) ->
+            .observe(viewLifecycleOwner) { s ->
                 baseMapGetterScope.launch {
-                    val baseMap = baseMapRepository.getOrDefault(baseMapUid)
+                    val baseMap = baseMapRepository.getOrDefault(s.baseMapUid)
                     val tileSource = tileSourceFromBaseMap(baseMap)
                     lifecycleScope.launch {
                         attributionVM.tileAttributionText.value = baseMap.attribution
                         map.setTileSource(tileSource)
                         val maxZoomLevel =
-                            if (zoomBeyondBaseMapMax) MAX_ZOOM_LEVEL_BEYOND_BASE_MAP else tileSource.maximumZoomLevel.toDouble()
+                            if (s.zoomBeyondBaseMapMax) MAX_ZOOM_LEVEL_BEYOND_BASE_MAP else tileSource.maximumZoomLevel.toDouble()
                         map.maxZoomLevel = max(maxZoomLevel, MIN_MAX_ZOOM_LEVEL)
+                        rotationGestureOverlay.isEnabled = s.mapRotationGestureEnabled
+                        if (!s.mapRotationGestureEnabled) {
+                            map.rotation = 0f
+                        }
                     }
                 }
             }

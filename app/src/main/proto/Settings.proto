@@ -34,4 +34,6 @@ message Settings {
   bool showNodes = 10;
 
   bool showWays = 11;
+
+  bool mapRotationGestureEnabled = 12;
 }
