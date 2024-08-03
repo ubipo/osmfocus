@@ -437,9 +437,12 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     lifecycleScope.launch {
                         attributionVM.tileAttributionText.value = baseMap.attribution
                         map.setTileSource(tileSource)
-                        val maxZoomLevel =
-                            if (s.zoomBeyondBaseMapMax) MAX_ZOOM_LEVEL_BEYOND_BASE_MAP else tileSource.maximumZoomLevel.toDouble()
-                        map.maxZoomLevel = max(maxZoomLevel, MIN_MAX_ZOOM_LEVEL)
+                        val maxZoomLevel = listOfNotNull(
+                            MAX_ZOOM_LEVEL_BEYOND_BASE_MAP.takeIf { s.zoomBeyondBaseMapMax },
+                            MIN_MAX_ZOOM_LEVEL,
+                            tileSource.maximumZoomLevel.toDouble(),
+                        ).max()
+                        map.maxZoomLevel = maxZoomLevel
                         rotationGestureOverlay.isEnabled = s.mapRotationGestureEnabled
                         if (!s.mapRotationGestureEnabled) {
                             map.rotation = 0f
@@ -690,7 +693,7 @@ class MapFragment : BindingFragment<FragmentMapBinding>(
                     or TileSourcePolicy.FLAG_USER_AGENT_NORMALIZED
         )
         return XYTileSource(
-            baseUrl, 0, 19, 256, baseMap.fileEnding,
+            baseUrl, 0, baseMap.maxZoom ?: 19, 256, baseMap.fileEnding,
             arrayOf(baseUrl), baseMap.attribution, usagePolicy
         )
     }
