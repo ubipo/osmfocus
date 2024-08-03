@@ -16,7 +16,7 @@ android {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 21
         targetSdk = 35
-        val versionTriple = Triple(1, 7, 0)
+        val versionTriple = Triple(1, 7, 1)
         versionName = versionTriple.toList().joinToString(".")
         versionCode = versionTriple.toList().joinToString("") { "%03d".format(it) }.toInt()
 
