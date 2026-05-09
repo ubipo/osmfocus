@@ -1,4 +1,7 @@
 # OAuth
 
-This package wraps Google's OAuth client library and provides a protobuf message to store the access
-credentials on-disk.
+This package handles the app's OpenStreetMap OAuth 2 flow via AppAuth.
+
+- `OsmAuthRepository` creates authorization requests and persists the serialized AppAuth `AuthState`
+  in `Settings`.
+- `OsmAuthWrapper` drives the user-facing login flow and token refreshes.

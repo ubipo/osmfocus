@@ -17,24 +17,4 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="ToolbarTheme" parent="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar" />
-
-    <style name="ToolbarPopupTheme" parent="@style/ThemeOverlay.MaterialComponents.Light" />
-
-    <style name="SettingsListItemIconOverlay">
-        <item name="cornerSize">50%</item>
-    </style>
-
-    <style name="SettingsListItemIcon">
-        <item name="android:layout_width">40dp</item>
-        <item name="android:layout_height">40dp</item>
-        <item name="android:layout_marginStart">16dp</item>
-        <item name="android:layout_marginTop">16dp</item>
-        <item name="android:layout_marginBottom">16dp</item>
-        <item name="shapeAppearanceOverlay">@style/SettingsListItemIconOverlay</item>
-        <item name="android:background">@color/secondary</item>
-        <item name="tint">@color/onSecondary</item>
-        <item name="contentPadding">5dp</item>
-    </style>
-
 </resources>

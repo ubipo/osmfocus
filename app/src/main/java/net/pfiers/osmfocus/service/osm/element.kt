@@ -55,6 +55,21 @@ class Way constructor(
 ) : Element(version, tags, changeset, lastEditTimestamp, username), Serializable {
     override val type: ElementType = ElementType.WAY
 
+    val isLikelyArea by lazy {
+        val nodeIds = nodeIds ?: return@lazy false
+        if (nodeIds.size < 4 || nodeIds.first() != nodeIds.last()) return@lazy false
+
+        val tags = tags ?: return@lazy false
+        if (tags["area"] == "no") return@lazy false
+        if (tags["area"] == "yes") return@lazy true
+        if ("building" in tags) return@lazy true
+        if (tags.keys.any { it.startsWith("area:") }) return@lazy true
+        if ("landuse" in tags) return@lazy true
+
+        val natural = tags["natural"]
+        natural != null && natural !in NON_AREA_NATURAL_VALUES
+    }
+
     override fun toGeometry(
         universe: Elements,
         geometryFactory: GeometryFactory,
@@ -66,7 +81,23 @@ class Way constructor(
                     throw ContainsStubElementsException()
                 } else null
         }
-        geometryFactory.createLineString(coordinates.toTypedArray())
+        if (isLikelyArea && coordinates.size >= 4 && coordinates.first().equals2D(coordinates.last())) {
+            geometryFactory.createPolygon(coordinates.toTypedArray())
+        } else {
+            geometryFactory.createLineString(coordinates.toTypedArray())
+        }
+    }
+
+    companion object {
+        private val NON_AREA_NATURAL_VALUES = setOf(
+            "tree_row",
+            "arete",
+            "earth_bank",
+            "gorge",
+            "gully",
+            "ridge",
+            "valley",
+        )
     }
 }
 
