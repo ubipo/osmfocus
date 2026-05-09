@@ -12,17 +12,7 @@ import java.io.OutputStream
 
 
 class SettingsSerializer : Serializer<Settings> {
-    override val defaultValue: Settings = Settings.newBuilder().apply {
-        apiBaseUrl = Defaults.apiBaseUrl
-        baseMapUid = BaseMapRepository.uidOfDefault
-        lastLocation = Defaults.location.toSettingsLocation()
-        lastZoomLevel = Defaults.zoomLevel
-        tagboxLongLines = Defaults.tagBoxLongLines
-        showRelations = Defaults.showRelations
-        showNodes = Defaults.showNodes
-        showWays = Defaults.showWays
-        zoomBeyondBaseMapMax = Defaults.zoomBeyondBaseMapMax
-    }.build()
+    override val defaultValue: Settings = Companion.defaultValue
 
     override suspend fun readFrom(input: InputStream): Settings {
         try {
@@ -46,4 +36,18 @@ class SettingsSerializer : Serializer<Settings> {
         t: Settings,
         output: OutputStream
     ) = withContext(Dispatchers.IO) { t.writeTo(output) }
+
+    companion object {
+        val defaultValue = Settings.newBuilder().apply {
+            apiBaseUrl = Defaults.apiBaseUrl
+            baseMapUid = BaseMapRepository.uidOfDefault
+            lastLocation = Defaults.location.toSettingsLocation()
+            lastZoomLevel = Defaults.zoomLevel
+            tagboxLongLines = Defaults.tagBoxLongLines
+            showRelations = Defaults.showRelations
+            showNodes = Defaults.showNodes
+            showWays = Defaults.showWays
+            zoomBeyondBaseMapMax = Defaults.zoomBeyondBaseMapMax
+        }.build()
+    }
 }

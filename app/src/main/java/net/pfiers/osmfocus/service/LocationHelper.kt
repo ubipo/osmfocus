@@ -15,6 +15,7 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.github.kittinunf.result.Result
+import com.github.kittinunf.result.getOrElse
 import com.github.kittinunf.result.map
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +24,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import net.pfiers.osmfocus.service.util.discard
-import net.pfiers.osmfocus.service.util.toGeoPoint
 import net.pfiers.osmfocus.viewmodel.support.Event
 import net.pfiers.osmfocus.viewmodel.support.createEventChannel
 import timber.log.Timber
@@ -95,9 +95,7 @@ class LocationHelper(private val context: Context) {
         val lastKnownLocation = locationManager.getLastKnownLocation(bestAvailableProvider)
         if (lastKnownLocation != null) {
             Timber.d(
-                "Got location from passive request: ${
-                    lastKnownLocation.toGeoPoint().toDoubleString()
-                }"
+                "Got location from passive request: ${lastKnownLocation.latitude}, ${lastKnownLocation.longitude}"
             )
             events.trySend(LocationEvent(lastKnownLocation)).discard()
         }
@@ -106,20 +104,24 @@ class LocationHelper(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     suspend fun getLocation(launchRequestIfDenied: Boolean): Result<Location, Exception> {
-        return getLastKnownLocation(launchRequestIfDenied).map { lastKnownLocation ->
-            lastKnownLocation ?: run {
-                val bestAvailableProvider =
-                    getBestProvider() ?: return Result.error(LocationUnavailableException())
-                val locationFuture = CompletableDeferred<Location>()
-                platformGetCurrentLocation(bestAvailableProvider) { location ->
-                    if (location == null) return@platformGetCurrentLocation
-                    events.trySend(LocationEvent(location))
-                    locationFuture.complete(location)
-                    Unit
-                }
-                locationFuture.await()
-            }
+        val lastKnownLocation = getLastKnownLocation(launchRequestIfDenied).getOrElse {
+            return Result.error(it)
         }
+        if (lastKnownLocation != null) return Result.success(lastKnownLocation)
+
+        val bestAvailableProvider =
+            getBestProvider() ?: return Result.error(LocationUnavailableException())
+        val locationFuture = CompletableDeferred<Location?>()
+        platformGetCurrentLocation(bestAvailableProvider) { location ->
+            if (location != null) {
+                events.trySend(LocationEvent(location))
+            }
+            // Some devices/API levels can call back with null; resolve to an explicit error.
+            locationFuture.complete(location)
+        }
+
+        val location = locationFuture.await() ?: return Result.error(LocationUnavailableException())
+        return Result.success(location)
     }
 
     @SuppressLint("MissingPermission")

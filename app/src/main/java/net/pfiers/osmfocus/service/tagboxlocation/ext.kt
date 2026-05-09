@@ -20,6 +20,35 @@ fun TbLoc.toEnvelopeCoordinate(envelope: Envelope) = Coordinate(
     }
 )
 
+fun TbLoc.toVisualSlot(rowLocations: List<TbLoc>): TbLoc {
+    val sortedRowLocations = rowLocations.sortedBy { it.x.ordinal }
+    val rowIndex = sortedRowLocations.indexOf(this)
+    if (rowIndex < 0) return this
+
+    val visualX = when (y) {
+        TbLoc.Y.MIDDLE -> x
+        TbLoc.Y.TOP,
+        TbLoc.Y.BOTTOM,
+        -> when (sortedRowLocations.size) {
+            1 -> TbLoc.X.MIDDLE
+            2 -> if (rowIndex == 0) TbLoc.X.LEFT else TbLoc.X.RIGHT
+            else -> listOf(TbLoc.X.LEFT, TbLoc.X.MIDDLE, TbLoc.X.RIGHT)[rowIndex.coerceAtMost(2)]
+        }
+    }
+    return copy(x = visualX)
+}
+
+fun TbLoc.maxWidthFraction(rowLocations: List<TbLoc>): Float = when (y) {
+    TbLoc.Y.MIDDLE -> 1f / 3f
+    TbLoc.Y.TOP,
+    TbLoc.Y.BOTTOM,
+    -> when (rowLocations.size) {
+        0, 1 -> 1f
+        2 -> 0.5f
+        else -> 1f / 3f
+    }
+}
+
 fun TbLoc.tagBoxLineStart(tagBoxRect: Rect) = Point(
     when (x) {
         TbLoc.X.LEFT -> tagBoxRect.right
