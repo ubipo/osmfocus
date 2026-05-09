@@ -29,7 +29,7 @@ android {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 23
         targetSdk = 36
-        val versionTriple = Triple(1, 7, 2)
+        val versionTriple = Triple(1, 8, 0)
         versionName = versionTriple.toList().joinToString(".")
         //noinspection WrongGradleMethod
         versionCode = versionTriple.toList().joinToString("") { "%03d".format(it) }.toInt()
