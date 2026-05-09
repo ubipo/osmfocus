@@ -1,34 +1,40 @@
-import com.google.protobuf.gradle.id
+@file:Suppress("DEPRECATION")
+
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.google.protobuf.gradle.*
+import java.io.FileNotFoundException
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    kotlin("android")
-    id("kotlin-kapt")
-    id("com.google.protobuf")
-    id("kotlin-android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.protobuf)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.benmanes.versions)
+}
+
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 android {
-    compileSdk = 34
-//    buildToolsVersion = "30.0.3"
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
-        minSdk = 21
-        targetSdk = 35
-        val versionTriple = Triple(1, 7, 1)
+        minSdk = 23
+        targetSdk = 36
+        val versionTriple = Triple(1, 7, 2)
         versionName = versionTriple.toList().joinToString(".")
+        //noinspection WrongGradleMethod
         versionCode = versionTriple.toList().joinToString("") { "%03d".format(it) }.toInt()
 
-        multiDexEnabled = true
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments["room.schemaLocation"] = "$projectDir/room-schemas"
-            }
-        }
 
         manifestPlaceholders["appAuthRedirectScheme"] = "net.pfiers.osmfocus"
     }
@@ -40,52 +46,54 @@ android {
     }
 
     buildFeatures {
-        dataBinding = true
         buildConfig = true
+        compose = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-        freeCompilerArgs += listOf(
-            "-Xcontext-receivers",
-        )
+    testOptions {
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
     }
+
 
     signingConfigs {
-        val secretProperties = project.rootProject.extra["secretProperties"] as java.util.Properties
-        val gplayStoreFile =
-            (secretProperties["signing_keystore_file"] as String?)?.let { file(it) }
-        val gplayStorePassword = secretProperties["signing_keystore_password"] as String?
-        val gplayKeyAlias = secretProperties["signing_key_alias"] as String?
-        val gplayKeyPassword = secretProperties["signing_key_password"] as String?
+        val getSigningValue: (String) -> String? = try {
+            val props = Properties()
+            FileInputStream(rootProject.file("secrets.properties")).use { inputStream ->
+                props.load(inputStream)
+            };
+            { key -> props.getProperty(key) }
+        } catch (_: FileNotFoundException) {
+            { key -> System.getenv(key.uppercase()) }
+        }
 
-        if (gplayStoreFile != null && gplayStorePassword != null && gplayKeyAlias != null && gplayKeyPassword != null) {
+        run {
+            val keystorePath = getSigningValue("signing_keystore_file") ?: return@run
+            val storePassword = getSigningValue("signing_keystore_password") ?: return@run
+            val keyAlias = getSigningValue("signing_key_alias") ?: return@run
+            val keyPassword = getSigningValue("signing_key_password") ?: return@run
+
             create("gplayRelease") {
-                storeFile = gplayStoreFile
-                storePassword = gplayStorePassword
-                keyAlias = gplayKeyAlias
-                keyPassword = gplayKeyPassword
+                storeFile = file(keystorePath)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
             }
         }
     }
 
     buildTypes {
         named("release") {
-//            isDebuggable = true
-
-            postprocessing {
-                isRemoveUnusedCode = true
-                isRemoveUnusedResources = true
-                isOptimizeCode = true
-                isObfuscate = false
-                proguardFiles("proguard-rules.pro")
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles("proguard-rules.pro")
         }
     }
 
     // Handles distribution channel differences (e.g. Google Play billing vs external payment flow for donations)
     val distributionChannelDimension = "distributionChannel"
-    flavorDimensionList.add(distributionChannelDimension)
+    flavorDimensions += distributionChannelDimension
 
     productFlavors {
         create("fdroid") {
@@ -100,8 +108,13 @@ android {
         }
     }
 
-    packagingOptions {
-        resources.excludes.addAll(listOf(
+    packaging {
+        jniLibs {
+            // Workaround for third-party native libs that are not 16 KB ELF-aligned.
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes.addAll(listOf(
             "META-INF/DEPENDENCIES",
             "META-INF/LICENSE",
             "META-INF/LICENSE.txt",
@@ -113,34 +126,28 @@ android {
             "META-INF/*.kotlin_module",
             "org/apache/http/version.properties",
             "org/apache/http/client/version.properties"
-        ))
+            ))
+        }
     }
     namespace = "net.pfiers.osmfocus"
 }
 
-//sourceSets.getByName("main") {
-//    java.srcDir("${protobuf.protobuf.generatedFilesBaseDir}/main/javalite")
-//}
-
+ksp {
+    arg("room.schemaLocation", "$projectDir/room-schemas")
+}
 
 protobuf {
     protobuf.apply {
         protoc {
-            artifact = "com.google.protobuf:protoc:3.24.2"
+            artifact = libs.google.protobuf.protoc.get().toString()
         }
 
-        plugins {
-            id("javalite") {
-                artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0"
-            }
-        }
         generateProtoTasks {
             all().forEach { task ->
                 task.builtins {
-//                remove("java")
-                }
-                task.plugins {
-                    id("javalite")
+                    id("java") {
+                        option("lite")
+                    }
                 }
             }
         }
@@ -158,82 +165,71 @@ configurations {
 dependencies {
     val implementation by configurations
 
-    val kotlinVersion = rootProject.extra["kotlin"] as String?
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    implementation("com.android.support:multidex:1.0.3")
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
-    implementation("androidx.recyclerview:recyclerview:1.3.1")
-    implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
-    implementation("com.google.android.material:material:1.9.0")
-    implementation("androidx.annotation:annotation:1.6.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.google.material)
+    implementation(libs.androidx.annotation)
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Spatial
-    val jtsVersion = "1.18.1"
-    implementation("org.locationtech.jts:jts-core:$jtsVersion")
-    implementation("org.locationtech.jts:jts-io:$jtsVersion")
-    implementation("org.locationtech.jts.io:jts-io-common:$jtsVersion")
-    implementation("net.sf.geographiclib:GeographicLib-Java:1.51")
+    implementation(libs.locationtech.jts.core)
+    implementation(libs.locationtech.jts.io)
+    implementation(libs.locationtech.jts.io.common)
+    implementation(libs.geographiclib)
 
     // Map
-    implementation("org.osmdroid:osmdroid-android:6.1.10")
+    implementation(libs.maplibre.compose)
 
     // HTTP
-    val fuelVersion = "2.3.1"
-    implementation("com.github.kittinunf.fuel:fuel:$fuelVersion")
-    implementation("com.github.kittinunf.fuel:fuel-coroutines:$fuelVersion")
+    implementation(libs.kittinunf.fuel)
+    implementation(libs.kittinunf.fuel.coroutines)
 
     // Result
-    implementation("com.github.kittinunf.result:result-coroutines:4.0.0")
+    implementation(libs.kittinunf.result.coroutines)
 
     // JSON
-    implementation("com.beust:klaxon:5.4")
+    implementation(libs.beust.klaxon)
+    implementation(libs.kotlinx.serialization.json)
 
     // Navigation
-    val navVersion = "2.7.1"
-    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
-    implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
 
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.fragment:fragment-ktx:1.6.1")
 
     // Room DB
-    val roomVersion = "2.6.0-beta01"
-    implementation("androidx.room:room-runtime:$roomVersion")
-
-    implementation("androidx.room:room-ktx:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
-//    androidTestImplementation("androidx.room:room-testing:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Protobuf
-    implementation("com.google.protobuf:protobuf-lite:3.0.1")
+    implementation(libs.google.protobuf.javalite)
 
     // Datastore
-    val datastoreVersion = "1.1.0-alpha04"
-    implementation("androidx.datastore:datastore:$datastoreVersion")
-    implementation("androidx.datastore:datastore-rxjava3:$datastoreVersion")
+    implementation(libs.androidx.datastore)
 
     // Datetime
-    implementation("org.ocpsoft.prettytime:prettytime:5.0.0.Final")
+    implementation(libs.ocpsoft.prettytime)
 
     // Logging
-    implementation("com.jakewharton.timber:timber:4.7.1")
+    implementation(libs.jakewharton.timber)
 
     // Auth
-    implementation("net.openid:appauth:0.10.0")
+    implementation(libs.openid.appauth)
 
     // Testing
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
-//    testImplementation("junit:junit:4.13.1")
-//    androidTestImplementation("androidx.test.ext:junit:1.1.2")
-//    androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+    // Debug
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

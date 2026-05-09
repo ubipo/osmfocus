@@ -1,13 +1,9 @@
 <resources>
     <string name="app_name">OSMfocus Reborn</string>
 
+    <string name="map_screen_title">Map</string>
     <string name="settings">Settings</string>
-    <string name="osm_api_base_url">OSM API base URL</string>
-    <string name="osm_api_default">Default (api.openstreetmap.org)</string>
-    <string name="osm_api_testing">Testing (master.apis.dev.openstreetmap.org)</string>
-    <string name="osm_api_choose">Choose…</string>
 
-    <string name="base_map">Base Map</string>
     <string name="base_map_default">OpenStreetMap Carto (Default)</string>
     <string name="base_map_carto_belgium">OpenStreetMap Carto Belgium</string>
     <string name="base_map_cartodb_voyager_w_labels">CartoDB Voyager w/ labels</string>
@@ -16,7 +12,6 @@
     <string name="base_map_cartodb_positron_wo_labels">CartoDB Positron w/o labels</string>
     <string name="base_map_cartodb_dark_matter_w_labels">CartoDB Dark Matter w/ labels</string>
     <string name="base_map_cartodb_dark_matter_wo_labels">CartoDB Dark Matter w/o labels</string>
-    <string name="base_map_manage">Manage…</string>
     <string name="map_data_openstreetmap_contributors">Map data © OpenStreetMap contributors</string>
     <string name="add_user_base_map_name_hint">My base map</string>
     <string name="add_user_base_map_url_template_hint">https://a.tile.example.org/</string>
@@ -39,6 +34,8 @@
     <string name="add_user_base_map_max_zoom_err_too_small">Must be at least 0</string>
     <string name="add_user_base_map_max_zoom_err_too_big">Must be at least most 25</string>
     <string name="user_base_maps_add_btn_description">Add base map</string>
+    <string name="base_maps_screen_title">Manage Base Maps</string>
+    <string name="add_user_base_map_screen_title">Add Base Map</string>
     <string name="base_maps_title_builtin">Built-in</string>
     <string name="base_maps_title_user">Own</string>
     <string name="base_maps_user_none">You don\'t have any custom base maps yet. Add one using the bottom-right + button.</string>
@@ -94,8 +91,6 @@
     </string>
     <string name="more_info_second_line">Notices, license</string>
     <string name="source_code_second_line">Git repository for this app</string>
-    <string name="coffee">Buy me a coffee!</string>
-    <string name="coffee_second_line">Like what I made? Make a donation :)</string>
     <string name="issues">Issues / improvements</string>
     <string name="issues_second_line">Found a bug or some missing functionality?</string>
     <string name="about_second_line">Issues, suggestions, notices…</string>
@@ -128,6 +123,7 @@
     <string name="view_on_openstreetmap_org">View on openstreetmap.org</string>
     <string name="open_geo_uri">Open geo: link (Google Maps, Waze, Vespucci…)</string>
     <string name="open_in_osmand">Open in OsmAnd</string>
+    <string name="add_note_here">Add a note here</string>
     <string name="copy_coordinates">Copy coordinates</string>
     <string name="something_copied">%1$s copied!</string>
     <string name="tag_table_header_key">Key</string>
@@ -139,9 +135,6 @@
     ]]></string>
     <string name="created_date"><![CDATA[
         Created %1$s <small>(%2$s)</small>
-    ]]></string>
-    <string name="created_date_unknown"><![CDATA[
-        Created <i>an unknown time ago</i>
     ]]></string>
     <string name="last_edit_date_unknown"><![CDATA[
         Last edited <i>an unknown time ago</i>
@@ -171,6 +164,7 @@
     <string name="actions_for_coordinate">Actions for %1$s</string>
     <string name="intent_oauth_callback">Callback for openstreetmap.org authentication</string>
     <string name="copy_coordinates_clipboard_label">Coordinates</string>
+    <string name="create_note_title">Create note</string>
     <string name="create_note_text_label">Note text</string>
     <string name="osm_login_confirm_dialog_title">Log in to OpenStreetMap.org?</string>
     <string name="osm_login_confirm_dialog_message">You need to login to OpenStreetMap.org to %1$s.</string>
@@ -191,6 +185,9 @@
     <string name="unknown_action">Action \'%1$s\' by %2$s</string>
     <string name="unknown_action_anonymous">Action \'%1$s\'</string>
     <string name="description">Description</string>
+    <string name="element_details_screen_title">Element Details</string>
+    <string name="note_details_screen_title">Note details</string>
     <string name="restart">Restart</string>
     <string name="retry">Retry</string>
+    <string name="error_updating_setting">Error updating setting</string>
 </resources>

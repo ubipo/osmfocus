@@ -7,6 +7,9 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.mapError
+import net.pfiers.osmfocus.service.osm.ElementType
+import net.pfiers.osmfocus.service.osm.NoteId
+import net.pfiers.osmfocus.service.osm.TypedId
 import net.pfiers.osmfocus.service.util.HTTP_ACCEPT
 import net.pfiers.osmfocus.service.util.HTTP_USER_AGENT
 import net.pfiers.osmfocus.service.util.MIME_JSON_UTF8
@@ -34,14 +37,23 @@ data class OsmApiConfig(
 enum class OsmApiMethod { GET, POST }
 
 @ExperimentalTime
-suspend inline fun OsmApiConfig.apiReq(
+suspend fun OsmApiConfig.apiReq(
     endpoint: Endpoint,
+    urlTransformer: (URI.() -> URI)? = null,
+    reqTransformer: (Request.() -> Request)? = null,
+    oauthAccessToken: String? = null,
+    method: OsmApiMethod = OsmApiMethod.GET
+): Result<String, Exception> = apiReq(endpoint.path, urlTransformer, reqTransformer, oauthAccessToken, method)
+
+@ExperimentalTime
+private suspend inline fun OsmApiConfig.apiReq(
+    path: String,
     noinline urlTransformer: (URI.() -> URI)? = null,
     noinline reqTransformer: (Request.() -> Request)? = null,
     oauthAccessToken: String? = null,
     method: OsmApiMethod = OsmApiMethod.GET
 ): Result<String, Exception> = baseUrl
-    .appendPath(endpoint.path)
+    .appendPath(path)
     .run { urlTransformer?.invoke(this) ?: this }
     .toString()
     .run { if (method == OsmApiMethod.GET) this.httpGet() else this.httpPost() }
@@ -63,6 +75,18 @@ suspend fun OsmApiConfig.map(envelope: Envelope) = apiReq(Endpoint.MAP, {
 suspend fun OsmApiConfig.notes(envelope: Envelope) = apiReq(Endpoint.NOTES, {
     appendQueryParameter("$OSM_API_PARAM_BBOX=${envelope.toApiBboxStr()}")
 })
+
+@ExperimentalTime
+suspend fun OsmApiConfig.element(typedId: TypedId) = apiReq(
+    when (typedId.type) {
+        ElementType.NODE -> "node/${typedId.id}.json"
+        ElementType.WAY -> "way/${typedId.id}/full.json"
+        ElementType.RELATION -> "relation/${typedId.id}/full.json"
+    },
+)
+
+@ExperimentalTime
+suspend fun OsmApiConfig.note(noteId: NoteId) = apiReq("notes/$noteId.json")
 
 @ExperimentalTime
 suspend fun OsmApiConfig.createNote(
