@@ -9,8 +9,8 @@ data class AndroidVersion(val name: String, val code: Int) {
 }
 
 fun AndroidVersion.Companion.fromGit(rootDir: File) = ProcessBuilder(
-    "python3",
-    rootDir.resolve("scripts/vcs_version.py").absolutePath
+    "bash",
+    rootDir.resolve("scripts/vcs_version.sh").absolutePath
 )
     .directory(rootDir)
     .redirectErrorStream(true)
