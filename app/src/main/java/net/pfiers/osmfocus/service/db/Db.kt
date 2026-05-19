@@ -23,11 +23,11 @@ abstract class Db : RoomDatabase() {
 
     companion object {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `key_meta` (`key` TEXT NOT NULL, `highestValueFraction` REAL NOT NULL, `wikiPageLanguagesJson` TEXT NOT NULL, PRIMARY KEY(`key`))"
                 )
-                database.execSQL(
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `tag_meta` (`key` TEXT NOT NULL, `value` TEXT NOT NULL, `wikiPageLanguagesJson` TEXT NOT NULL, PRIMARY KEY(`key`, `value`), FOREIGN KEY(`key`) REFERENCES `key_meta`(`key`) ON UPDATE NO ACTION ON DELETE RESTRICT )"
                 )
             }
@@ -40,7 +40,7 @@ abstract class Db : RoomDatabase() {
                 "osmfocus"
             )
                 .addMigrations(MIGRATION_1_2)
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
         }
     }

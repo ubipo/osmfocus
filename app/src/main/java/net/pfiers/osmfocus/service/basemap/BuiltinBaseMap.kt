@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.annotation.StringRes
 
 data class BuiltinBaseMap(
-    @StringRes
+    @param:StringRes
     private val nameRes: Int,
     override val attribution: String,
     override val baseUrl: String,

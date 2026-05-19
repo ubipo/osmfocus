@@ -3,15 +3,12 @@ package net.pfiers.osmfocus.service
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.location.Criteria
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.github.kittinunf.result.Result
@@ -138,11 +135,23 @@ class LocationHelper(private val context: Context) {
                     callback
                 )
             } else {
-                @Suppress("deprecation")
-                locationManager.requestSingleUpdate(
+                val listener = object : LocationListener {
+                    override fun onLocationChanged(location: Location) {
+                        locationManager.removeUpdates(this)
+                        callback(location)
+                    }
+
+                    override fun onProviderDisabled(provider: String) {
+                        locationManager.removeUpdates(this)
+                        callback(null)
+                    }
+                }
+                locationManager.requestLocationUpdates(
                     provider,
-                    callback,
-                    Looper.myLooper()
+                    0L,
+                    0.0F,
+                    listener,
+                    handlerThread.looper
                 )
             }
         }
@@ -170,19 +179,20 @@ class LocationHelper(private val context: Context) {
         locationManager.removeUpdates(locationListener)
     }
 
-    private fun getBestProvider(): String? = locationManager.getBestProvider(
-        Criteria().apply {
-            horizontalAccuracy = Criteria.ACCURACY_HIGH
-        }, true
-    )
+    private fun getBestProvider(): String? {
+        val enabledProviders = locationManager.getProviders(true)
+        return listOf(
+            LocationManager.GPS_PROVIDER,
+            LocationManager.NETWORK_PROVIDER,
+            LocationManager.PASSIVE_PROVIDER
+        ).firstOrNull(enabledProviders::contains) ?: enabledProviders.firstOrNull()
+    }
 
     private val locationListener by lazy {
         object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 events.trySend(LocationEvent(location))
             }
-
-            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
 
             override fun onProviderEnabled(provider: String) {}
 
