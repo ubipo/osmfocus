@@ -4,8 +4,10 @@
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
+/.idea/misc.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
+/.idea/kotlinc.xml
 /.idea/assetWizardSettings.xml
 /.idea/deploymentTargetDropDown.xml
 .DS_Store
@@ -14,6 +16,7 @@
 /captures
 .externalNativeBuild
 .cxx
+__pycache__
 
 /scratch/
 /app/release/
