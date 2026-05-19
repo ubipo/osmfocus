@@ -59,11 +59,13 @@ def main() -> int:
     tag, version = latest_semver_tag(root)
     semver = ".".join(str(part) for part in version)
     code = android_code(version)
+    fdroid_version_name = f"{semver}-fdroid"
     print(f"release_tag={tag}")
     print(f"semver={semver}")
     print(f"android_code={code}")
     print(f"is_head_tagged={str(is_head_tag(tag, root)).lower()}")
-    print(f"fdroid_tag=fdroid/{tag}+{code}")
+    print(f"fdroid_version_name={fdroid_version_name}")
+    print(f"fdroid_tag=fdroid/v{fdroid_version_name}+{code}")
     return 0
 
 
