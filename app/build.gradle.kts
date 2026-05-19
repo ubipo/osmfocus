@@ -1,10 +1,35 @@
-@file:Suppress("DEPRECATION")
-
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import com.google.protobuf.gradle.*
 import java.io.FileNotFoundException
 import java.io.FileInputStream
 import java.util.Properties
+
+data class AndroidVersion(val name: String, val code: Int) {
+    companion object
+}
+
+fun AndroidVersion.Companion.fromGit(rootDir: File) = ProcessBuilder(
+    "python3",
+    rootDir.resolve("scripts/vcs_version.py").absolutePath
+)
+    .directory(rootDir)
+    .redirectErrorStream(true)
+    .start()
+    .run {
+        val stdout = inputReader().use { it.readText() }.trim()
+        check(waitFor() == 0) { stdout.ifBlank { "<empty stdout>" } }
+        stdout
+    }
+    .lineSequence()
+    .filter(String::isNotBlank)
+    .map { line -> line.split('=', limit = 2) }
+    .associate { (key, value) -> key to value }
+    .run {
+        AndroidVersion(
+            name = getValue("semver"),
+            code = getValue("android_code").toInt(),
+        )
+    }
 
 plugins {
     alias(libs.plugins.android.application)
@@ -24,15 +49,19 @@ kotlin {
 
 android {
     compileSdk = 36
+    val androidVersion = try {
+        AndroidVersion.fromGit(rootDir)
+    } catch (e: Exception) {
+        logger.warn("Failed to read VCS version (${e.message}); using fallback version 0.0.0 (1).")
+        AndroidVersion("0.0.0", 1)
+    }
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 23
         targetSdk = 36
-        val versionTriple = Triple(1, 8, 0)
-        versionName = versionTriple.toList().joinToString(".")
-        //noinspection WrongGradleMethod
-        versionCode = versionTriple.toList().joinToString("") { "%03d".format(it) }.toInt()
+        versionName = androidVersion.name
+        versionCode = androidVersion.code
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -104,7 +133,7 @@ android {
         create("gplay") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-gplay"
-            signingConfigs.asMap["gplayRelease"]?. let { signingConfig = it }
+            signingConfigs.asMap["gplayRelease"]?.let { signingConfig = it }
         }
     }
 
@@ -114,19 +143,21 @@ android {
             useLegacyPackaging = true
         }
         resources {
-            excludes.addAll(listOf(
-            "META-INF/DEPENDENCIES",
-            "META-INF/LICENSE",
-            "META-INF/LICENSE.txt",
-            "META-INF/license.txt",
-            "META-INF/NOTICE",
-            "META-INF/NOTICE.txt",
-            "META-INF/notice.txt",
-            "META-INF/ASL2.0",
-            "META-INF/*.kotlin_module",
-            "org/apache/http/version.properties",
-            "org/apache/http/client/version.properties"
-            ))
+            excludes.addAll(
+                listOf(
+                    "META-INF/DEPENDENCIES",
+                    "META-INF/LICENSE",
+                    "META-INF/LICENSE.txt",
+                    "META-INF/license.txt",
+                    "META-INF/NOTICE",
+                    "META-INF/NOTICE.txt",
+                    "META-INF/notice.txt",
+                    "META-INF/ASL2.0",
+                    "META-INF/*.kotlin_module",
+                    "org/apache/http/version.properties",
+                    "org/apache/http/client/version.properties"
+                )
+            )
         }
     }
     namespace = "net.pfiers.osmfocus"
@@ -137,17 +168,15 @@ ksp {
 }
 
 protobuf {
-    protobuf.apply {
-        protoc {
-            artifact = libs.google.protobuf.protoc.get().toString()
-        }
+    protoc {
+        artifact = libs.google.protobuf.protoc.get().toString()
+    }
 
-        generateProtoTasks {
-            all().forEach { task ->
-                task.builtins {
-                    id("java") {
-                        option("lite")
-                    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                id("java") {
+                    option("lite")
                 }
             }
         }
