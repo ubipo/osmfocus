@@ -103,16 +103,18 @@
     <string name="setting_tagbox_long_lines_ellipsize">Ellipsize</string>
     <string name="setting_tagbox_long_lines_wrap">Wrap</string>
     <string name="tagbox_long_lines_edit_dialog_title">Long lines in tagboxes</string>
-    <string name="map_relation_toggle_btn_description">Toggle OSM relations</string>
+    <string name="setting_show_notes">Show notes</string>
+    <string name="setting_show_notes_shown">Shown</string>
+    <string name="setting_show_notes_hidden">Hidden</string>
     <string name="setting_show_relations">Show relations</string>
     <string name="setting_show_relations_shown">Shown</string>
     <string name="setting_show_relations_hidden">Hidden</string>
-    <string name="setting_show_nodes">Show nodes</string>
-    <string name="setting_show_nodes_shown">Shown</string>
-    <string name="setting_show_nodes_hidden">Hidden</string>
     <string name="setting_show_ways">Show ways</string>
     <string name="setting_show_ways_shown">Shown</string>
     <string name="setting_show_ways_hidden">Hidden</string>
+    <string name="setting_show_nodes">Show nodes</string>
+    <string name="setting_show_nodes_shown">Shown</string>
+    <string name="setting_show_nodes_hidden">Hidden</string>
     <string name="too_zoomed_out">Zoom in to view data</string>
     <string name="setting_zoom_beyond_base_map_max_enabled">Enabled</string>
     <string name="setting_zoom_beyond_base_map_max_disabled">Disabled</string>
@@ -190,4 +192,5 @@
     <string name="restart">Restart</string>
     <string name="retry">Retry</string>
     <string name="error_updating_setting">Error updating setting</string>
+    <string name="loading_settings">Loading settings…</string>
 </resources>

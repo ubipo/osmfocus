@@ -12,5 +12,5 @@ import net.pfiers.osmfocus.Settings
 val Context.settingsDataStore: DataStore<Settings> by dataStore(
     fileName = "settings.pb",
     serializer = SettingsSerializer(),
-    corruptionHandler = ReplaceFileCorruptionHandler{ SettingsSerializer.defaultValue },
+    corruptionHandler = ReplaceFileCorruptionHandler { settingsDefault },
 )

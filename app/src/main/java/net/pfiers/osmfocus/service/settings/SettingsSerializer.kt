@@ -7,23 +7,39 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository
+import org.locationtech.jts.geom.Coordinate
 import java.io.InputStream
 import java.io.OutputStream
 
+val settingsDefault: Settings = Settings.newBuilder().apply {
+    apiBaseUrl = "https://api.openstreetmap.org/api/0.6"
+    baseMapUid = BaseMapRepository.uidOfDefault
+    lastLocation = Coordinate(4.7011675, 50.879202).toSettingsLocation()
+    lastZoomLevel = 14.0
+    tagboxLongLines = Settings.TagboxLongLines.ELLIPSIZE
+    showNotes = true
+    showRelations = false
+    showNodes = true
+    showWays = true
+    zoomBeyondBaseMapMax = false
+}.build()
 
 class SettingsSerializer : Serializer<Settings> {
-    override val defaultValue: Settings = Companion.defaultValue
+    override val defaultValue: Settings = settingsDefault
 
     override suspend fun readFrom(input: InputStream): Settings {
         try {
             return withContext(Dispatchers.IO) {
                 val settingsBuilder = Settings.parseFrom(input).toBuilder()
-                // Set defaults after upgrade (protobuf string default is the empty string)
+                // Backfill app defaults after upgrade when older settings files are missing newer fields.
                 if (settingsBuilder.apiBaseUrl.isBlank()) {
-                    settingsBuilder.apiBaseUrl = Defaults.apiBaseUrl
+                    settingsBuilder.apiBaseUrl = settingsDefault.apiBaseUrl
                 }
                 if (settingsBuilder.baseMapUid.isBlank()) {
                     settingsBuilder.baseMapUid = BaseMapRepository.uidOfDefault
+                }
+                if (!settingsBuilder.hasShowNotes()) {
+                    settingsBuilder.showNotes = settingsDefault.showNotes
                 }
                 settingsBuilder.build()
             }
@@ -36,18 +52,4 @@ class SettingsSerializer : Serializer<Settings> {
         t: Settings,
         output: OutputStream
     ) = withContext(Dispatchers.IO) { t.writeTo(output) }
-
-    companion object {
-        val defaultValue = Settings.newBuilder().apply {
-            apiBaseUrl = Defaults.apiBaseUrl
-            baseMapUid = BaseMapRepository.uidOfDefault
-            lastLocation = Defaults.location.toSettingsLocation()
-            lastZoomLevel = Defaults.zoomLevel
-            tagboxLongLines = Defaults.tagBoxLongLines
-            showRelations = Defaults.showRelations
-            showNodes = Defaults.showNodes
-            showWays = Defaults.showWays
-            zoomBeyondBaseMapMax = Defaults.zoomBeyondBaseMapMax
-        }.build()
-    }
 }

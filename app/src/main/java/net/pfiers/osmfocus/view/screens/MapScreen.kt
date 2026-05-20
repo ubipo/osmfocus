@@ -87,7 +87,7 @@ import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfi
 import net.pfiers.osmfocus.service.osmapi.ElementsDownloadManager
 import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
 import net.pfiers.osmfocus.service.osmapi.NotesDownloadManager
-import net.pfiers.osmfocus.service.settings.Defaults
+import net.pfiers.osmfocus.service.settings.settingsDefault
 import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.service.settings.toSettingsLocation
 import net.pfiers.osmfocus.service.tagboxlocation.TbLoc
@@ -161,7 +161,7 @@ internal fun MapScreen(
     onShowElementDetails: (TypedId) -> Unit,
     onShowNoteDetails: (Long) -> Unit,
 ) {
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
     remember(context) {
         MapLibre.getInstance(context)
     }
@@ -171,11 +171,16 @@ internal fun MapScreen(
     val elementsDownloadManager = ElementsDownloadManager.instance()
     val notesDownloadManager = NotesDownloadManager.instance()
     val latestMapState = remember { AtomicReference<MapState?>(null) }
+    val defaultSettings = remember { settingsDefault }
+    val defaultLocation = remember(defaultSettings) {
+        defaultSettings.lastLocation.settingsLocationToLatLng()
+    }
 
     val settingsOrNull by produceState<Settings?>(initialValue = null, context) {
         context.settingsDataStore.data.collect { value = it }
     }
-    val settings = settingsOrNull ?: Settings.getDefaultInstance()
+    val settings = settingsOrNull ?: defaultSettings
+    val showAnyElementType = settings.showRelations || settings.showWays || settings.showNodes
     val activeBaseMap by produceState<BaseMap?>(
         initialValue = null,
         key1 = settingsOrNull?.baseMapUid,
@@ -194,11 +199,16 @@ internal fun MapScreen(
     val baseStyle = remember(resolvedBaseMap) { resolvedBaseMap.toMapLibre() }
     val cameraState = rememberCameraState(
         firstPosition = CameraPosition(
-            target = Defaults.location.toPosition(),
-            zoom = Defaults.zoomLevel,
+            target = Position(
+                longitude = defaultLocation.longitude,
+                latitude = defaultLocation.latitude,
+            ),
+            zoom = defaultSettings.lastZoomLevel,
         ),
     )
-    val noteLayerIds = remember { setOf(NOTES_OPEN_LAYER_ID, NOTES_CLOSED_LAYER_ID) }
+    val noteLayerIds = remember(settings.showNotes) {
+        if (settings.showNotes) setOf(NOTES_OPEN_LAYER_ID, NOTES_CLOSED_LAYER_ID) else emptySet()
+    }
     val mapOptions = remember(settings.mapRotationGestureEnabled) {
         MapOptions(
             gestureOptions = if (settings.mapRotationGestureEnabled) {
@@ -262,23 +272,27 @@ internal fun MapScreen(
     }
 
     fun initiateDownload() {
-        coroutineScope.launch(Dispatchers.Default) {
-            elementsDownloadManager.download {
-                getDownloadEnvelope(latestMapState.get(), ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL)
-            }.onError { ex ->
-                when (ex) {
-                    is ZoomLevelRecededException,
-                    is EnvelopeDownloadManager.FresherDownloadCe,
-                    -> return@onError
-                }
-                withContext(Dispatchers.Main) {
-                    downloadException = ex
+        if (showAnyElementType) {
+            coroutineScope.launch(Dispatchers.Default) {
+                elementsDownloadManager.download {
+                    getDownloadEnvelope(latestMapState.get(), ELEMENTS_MIN_DOWNLOAD_ZOOM_LEVEL)
+                }.onError { ex ->
+                    when (ex) {
+                        is ZoomLevelRecededException,
+                        is EnvelopeDownloadManager.FresherDownloadCe,
+                        -> return@onError
+                    }
+                    withContext(Dispatchers.Main) {
+                        downloadException = ex
+                    }
                 }
             }
         }
-        coroutineScope.launch(Dispatchers.Default) {
-            notesDownloadManager.download {
-                getDownloadEnvelope(latestMapState.get(), NOTES_MIN_DOWNLOAD_ZOOM_LEVEL)
+        if (settings.showNotes) {
+            coroutineScope.launch(Dispatchers.Default) {
+                notesDownloadManager.download {
+                    getDownloadEnvelope(latestMapState.get(), NOTES_MIN_DOWNLOAD_ZOOM_LEVEL)
+                }
             }
         }
     }
@@ -290,7 +304,15 @@ internal fun MapScreen(
         }
     }
 
-    LaunchedEffect(elementsDownloadManager) {
+    LaunchedEffect(elementsDownloadManager, showAnyElementType) {
+        if (!showAnyElementType) {
+            downloadState = EnvelopeDownloadManager.State.IDLE
+            overlayTextRes = null
+            downloadException = null
+            return@LaunchedEffect
+        }
+
+        downloadState = elementsDownloadManager.state
         elementsDownloadManager.events.receiveAsFlow().collect { event ->
             when (event) {
                 is PropertyChangedEvent<*> -> {
@@ -374,8 +396,8 @@ internal fun MapScreen(
         }
     }
 
-    LaunchedEffect(mapState) {
-        if (mapState != null) {
+    LaunchedEffect(mapState, showAnyElementType, settings.showNotes) {
+        if (mapState != null && (showAnyElementType || settings.showNotes)) {
             initiateDownload()
         }
     }
@@ -395,7 +417,7 @@ internal fun MapScreen(
         }
 
         val tagBoxElementPairs = withContext(Dispatchers.Default) {
-            if (currentMapState.zoomLevel < ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
+            if (!showAnyElementType || currentMapState.zoomLevel < ELEMENTS_MIN_DISPLAY_ZOOM_LEVEL) {
                 emptyMap()
             } else {
                 val displayedElements = getElementsToDisplay(
@@ -523,7 +545,7 @@ internal fun MapScreen(
                 MapOverlayContent(
                     highlightedElements = highlightedElements,
                     tbInfos = tbInfos,
-                    notes = notes,
+                    notes = if (settings.showNotes) notes else emptyMap(),
                     latestLocation = latestLocation,
                     noteDrawables = noteDrawables,
                     deviceLocationBitmap = deviceLocationBitmap,
@@ -564,7 +586,7 @@ internal fun MapScreen(
                 }
             }
 
-            overlayTextRes?.let { overlayRes ->
+            if (showAnyElementType) overlayTextRes?.let { overlayRes ->
                 Surface(
                     modifier = Modifier
                         .mapGesturePassthrough()
@@ -582,7 +604,7 @@ internal fun MapScreen(
                 }
             }
 
-            progressIndicatorIcon(downloadState)?.let { iconRes ->
+            if (showAnyElementType) progressIndicatorIcon(downloadState)?.let { iconRes ->
                 androidx.compose.material3.Icon(
                     painter = painterResource(iconRes),
                     contentDescription = null,
@@ -1230,5 +1252,3 @@ private const val CROSSHAIR_LINE_WIDTH = 3f
 private const val CROSSHAIR_GAP = 10f
 private val geometryFactory = GeometryFactory()
 private val EMPTY_FEATURE_COLLECTION = FeatureCollection.fromFeatures(emptyArray())
-
-

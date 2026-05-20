@@ -1,15 +1,19 @@
 package net.pfiers.osmfocus.view.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -20,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -48,10 +51,71 @@ internal fun SettingsScreen(
     onShowBaseMaps: () -> Unit,
     onShowAbout: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val settings by context.settingsDataStore.data.collectAsState(initial = Settings.getDefaultInstance())
+    val context = LocalContext.current.applicationContext
+    val settingsUiState by produceState<SettingsUiState>(
+        initialValue = SettingsUiState.Loading,
+        key1 = context,
+    ) {
+        context.settingsDataStore.data.collect { value = SettingsUiState.Loaded(it) }
+    }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text(stringResource(R.string.settings)) })
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        when (val state = settingsUiState) {
+            SettingsUiState.Loading -> LoadingSettingsContent(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+            )
+
+            is SettingsUiState.Loaded -> LoadedSettingsContent(
+                settings = state.settings,
+                onShowBaseMaps = onShowBaseMaps,
+                onShowAbout = onShowAbout,
+                snackbarHostState = snackbarHostState,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState()),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadingSettingsContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.loading_settings))
+        }
+    }
+}
+
+private sealed interface SettingsUiState {
+    data object Loading : SettingsUiState
+    data class Loaded(val settings: Settings) : SettingsUiState
+}
+
+@Composable
+private fun LoadedSettingsContent(
+    settings: Settings,
+    onShowBaseMaps: () -> Unit,
+    onShowAbout: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current.applicationContext
+    val coroutineScope = rememberCoroutineScope()
     val baseMapName by produceState(initialValue = "", settings.baseMapUid, context) {
         try {
             value = withContext(Dispatchers.Default) {
@@ -66,10 +130,7 @@ internal fun SettingsScreen(
         }
     }
 
-    // Dialog state
     var showTagboxLongLinesDialog by remember { mutableStateOf(false) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
     val errorUpdatingSettingMessage = stringResource(R.string.error_updating_setting)
 
     fun updateSetting(update: Settings.Builder.() -> Unit) {
@@ -96,108 +157,110 @@ internal fun SettingsScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.settings)) })
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            SettingItem(
-                iconRes = R.drawable.ic_map_24,
-                title = stringResource(R.string.setting_title_base_map),
-                subtitle = baseMapName,
-                onClick = onShowBaseMaps,
-            )
+    Column(modifier = modifier) {
+        SettingItem(
+            iconRes = R.drawable.ic_map_24,
+            title = stringResource(R.string.setting_title_base_map),
+            subtitle = baseMapName,
+            onClick = onShowBaseMaps,
+        )
 
-            SettingItem(
-                iconRes = R.drawable.ic_wrap_text,
-                title = stringResource(R.string.setting_title_tagbox_long_lines),
-                subtitle = stringResource(
-                    if (settings.tagboxLongLines == Settings.TagboxLongLines.ELLIPSIZE)
-                        R.string.setting_tagbox_long_lines_ellipsize
-                    else
-                        R.string.setting_tagbox_long_lines_wrap
-                ),
-                onClick = { showTagboxLongLinesDialog = true }
-            )
+        SettingItem(
+            iconRes = R.drawable.ic_wrap_text,
+            title = stringResource(R.string.setting_title_tagbox_long_lines),
+            subtitle = stringResource(
+                if (settings.tagboxLongLines == Settings.TagboxLongLines.ELLIPSIZE)
+                    R.string.setting_tagbox_long_lines_ellipsize
+                else
+                    R.string.setting_tagbox_long_lines_wrap
+            ),
+            onClick = { showTagboxLongLinesDialog = true }
+        )
 
-            SettingItemWithToggle(
-                iconRes = R.drawable.ic_relation,
-                title = stringResource(R.string.setting_show_relations),
-                subtitle = stringResource(
-                    if (settings.showRelations) R.string.setting_show_relations_shown
-                    else R.string.setting_show_relations_hidden
-                ),
-                isChecked = settings.showRelations,
-                onToggle = { newValue ->
-                    updateSetting { showRelations = newValue }
-                }
-            )
+        SettingItemWithToggle(
+            iconRes = R.drawable.ic_baseline_add_comment_24,
+            title = stringResource(R.string.setting_show_notes),
+            subtitle = stringResource(
+                if (settings.showNotes) R.string.setting_show_notes_shown
+                else R.string.setting_show_notes_hidden
+            ),
+            isChecked = settings.showNotes,
+            onToggle = { newValue ->
+                updateSetting { showNotes = newValue }
+            }
+        )
 
-            SettingItemWithToggle(
-                iconRes = R.drawable.ic_nodes,
-                title = stringResource(R.string.setting_show_nodes),
-                subtitle = stringResource(
-                    if (settings.showNodes) R.string.setting_show_nodes_shown
-                    else R.string.setting_show_nodes_hidden
-                ),
-                isChecked = settings.showNodes,
-                onToggle = { newValue ->
-                    updateSetting { showNodes = newValue }
-                }
-            )
+        SettingItemWithToggle(
+            iconRes = R.drawable.ic_relation,
+            title = stringResource(R.string.setting_show_relations),
+            subtitle = stringResource(
+                if (settings.showRelations) R.string.setting_show_relations_shown
+                else R.string.setting_show_relations_hidden
+            ),
+            isChecked = settings.showRelations,
+            onToggle = { newValue ->
+                updateSetting { showRelations = newValue }
+            }
+        )
 
-            SettingItemWithToggle(
-                iconRes = R.drawable.ic_ways,
-                title = stringResource(R.string.setting_show_ways),
-                subtitle = stringResource(
-                    if (settings.showWays) R.string.setting_show_ways_shown
-                    else R.string.setting_show_ways_hidden
-                ),
-                isChecked = settings.showWays,
-                onToggle = { newValue ->
-                    updateSetting { showWays = newValue }
-                }
-            )
+        SettingItemWithToggle(
+            iconRes = R.drawable.ic_ways,
+            title = stringResource(R.string.setting_show_ways),
+            subtitle = stringResource(
+                if (settings.showWays) R.string.setting_show_ways_shown
+                else R.string.setting_show_ways_hidden
+            ),
+            isChecked = settings.showWays,
+            onToggle = { newValue ->
+                updateSetting { showWays = newValue }
+            }
+        )
 
-            SettingItemWithToggle(
-                iconRes = R.drawable.ic_baseline_rotate_left_24,
-                title = stringResource(R.string.setting_allow_rotating_map),
-                subtitle = stringResource(
-                    if (settings.mapRotationGestureEnabled) R.string.allow_rotating_map_enabled
-                    else R.string.allow_rotating_map_disabled
-                ),
-                isChecked = settings.mapRotationGestureEnabled,
-                onToggle = { newValue ->
-                    updateSetting { mapRotationGestureEnabled = newValue }
-                }
-            )
+        SettingItemWithToggle(
+            iconRes = R.drawable.ic_nodes,
+            title = stringResource(R.string.setting_show_nodes),
+            subtitle = stringResource(
+                if (settings.showNodes) R.string.setting_show_nodes_shown
+                else R.string.setting_show_nodes_hidden
+            ),
+            isChecked = settings.showNodes,
+            onToggle = { newValue ->
+                updateSetting { showNodes = newValue }
+            }
+        )
 
-            SettingItemWithToggle(
-                iconRes = R.drawable.ic_baseline_zoom_in_24,
-                title = stringResource(R.string.setting_zoom_beyond_base_map_max),
-                subtitle = stringResource(
-                    if (settings.zoomBeyondBaseMapMax) R.string.setting_zoom_beyond_base_map_max_enabled
-                    else R.string.setting_zoom_beyond_base_map_max_disabled
-                ),
-                isChecked = settings.zoomBeyondBaseMapMax,
-                onToggle = { newValue ->
-                    updateSetting { zoomBeyondBaseMapMax = newValue }
-                }
-            )
+        SettingItemWithToggle(
+            iconRes = R.drawable.ic_baseline_rotate_left_24,
+            title = stringResource(R.string.setting_allow_rotating_map),
+            subtitle = stringResource(
+                if (settings.mapRotationGestureEnabled) R.string.allow_rotating_map_enabled
+                else R.string.allow_rotating_map_disabled
+            ),
+            isChecked = settings.mapRotationGestureEnabled,
+            onToggle = { newValue ->
+                updateSetting { mapRotationGestureEnabled = newValue }
+            }
+        )
 
-            SettingItem(
-                iconRes = R.drawable.ic_baseline_info_24,
-                title = stringResource(R.string.about),
-                subtitle = stringResource(R.string.about_second_line),
-                onClick = onShowAbout,
-            )
-        }
+        SettingItemWithToggle(
+            iconRes = R.drawable.ic_baseline_zoom_in_24,
+            title = stringResource(R.string.setting_zoom_beyond_base_map_max),
+            subtitle = stringResource(
+                if (settings.zoomBeyondBaseMapMax) R.string.setting_zoom_beyond_base_map_max_enabled
+                else R.string.setting_zoom_beyond_base_map_max_disabled
+            ),
+            isChecked = settings.zoomBeyondBaseMapMax,
+            onToggle = { newValue ->
+                updateSetting { zoomBeyondBaseMapMax = newValue }
+            }
+        )
+
+        SettingItem(
+            iconRes = R.drawable.ic_baseline_info_24,
+            title = stringResource(R.string.about),
+            subtitle = stringResource(R.string.about_second_line),
+            onClick = onShowAbout,
+        )
     }
 }
 
