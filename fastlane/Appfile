@@ -1,2 +1,2 @@
-json_key_file("../play-store-credentials.json")
+json_key_file(File.expand_path("../play-store-credentials.json", Dir.pwd))
 package_name("net.pfiers.osmfocus")
