@@ -128,13 +128,13 @@ android {
         create("fdroid") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-fdroid"
-            signingConfigs.asMap["release"]?.let { signingConfig = it }
+            signingConfigs["release"]?.let { signingConfig = it }
         }
 
         create("gplay") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-gplay"
-            signingConfigs.asMap["release"]?.let { signingConfig = it }
+            signingConfigs["release"]?.let { signingConfig = it }
         }
     }
 
