@@ -71,6 +71,16 @@ jobs:
             --title "$RELEASE_TAG" \
             --generate-notes
 
+      - name: Upload signed OSS APK asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.version_meta.outputs.release_tag }}
+        run: |
+          apk_path="$(find app/build/outputs/apk/fdroid/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          test -n "$apk_path"
+          asset_name="net.pfiers.osmfocus-${RELEASE_TAG#v}-oss.apk"
+          gh release upload "$RELEASE_TAG" "$apk_path#$asset_name" --clobber
+
   fdroid_tag:
     runs-on: ubuntu-latest
     needs:

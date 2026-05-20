@@ -103,7 +103,7 @@ android {
             val keyAlias = getSigningValue("signing_key_alias") ?: return@run
             val keyPassword = getSigningValue("signing_key_password") ?: return@run
 
-            create("gplayRelease") {
+            create("release") {
                 storeFile = file(keystorePath)
                 this.storePassword = storePassword
                 this.keyAlias = keyAlias
@@ -128,12 +128,13 @@ android {
         create("fdroid") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-fdroid"
+            signingConfigs.asMap["release"]?.let { signingConfig = it }
         }
 
         create("gplay") {
             dimension = distributionChannelDimension
             versionNameSuffix = "-gplay"
-            signingConfigs.asMap["gplayRelease"]?.let { signingConfig = it }
+            signingConfigs.asMap["release"]?.let { signingConfig = it }
         }
     }
 
