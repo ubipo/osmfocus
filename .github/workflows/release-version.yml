@@ -52,6 +52,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
       - name: Create GitHub release if missing
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,6 +67,7 @@ jobs:
           fi
 
           gh release create "$RELEASE_TAG" \
+            --verify-tag \
             --title "$RELEASE_TAG" \
             --generate-notes
 

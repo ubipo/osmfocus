@@ -3,10 +3,12 @@ default_platform(:android)
 platform :android do
   desc "Deploy to Google Play"
   lane :production do
+    repo_root = File.expand_path("..", __dir__)
+
     gradle(
       task: "clean bundleGplayRelease",
-      project_dir: "..",
-      gradle_path: "./gradlew"
+      project_dir: repo_root,
+      gradle_path: File.join(repo_root, "gradlew")
     )
     upload_to_play_store(release_status: 'draft')
   end
