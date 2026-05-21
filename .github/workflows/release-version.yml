@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional semantic version tag or version expression to release (for example: v1.8.9 or 1.8.9)"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -15,26 +21,39 @@ jobs:
       release_tag: ${{ steps.meta.outputs.release_tag }}
       is_head_tagged: ${{ steps.meta.outputs.is_head_tagged }}
       fdroid_tag: ${{ steps.meta.outputs.fdroid_tag }}
+      checkout_ref: ${{ steps.meta.outputs.checkout_ref }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
 
       - name: Compute version metadata
         id: meta
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CURRENT_REF: ${{ github.ref }}
         run: |
           set -o pipefail
-          bash scripts/vcs_version.sh | tee -a "$GITHUB_OUTPUT"
+          bash scripts/vcs_version.sh "${{ github.event.inputs.tag || '' }}" | tee -a "$GITHUB_OUTPUT"
+          release_tag="$(grep '^release_tag=' "$GITHUB_OUTPUT" | tail -n 1 | cut -d= -f2-)"
+
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            echo "checkout_ref=refs/tags/$release_tag" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout_ref=$CURRENT_REF" >> "$GITHUB_OUTPUT"
+          fi
 
   tests:
     runs-on: ubuntu-latest
     needs: version_meta
-    if: needs.version_meta.outputs.is_head_tagged == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.version_meta.outputs.is_head_tagged == 'true'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
+          ref: ${{ needs.version_meta.outputs.checkout_ref }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -55,6 +74,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
+          ref: ${{ needs.version_meta.outputs.checkout_ref }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -67,8 +87,8 @@ jobs:
         env:
           ANDROID_SIGNING_KEYSTORE_JKS_B64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_JKS_B64 }}
 
-      - name: Build signed OSS APK
-        run: ./gradlew app:assembleFdroidRelease
+      - name: Build signed release APKs
+        run: ./gradlew app:assembleFdroidRelease app:assembleGplayRelease
         env:
           SIGNING_KEYSTORE_FILE: ../android-signing-keystore.jks
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
@@ -90,15 +110,26 @@ jobs:
             --title "$RELEASE_TAG" \
             --generate-notes
 
-      - name: Upload signed OSS APK asset
+      - name: Upload signed release APK and metadata assets
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.version_meta.outputs.release_tag }}
         run: |
-          apk_path="$(find app/build/outputs/apk/fdroid/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
-          test -n "$apk_path"
-          asset_name="net.pfiers.osmfocus-${RELEASE_TAG#v}-oss.apk"
-          gh release upload "$RELEASE_TAG" "$apk_path#$asset_name" --clobber
+          version="${RELEASE_TAG#v}"
+
+          for flavor in fdroid gplay; do
+            apk_dir="app/build/outputs/apk/$flavor/release"
+            apk_path="$(find "$apk_dir" -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+            metadata_path="$apk_dir/output-metadata.json"
+
+            test -n "$apk_path"
+            test -f "$metadata_path"
+
+            gh release upload "$RELEASE_TAG" \
+              "$apk_path#net.pfiers.osmfocus-${version}-${flavor}.apk" \
+              "$metadata_path#net.pfiers.osmfocus-${version}-${flavor}-output-metadata.json" \
+              --clobber
+          done
 
   fdroid_tag:
     runs-on: ubuntu-latest
@@ -111,6 +142,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
+          ref: ${{ needs.version_meta.outputs.checkout_ref }}
 
       - name: Create F-Droid tag if missing
         env:
@@ -133,10 +165,12 @@ jobs:
     needs:
       - version_meta
       - tests
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
+          ref: ${{ needs.version_meta.outputs.checkout_ref }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:

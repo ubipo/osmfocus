@@ -164,6 +164,14 @@ android {
     namespace = "net.pfiers.osmfocus"
 }
 
+@Suppress("UnstableApiUsage")
+androidComponents {
+    beforeVariants(selector().withBuildType("release").withFlavor("distributionChannel", "fdroid")) {
+        it.isMinifyEnabled = false
+        it.shrinkResources = false
+    }
+}
+
 ksp {
     arg("room.schemaLocation", "$projectDir/room-schemas")
 }

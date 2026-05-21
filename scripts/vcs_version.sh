@@ -2,6 +2,24 @@
 set -euo pipefail
 
 SEMVER_RE='^v([0-9]+)\.([0-9]+)\.([0-9]+)$'
+VERSION_EXPR_RE='^([0-9]+)\.([0-9]+)\.([0-9]+)$'
+
+resolve_tag() {
+  local version_expr="${1:-}"
+
+  if [[ "$version_expr" =~ $SEMVER_RE ]]; then
+    printf '%s\n' "$version_expr"
+    return 0
+  fi
+
+  if [[ "$version_expr" =~ $VERSION_EXPR_RE ]]; then
+    printf 'v%s\n' "$version_expr"
+    return 0
+  fi
+
+  echo "Expected a semantic version tag or version expression like v1.8.0 or 1.8.0, got: $version_expr" >&2
+  return 1
+}
 
 latest_semver_tag() {
   local tag
@@ -31,10 +49,15 @@ is_head_tagged() {
 }
 
 main() {
-  local tag major minor patch semver android_code fdroid_version_name
+  local version_expr tag major minor patch semver android_code fdroid_version_name
   cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
-  tag="$(latest_semver_tag)"
+  version_expr="${1:-}"
+  if [[ -n "$version_expr" ]]; then
+    tag="$(resolve_tag "$version_expr")"
+  else
+    tag="$(latest_semver_tag)"
+  fi
   IFS=. read -r major minor patch <<< "${tag#v}"
   semver="${major}.${minor}.${patch}"
   android_code="$(get_android_code "$major" "$minor" "$patch")"
