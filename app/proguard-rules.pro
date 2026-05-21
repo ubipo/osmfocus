@@ -33,6 +33,12 @@
     <fields>;
 }
 
+# Klaxon locates converter methods such as toJson() by name via Kotlin reflection.
+# Keep the app's custom converters intact in release builds so R8 cannot rename
+# or merge away those methods.
+-keep class net.pfiers.osmfocus.service.klaxon.InstantConverter { *; }
+-keep class net.pfiers.osmfocus.service.klaxon.UriConverter { *; }
+
 # androidx.window reflects on OEM extension and sidecar implementations that are
 # not bundled with the app on most devices. Suppress R8 warnings for those
 # optional classes so release minification can proceed.
