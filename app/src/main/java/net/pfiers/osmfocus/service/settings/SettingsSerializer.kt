@@ -17,6 +17,7 @@ val settingsDefault: Settings = Settings.newBuilder().apply {
     lastLocation = Coordinate(4.7011675, 50.879202).toSettingsLocation()
     lastZoomLevel = 14.0
     tagboxLongLines = Settings.TagboxLongLines.ELLIPSIZE
+    filterElements = ""
     showNotes = true
     showRelations = false
     showNodes = true

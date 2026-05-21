@@ -103,6 +103,15 @@
     <string name="setting_tagbox_long_lines_ellipsize">Ellipsize</string>
     <string name="setting_tagbox_long_lines_wrap">Wrap</string>
     <string name="tagbox_long_lines_edit_dialog_title">Long lines in tagboxes</string>
+    <string name="setting_filter_elements">Filter elements</string>
+    <string name="setting_filter_elements_all">All elements</string>
+    <string name="setting_filter_elements_custom">Custom filters configured</string>
+    <string name="setting_filter_elements_dialog_title">Filter elements</string>
+    <string name="setting_filter_elements_format">One filter per line, use \'-\' to invert. Examples:
+key=value
+key
+source:*=Name for my * source
+-building=dormitory</string>
     <string name="setting_show_notes">Show notes</string>
     <string name="setting_show_notes_shown">Shown</string>
     <string name="setting_show_notes_hidden">Hidden</string>

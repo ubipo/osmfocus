@@ -83,6 +83,8 @@ import net.pfiers.osmfocus.service.osm.Element
 import net.pfiers.osmfocus.service.osm.ElementCentroidAndId
 import net.pfiers.osmfocus.service.osm.Notes
 import net.pfiers.osmfocus.service.osm.TypedId
+import net.pfiers.osmfocus.service.osm.filter.TagFilters
+import net.pfiers.osmfocus.service.osm.filter.toTagFilters
 import net.pfiers.osmfocus.service.osmapi.ApiConfigRepository.Companion.apiConfigRepository
 import net.pfiers.osmfocus.service.osmapi.ElementsDownloadManager
 import net.pfiers.osmfocus.service.osmapi.EnvelopeDownloadManager
@@ -181,6 +183,7 @@ internal fun MapScreen(
     }
     val settings = settingsOrNull ?: defaultSettings
     val showAnyElementType = settings.showRelations || settings.showWays || settings.showNodes
+    val tagFilters = remember(settings.filterElements) { settings.filterElements.toTagFilters() }
     val activeBaseMap by produceState<BaseMap?>(
         initialValue = null,
         key1 = settingsOrNull?.baseMapUid,
@@ -405,6 +408,7 @@ internal fun MapScreen(
     LaunchedEffect(
         mapState,
         elementsVersion,
+        tagFilters,
         settings.showRelations,
         settings.showNodes,
         settings.showWays,
@@ -423,6 +427,7 @@ internal fun MapScreen(
                 val displayedElements = getElementsToDisplay(
                     envelope = currentMapState.envelope,
                     elementsDownloadManager = elementsDownloadManager,
+                    tagFilters = tagFilters,
                     showNodes = settings.showNodes,
                     showWays = settings.showWays,
                     showRelations = settings.showRelations,
@@ -1190,6 +1195,7 @@ private fun getDownloadEnvelope(
 private fun getElementsToDisplay(
     envelope: Envelope,
     elementsDownloadManager: ElementsDownloadManager,
+    tagFilters: TagFilters,
     showNodes: Boolean,
     showWays: Boolean,
     showRelations: Boolean,
@@ -1201,6 +1207,7 @@ private fun getElementsToDisplay(
     if (showRelations) elementsList.addAll(elementsDownloadManager.elements.relations.entries)
     return elementsList
         .filterNot { (_, element) -> element.tags.isNullOrEmpty() }
+        .filter { (_, element) -> tagFilters.matches(element) }
         .mapNotNull { (id, element) ->
             elementsDownloadManager.getGeometry(TypedId(id, element.type))?.takeIf { geometry ->
                 !geometry.isEmpty && envelope.intersects(geometry.envelopeInternal)

@@ -38,4 +38,6 @@ message Settings {
   bool showWays = 11;
 
   bool mapRotationGestureEnabled = 12;
+
+  string filterElements = 14;
 }

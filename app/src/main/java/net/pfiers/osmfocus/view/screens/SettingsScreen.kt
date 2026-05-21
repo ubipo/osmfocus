@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -29,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +43,7 @@ import kotlinx.coroutines.withContext
 import net.pfiers.osmfocus.R
 import net.pfiers.osmfocus.Settings
 import net.pfiers.osmfocus.service.basemap.BaseMapRepository.Companion.baseMapRepository
+import net.pfiers.osmfocus.service.osm.filter.toTagFilters
 import net.pfiers.osmfocus.service.settings.settingsDataStore
 import net.pfiers.osmfocus.view.support.IconSubtitleListItem
 import timber.log.Timber
@@ -131,6 +134,7 @@ private fun LoadedSettingsContent(
     }
 
     var showTagboxLongLinesDialog by remember { mutableStateOf(false) }
+    var showFilterElementsDialog by remember { mutableStateOf(false) }
     val errorUpdatingSettingMessage = stringResource(R.string.error_updating_setting)
 
     fun updateSetting(update: Settings.Builder.() -> Unit) {
@@ -157,6 +161,17 @@ private fun LoadedSettingsContent(
         )
     }
 
+    if (showFilterElementsDialog) {
+        FilterElementsDialog(
+            oldFilterLines = settings.filterElements,
+            onDismiss = { showFilterElementsDialog = false },
+            onConfirm = { newValue ->
+                updateSetting { filterElements = newValue.toTagFilters().render() }
+                showFilterElementsDialog = false
+            }
+        )
+    }
+
     Column(modifier = modifier) {
         SettingItem(
             iconRes = R.drawable.ic_map_24,
@@ -175,6 +190,16 @@ private fun LoadedSettingsContent(
                     R.string.setting_tagbox_long_lines_wrap
             ),
             onClick = { showTagboxLongLinesDialog = true }
+        )
+
+        SettingItem(
+            iconRes = R.drawable.ic_baseline_app_settings_alt_24,
+            title = stringResource(R.string.setting_filter_elements),
+            subtitle = stringResource(
+                if (settings.filterElements.isBlank()) R.string.setting_filter_elements_all
+                else R.string.setting_filter_elements_custom
+            ),
+            onClick = { showFilterElementsDialog = true }
         )
 
         SettingItemWithToggle(
@@ -360,3 +385,39 @@ private fun TagboxLongLinesDialog(
     )
 }
 
+@Composable
+private fun FilterElementsDialog(
+    oldFilterLines: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var editedFilterLines by rememberSaveable(oldFilterLines) { mutableStateOf(oldFilterLines) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.setting_filter_elements_dialog_title)) },
+        text = {
+            OutlinedTextField(
+                value = editedFilterLines,
+                onValueChange = { editedFilterLines = it },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 5,
+                supportingText = {
+                    Text(stringResource(R.string.setting_filter_elements_format))
+                },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(editedFilterLines) }
+            ) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
