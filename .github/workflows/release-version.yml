@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'dev/v*.*.*'
+  workflow_dispatch:
+    inputs:
+      dev_tag:
+        description: 'Release source tag (format: dev/vX.Y.Z)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -20,13 +26,23 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
 
       - name: Compute version metadata
         id: meta
         shell: bash
+        env:
+          INPUT_DEV_TAG: ${{ inputs.dev_tag }}
         run: |
           set -o pipefail
-          python3 scripts/version.py get "${{ github.ref_name }}" | tee -a "$GITHUB_OUTPUT"
+          trigger_tag="${INPUT_DEV_TAG:-${{ github.ref_name }}}"
+
+          if [[ ! "$trigger_tag" =~ ^dev/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid tag: '$trigger_tag'. Expected format dev/vX.Y.Z" >&2
+            exit 1
+          fi
+
+          python3 scripts/version.py get "$trigger_tag" | tee -a "$GITHUB_OUTPUT"
           semver="$(grep '^semver=' "$GITHUB_OUTPUT" | tail -n 1 | cut -d= -f2-)"
           echo "release_tag=v$semver" | tee -a "$GITHUB_OUTPUT"
 
