@@ -3,57 +3,83 @@ name: Release new app version
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Optional semantic version tag or version expression to release (for example: v1.8.9 or 1.8.9)"
-        required: false
-        type: string
+      - 'dev/v*.*.*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   version_meta:
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.meta.outputs.release_tag }}
-      is_head_tagged: ${{ steps.meta.outputs.is_head_tagged }}
-      fdroid_tag: ${{ steps.meta.outputs.fdroid_tag }}
-      checkout_ref: ${{ steps.meta.outputs.checkout_ref }}
+      semver: ${{ steps.meta.outputs.semver }}
+      android_code: ${{ steps.meta.outputs.android_code }}
+      stamped_commit_sha: ${{ steps.stamp.outputs.stamped_commit_sha }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
 
       - name: Compute version metadata
         id: meta
         shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          CURRENT_REF: ${{ github.ref }}
         run: |
           set -o pipefail
-          bash scripts/vcs_version.sh "${{ github.event.inputs.tag || '' }}" | tee -a "$GITHUB_OUTPUT"
-          release_tag="$(grep '^release_tag=' "$GITHUB_OUTPUT" | tail -n 1 | cut -d= -f2-)"
+          python3 scripts/version.py get "${{ github.ref_name }}" | tee -a "$GITHUB_OUTPUT"
+          semver="$(grep '^semver=' "$GITHUB_OUTPUT" | tail -n 1 | cut -d= -f2-)"
+          echo "release_tag=v$semver" | tee -a "$GITHUB_OUTPUT"
 
-          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
-            echo "checkout_ref=refs/tags/$release_tag" >> "$GITHUB_OUTPUT"
-          else
-            echo "checkout_ref=$CURRENT_REF" >> "$GITHUB_OUTPUT"
+      - name: Stamp and commit release
+        id: stamp
+        shell: bash
+        env:
+          SEMVER: ${{ steps.meta.outputs.semver }}
+          ANDROID_CODE: ${{ steps.meta.outputs.android_code }}
+          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+        run: |
+          python3 scripts/version.py stamp "$SEMVER" "$ANDROID_CODE"
+
+          git config user.name "github-actions[bot]"
+          # 41898282 is GitHub's numeric user ID for github-actions[bot].
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app/build.gradle.kts
+          if git diff --cached --quiet; then
+            echo "Version stamping produced no changes; expected to replace development markers." >&2
+            exit 1
           fi
+          git commit -m "release: $SEMVER"
+
+          release_commit="$(git rev-parse HEAD)"
+          echo "release_commit=$release_commit" >> "$GITHUB_OUTPUT"
+
+          git fetch --tags --force origin
+
+          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG^{commit}" >/dev/null; then
+            existing_tag_sha="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+            if [[ "$existing_tag_sha" != "$release_commit" ]]; then
+              echo "Tag $RELEASE_TAG already exists on $existing_tag_sha; expected $release_commit." >&2
+              exit 1
+            fi
+            echo "Tag $RELEASE_TAG already points to stamped commit; skipping tag creation."
+          else
+            git push --force-with-lease origin "HEAD:release"
+            git tag "$RELEASE_TAG" "$release_commit"
+            git push origin "refs/tags/$RELEASE_TAG"
+            exit 0
+          fi
+
+          git push --force-with-lease origin "HEAD:release"
 
   tests:
     runs-on: ubuntu-latest
     needs: version_meta
-    if: github.event_name == 'workflow_dispatch' || needs.version_meta.outputs.is_head_tagged == 'true'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.checkout_ref }}
+          ref: ${{ needs.version_meta.outputs.release_commit }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -74,7 +100,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.checkout_ref }}
+          ref: ${{ needs.version_meta.outputs.release_commit }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -131,46 +157,16 @@ jobs:
               --clobber
           done
 
-  fdroid_tag:
-    runs-on: ubuntu-latest
-    needs:
-      - version_meta
-      - tests
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.checkout_ref }}
-
-      - name: Create F-Droid tag if missing
-        env:
-          FDROID_TAG: ${{ needs.version_meta.outputs.fdroid_tag }}
-        run: |
-          if git rev-parse -q --verify "refs/tags/$FDROID_TAG" >/dev/null; then
-            echo "Tag $FDROID_TAG already exists; skipping."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          # 41898282 is GitHub's numeric user ID for github-actions[bot]:
-          # https://github.com/orgs/community/discussions/26560#discussioncomment-3531273
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "$FDROID_TAG"
-          git push origin "refs/tags/$FDROID_TAG"
-
   gplay_deploy:
     runs-on: ubuntu-latest
     needs:
       - version_meta
       - tests
-    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.checkout_ref }}
+          ref: ${{ needs.version_meta.outputs.release_commit }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:

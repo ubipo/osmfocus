@@ -18,11 +18,24 @@ Change the basemap (background layer) or add your own by going to the settings s
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="75">](https://f-droid.org/packages/net.pfiers.osmfocus) [<img height="75" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">](https://play.google.com/store/apps/details?id=net.pfiers.osmfocus)
 
+## Release Channels
+
+- [Google Play](https://play.google.com/store/apps/details?id=net.pfiers.osmfocus)
+- [F-Droid](https://f-droid.org/en/packages/net.pfiers.osmfocus/)  
+  New versions are picked up from the `release` branch by the F-Droid build server. This process can
+  take up to a day.
+- [GitHub Releases](https://github.com/ubipo/osmfocus/releases)
+
 ## Source, issue tracking and more info
 
 Visit [https://github.com/ubipo/osmfocus](https://github.com/ubipo/osmfocus)
 
 Other stuff by me: [https://pfiers.net](https://pfiers.net)
+
+## Branches & Tags
+
+- [`main`](https://github.com/ubipo/osmfocus/tree/main): active development. Commits tagged with `main/vX.Y.Z` are released to the `release` branch by CI.
+- [`release`](https://github.com/ubipo/osmfocus/tree/release): dedicated for semantic version CI releases. Each commit corresponds to a release and is tagged with `vX.Y.Z`.
 
 ## Notices
 

@@ -1,12 +1,19 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>classmethod</w>
       <w>fastlane</w>
       <w>fdroid</w>
+      <w>finditer</w>
       <w>fullmatch</w>
+      <w>keepends</w>
       <w>refname</w>
+      <w>rsplit</w>
+      <w>semver</w>
       <w>snackbar</w>
       <w>splitlines</w>
+      <w>startswith</w>
+      <w>subparsers</w>
       <w>temurin</w>
     </words>
   </dictionary>

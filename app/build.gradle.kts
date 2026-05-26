@@ -4,33 +4,6 @@ import java.io.FileNotFoundException
 import java.io.FileInputStream
 import java.util.Properties
 
-data class AndroidVersion(val name: String, val code: Int) {
-    companion object
-}
-
-fun AndroidVersion.Companion.fromGit(rootDir: File) = ProcessBuilder(
-    "bash",
-    rootDir.resolve("scripts/vcs_version.sh").absolutePath
-)
-    .directory(rootDir)
-    .redirectErrorStream(true)
-    .start()
-    .run {
-        val stdout = inputReader().use { it.readText() }.trim()
-        check(waitFor() == 0) { stdout.ifBlank { "<empty stdout>" } }
-        stdout
-    }
-    .lineSequence()
-    .filter(String::isNotBlank)
-    .map { line -> line.split('=', limit = 2) }
-    .associate { (key, value) -> key to value }
-    .run {
-        AndroidVersion(
-            name = getValue("semver"),
-            code = getValue("android_code").toInt(),
-        )
-    }
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
@@ -49,19 +22,14 @@ kotlin {
 
 android {
     compileSdk = 36
-    val androidVersion = try {
-        AndroidVersion.fromGit(rootDir)
-    } catch (e: Exception) {
-        logger.warn("Failed to read VCS version (${e.message}); using fallback version 0.0.0 (1).")
-        AndroidVersion("0.0.0", 1)
-    }
 
     defaultConfig {
         applicationId = "net.pfiers.osmfocus"
         minSdk = 23
         targetSdk = 36
-        versionName = androidVersion.name
-        versionCode = androidVersion.code
+        // Placeholders filled by `./scripts/version.py stamp`.
+        versionName = "0.0.1"
+        versionCode = 1
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

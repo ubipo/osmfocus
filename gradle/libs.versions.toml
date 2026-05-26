@@ -1,7 +1,7 @@
 [versions]
 benmanes-versions = "0.54.0"
 kotlin = "2.3.21"
-agp = "9.1.1"
+agp = "9.2.1"
 nav3 = "1.1.1"
 protobuf-gradle-plugin = "0.10.0"
 ksp = "2.3.6"
