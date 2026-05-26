@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: write
-  workflows: write
 
 jobs:
   version_meta:
@@ -83,6 +82,36 @@ jobs:
           echo "release_commit=$release_commit" >> "$GITHUB_OUTPUT"
 
           git fetch --tags --force origin
+
+          # Files/directories to include in release branch
+          FILES_TO_RELEASE=(
+            "app"
+            "gradle"
+            "fastlane/metadata"
+            "build.gradle.kts"
+            "gradle.properties"
+            "local.properties"
+            "gradlew"
+            "gradlew.bat"
+            "settings.gradle"
+            "LICENSE"
+            "NOTICE"
+            "README.md"
+          )
+
+          # Delete everything not in whitelist for release branch
+          git rm -rf .
+          
+          for item in "${FILES_TO_RELEASE[@]}"; do
+            if [ -e "$item" ]; then
+              git add "$item"
+            fi
+          done
+
+          # Only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "release: v$SEMVER"
+          fi
 
           if git rev-parse -q --verify "refs/tags/$RELEASE_TAG^{commit}" >/dev/null; then
             existing_tag_sha="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
