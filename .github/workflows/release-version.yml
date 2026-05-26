@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  workflows: write
 
 jobs:
   version_meta:
@@ -21,12 +22,23 @@ jobs:
       release_tag: ${{ steps.meta.outputs.release_tag }}
       semver: ${{ steps.meta.outputs.semver }}
       android_code: ${{ steps.meta.outputs.android_code }}
-      stamped_commit_sha: ${{ steps.stamp.outputs.stamped_commit_sha }}
+      release_commit: ${{ steps.stamp.outputs.release_commit }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
+
+      - name: Verify tag commit is on main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag commit $GITHUB_SHA is not reachable from origin/main."
+            exit 1
+          fi
 
       - name: Compute version metadata
         id: meta
