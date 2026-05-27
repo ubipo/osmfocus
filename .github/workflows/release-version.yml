@@ -82,6 +82,7 @@ jobs:
           echo "release_commit=$release_commit" >> "$GITHUB_OUTPUT"
 
           git fetch --tags --force origin
+          git fetch origin release || true
 
           # Files/directories to include in release branch
           FILES_TO_RELEASE=(
@@ -99,12 +100,22 @@ jobs:
             "README.md"
           )
 
-          # Delete everything not in whitelist for release branch
-          git rm -rf .
-          
+          # Build release branch history independently from main.
+          if git show-ref --verify --quiet refs/remotes/origin/release; then
+            git switch --force-create release-work refs/remotes/origin/release
+          else
+            git switch --orphan release-work
+          fi
+
+          # Clear tracked files from the branch tip (or orphan index).
+          if [ -n "$(git ls-files)" ]; then
+            git rm -rf .
+          fi
+
+          # Restore only release-branch files from the stamped release commit.
           for item in "${FILES_TO_RELEASE[@]}"; do
-            if [ -e "$item" ]; then
-              git add "$item"
+            if git cat-file -e "$release_commit:$item" 2>/dev/null; then
+              git restore --source="$release_commit" --staged --worktree -- "$item"
             fi
           done
 
@@ -121,10 +132,8 @@ jobs:
             fi
             echo "Tag $RELEASE_TAG already points to stamped commit; skipping tag creation."
           else
-            git push --force-with-lease origin "HEAD:refs/heads/release"
             git tag "$RELEASE_TAG" "$release_commit"
             git push origin "refs/tags/$RELEASE_TAG"
-            exit 0
           fi
 
           git push --force-with-lease origin "HEAD:refs/heads/release"
