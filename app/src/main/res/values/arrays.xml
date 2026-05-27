@@ -1,0 +1,13 @@
+<resources>
+    <!-- https://coolors.co/00ffff-ff0000-ff00ff-00ff00-ffff00-0000ff-ff8c00-7700ff -->
+    <array name="paletteVibrant">
+        <item>#00ffff</item>
+        <item>#ff0000</item>
+        <item>#ff00ff</item>
+        <item>#00ff00</item>
+        <item>#ffff00</item>
+        <item>#0000ff</item>
+        <item>#ff8c00</item>
+        <item>#007E00</item>
+    </array>
+</resources>

@@ -1,0 +1,2 @@
+- Always show map buttons
+- Don't zoom out when following location

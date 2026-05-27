@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <!-- <data android:="image/jpeg" /> -->
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".view.MainActivity"
+            android:theme="@style/AppTheme"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+<!--            <intent-filter android:label="@string/intent_oauth_callback">-->
+<!--                <action android:name="android.intent.action.VIEW" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <category android:name="android.intent.category.BROWSABLE" />-->
+<!--                <data android:scheme="net.pfiers.osmfocus" />-->
+<!--            </intent-filter>-->
+
+        </activity>
+
+        <activity
+            android:name=".view.ExceptionActivity"
+            android:theme="@style/ExceptionDialogTheme"
+            android:excludeFromRecents="true" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="net.pfiers.osmfocus.email_attachments_fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/email_attachments_filepaths" />
+
+        </provider>
+
+    </application>
+
+</manifest>

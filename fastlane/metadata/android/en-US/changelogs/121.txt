@@ -1,0 +1,1 @@
+- Hotfix for v1.2.0 regression

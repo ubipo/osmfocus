@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_device_location_searching">
+
+<!--    <target-->
+<!--        android:name="loadingPizzaCrustGroup"-->
+<!--        android:animation="@animator/rotation" />-->
+
+    <target
+        android:name="pizzaCrust"
+        android:animation="@animator/marker_device_location_animation" />
+
+
+</animated-vector>

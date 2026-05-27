@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option java_package = "net.pfiers.osmfocus";
+option java_multiple_files = true;
+
+message Settings {
+
+  message Location {
+    double longitude = 1;
+    double latitude = 2;
+  }
+
+  string baseMapUid = 1;
+
+  Location lastLocation = 2;
+
+  string apiBaseUrl = 3;
+
+  enum TagboxLongLines {
+    ELLIPSIZE = 0;
+    WRAP = 1;
+  }
+
+  TagboxLongLines tagboxLongLines = 4;
+
+  optional bool showNotes = 13;
+
+  bool showRelations = 5;
+
+  double lastZoomLevel = 6;
+
+  bool zoomBeyondBaseMapMax = 7;
+
+  string osmAuthState = 8;
+
+  bool showNodes = 10;
+
+  bool showWays = 11;
+
+  bool mapRotationGestureEnabled = 12;
+
+  string filterElements = 14;
+}

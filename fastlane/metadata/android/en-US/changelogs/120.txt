@@ -1,0 +1,3 @@
+- Added follow location
+- Bugfixes
+- Stability improvements

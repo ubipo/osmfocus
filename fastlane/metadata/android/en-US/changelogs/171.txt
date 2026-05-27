@@ -1,0 +1,1 @@
+- Fix basemap max zoom level not applying

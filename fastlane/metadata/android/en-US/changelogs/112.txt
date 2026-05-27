@@ -1,0 +1,4 @@
+Speed up loading times
+Fix crash on non-English locales (thanks @tuukka)
+Fix text wrapping on about page (thanks @yuhuitech)
+Add padding to tagboxes
