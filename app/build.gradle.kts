@@ -28,8 +28,8 @@ android {
         minSdk = 23
         targetSdk = 36
         // Placeholders filled by `./scripts/version.py stamp`.
-        versionName = "1.9.6"
-        versionCode = 1009006
+        versionName = "1.9.8"
+        versionCode = 1009008
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
