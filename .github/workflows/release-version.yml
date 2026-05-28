@@ -119,7 +119,7 @@ jobs:
             fi
           done
 
-          sed "s/{{SEMVER}}/$SEMVER/g" scripts/release-template-README.md > README.md
+          git show "$release_commit:scripts/release-template-README.md" | sed "s/{{SEMVER}}/$SEMVER/g" > README.md
           git add README.md
 
           # Only commit if there are changes
