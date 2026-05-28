@@ -119,6 +119,9 @@ jobs:
             fi
           done
 
+          sed "s/{{SEMVER}}/$SEMVER/g" scripts/release-template-README.md > README.md
+          git add README.md
+
           # Only commit if there are changes
           if ! git diff --cached --quiet; then
             git commit -m "release: v$SEMVER"
