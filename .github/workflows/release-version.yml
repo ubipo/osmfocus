@@ -63,7 +63,6 @@ jobs:
         env:
           SEMVER: ${{ steps.meta.outputs.semver }}
           ANDROID_CODE: ${{ steps.meta.outputs.android_code }}
-          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
         run: |
           python3 scripts/version.py stamp "$SEMVER" "$ANDROID_CODE"
 
@@ -78,17 +77,15 @@ jobs:
           fi
           git commit -m "release: $SEMVER"
 
-          release_commit="$(git rev-parse HEAD)"
-          echo "release_commit=$release_commit" >> "$GITHUB_OUTPUT"
+          stamped_source_commit="$(git rev-parse HEAD)"
 
-          git fetch --tags --force origin
           git fetch origin release || true
 
           # Files/directories to include in release branch
           FILES_TO_RELEASE=(
             "app"
             "gradle"
-            "fastlane/metadata"
+            "fastlane"
             "build.gradle.kts"
             "gradle.properties"
             "local.properties"
@@ -112,34 +109,34 @@ jobs:
             git rm -rf .
           fi
 
-          # Restore only release-branch files from the stamped release commit.
+          # Restore only release-branch files from the stamped source commit.
           for item in "${FILES_TO_RELEASE[@]}"; do
-            if git cat-file -e "$release_commit:$item" 2>/dev/null; then
-              git restore --source="$release_commit" --staged --worktree -- "$item"
+            if git cat-file -e "$stamped_source_commit:$item" 2>/dev/null; then
+              git restore --source="$stamped_source_commit" --staged --worktree -- "$item"
             fi
           done
 
-          git show "$release_commit:scripts/release-template-README.md" | sed "s/{{SEMVER}}/$SEMVER/g" > README.md
+          git show "$stamped_source_commit:scripts/release-template-README.md" | sed "s/{{SEMVER}}/$SEMVER/g" > README.md
           git add README.md
 
-          # Only commit if there are changes
-          if ! git diff --cached --quiet; then
-            git commit -m "release: v$SEMVER"
+          if git diff --cached --quiet; then
+            echo "Release branch commit produced no changes; expected at least version stamp or README update." >&2
+            exit 1
           fi
 
-          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG^{commit}" >/dev/null; then
-            existing_tag_sha="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
-            if [[ "$existing_tag_sha" != "$release_commit" ]]; then
-              echo "Tag $RELEASE_TAG already exists on $existing_tag_sha; expected $release_commit." >&2
-              exit 1
-            fi
-            echo "Tag $RELEASE_TAG already points to stamped commit; skipping tag creation."
-          else
-            git tag "$RELEASE_TAG" "$release_commit"
-            git push origin "refs/tags/$RELEASE_TAG"
-          fi
+          git commit -m "release: v$SEMVER"
 
-          git push --force-with-lease origin "HEAD:refs/heads/release"
+          release_commit="$(git rev-parse HEAD)"
+          echo "release_commit=$release_commit" >> "$GITHUB_OUTPUT"
+
+          # Pass by bundle to prevent pushing before tests pass
+          git bundle create release-commit.bundle "$release_commit"
+
+      - name: Upload release commit bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-commit-bundle
+          path: release-commit.bundle
 
   tests:
     runs-on: ubuntu-latest
@@ -148,7 +145,16 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.release_commit }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-commit-bundle
+
+      - name: Import release commit from bundle
+        run: |
+          git fetch ./release-commit.bundle HEAD
+          git checkout ${{ needs.version_meta.outputs.release_commit }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -158,18 +164,77 @@ jobs:
       - name: Run tests
         run: ./gradlew test
 
+  push_release_branch:
+    runs-on: ubuntu-latest
+    needs:
+      - version_meta
+      - tests
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-commit-bundle
+
+      - name: Import release commit from bundle
+        run: git fetch ./release-commit.bundle HEAD
+
+      - name: Push tag and release branch
+        shell: bash
+        env:
+          RELEASE_COMMIT: ${{ needs.version_meta.outputs.release_commit }}
+          RELEASE_TAG: ${{ needs.version_meta.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch --tags --force origin
+          git fetch origin release || true
+
+          git checkout "$RELEASE_COMMIT"
+
+          # Push the release tag (points to the stamped commit on release history).
+          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG^{commit}" >/dev/null; then
+            existing_tag_sha="$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+            if [[ "$existing_tag_sha" != "$RELEASE_COMMIT" ]]; then
+              echo "Tag $RELEASE_TAG already exists on $existing_tag_sha; expected $RELEASE_COMMIT." >&2
+              exit 1
+            fi
+            echo "Tag $RELEASE_TAG already points to stamped commit; skipping tag creation."
+          else
+            git tag "$RELEASE_TAG" "$RELEASE_COMMIT"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+
+          git push --force-with-lease origin "$RELEASE_COMMIT:refs/heads/release"
+
   github_release:
     runs-on: ubuntu-latest
     needs:
       - version_meta
       - tests
+      - push_release_branch
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.release_commit }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-commit-bundle
+
+      - name: Import release commit from bundle
+        run: |
+          git fetch ./release-commit.bundle HEAD
+          git checkout ${{ needs.version_meta.outputs.release_commit }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
@@ -235,7 +300,16 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          ref: ${{ needs.version_meta.outputs.release_commit }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-commit-bundle
+
+      - name: Import release commit from bundle
+        run: |
+          git fetch ./release-commit.bundle HEAD
+          git checkout ${{ needs.version_meta.outputs.release_commit }}
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
