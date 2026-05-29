@@ -133,7 +133,7 @@ jobs:
           git bundle create release-commit.bundle HEAD
 
       - name: Upload release commit bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-commit-bundle
           path: release-commit.bundle
@@ -147,7 +147,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: release-commit-bundle
 
@@ -175,7 +175,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: release-commit-bundle
 
@@ -227,7 +227,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: release-commit-bundle
 
@@ -252,7 +252,7 @@ jobs:
         env:
           SIGNING_KEYSTORE_FILE: ../android-signing-keystore.jks
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_ALIAS: ${{ vars.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
       - name: Create GitHub release if missing
@@ -276,18 +276,25 @@ jobs:
           RELEASE_TAG: ${{ needs.version_meta.outputs.release_tag }}
         run: |
           version="${RELEASE_TAG#v}"
+          upload_dir="$(mktemp -d)"
+          trap 'rm -rf "$upload_dir"' EXIT
 
           for flavor in fdroid gplay; do
             apk_dir="app/build/outputs/apk/$flavor/release"
             apk_path="$(find "$apk_dir" -maxdepth 1 -type f -name '*.apk' | head -n 1)"
             metadata_path="$apk_dir/output-metadata.json"
+            target_apk="$upload_dir/net.pfiers.osmfocus-${version}-${flavor}.apk"
+            target_metadata="$upload_dir/net.pfiers.osmfocus-${version}-${flavor}-output-metadata.json"
 
             test -n "$apk_path"
             test -f "$metadata_path"
 
+            cp "$apk_path" "$target_apk"
+            cp "$metadata_path" "$target_metadata"
+
             gh release upload "$RELEASE_TAG" \
-              "$apk_path#net.pfiers.osmfocus-${version}-${flavor}.apk" \
-              "$metadata_path#net.pfiers.osmfocus-${version}-${flavor}-output-metadata.json" \
+              "$target_apk" \
+              "$target_metadata" \
               --clobber
           done
 
@@ -302,7 +309,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.dev_tag) || github.ref }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: release-commit-bundle
 
@@ -338,5 +345,5 @@ jobs:
         env:
           SIGNING_KEYSTORE_FILE: ../android-signing-keystore.jks
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_ALIAS: ${{ vars.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
