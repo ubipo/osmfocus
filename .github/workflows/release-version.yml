@@ -129,8 +129,8 @@ jobs:
           release_commit="$(git rev-parse HEAD)"
           echo "release_commit=$release_commit" >> "$GITHUB_OUTPUT"
 
-          # Pass by bundle to prevent pushing before tests pass
-          git bundle create release-commit.bundle "$release_commit"
+          # Pass by bundle to prevent pushing before tests pass.
+          git bundle create release-commit.bundle HEAD
 
       - name: Upload release commit bundle
         uses: actions/upload-artifact@v4
