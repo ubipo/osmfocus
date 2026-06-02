@@ -1,0 +1,17 @@
+*.iml
+.gradle
+/local.properties
+.DS_Store
+/build
+/.kotlin
+/captures
+.externalNativeBuild
+.cxx
+__pycache__
+/scratch
+/vendor
+/android-signing-keystore.jks
+/play-store-credentials.json
+/secrets.properties
+/.bundle
+/fastlane/report.xml
