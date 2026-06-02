@@ -82,6 +82,12 @@ jobs:
           git fetch origin release || true
 
           # Files/directories to include in release branch
+          mapfile -t GITIGNORE_FILES < <(
+            find . -path './.git' -prune -o -name .gitignore -type f -print \
+              | sed 's#^\./##' \
+              | sort
+          )
+
           FILES_TO_RELEASE=(
             "app"
             "gradle"
@@ -96,6 +102,7 @@ jobs:
             "NOTICE"
             "README.md"
           )
+          FILES_TO_RELEASE+=("${GITIGNORE_FILES[@]}")
 
           # Build release branch history independently from main.
           if git show-ref --verify --quiet refs/remotes/origin/release; then
