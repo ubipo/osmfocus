@@ -16,14 +16,15 @@ fun HtmlText(
     AndroidView(
         factory = { context ->
             TextView(context).apply {
-                movementMethod = LinkMovementMethod.getInstance()
-                linksClickable = true
                 setTextIsSelectable(selectable)
+                linksClickable = true
+                movementMethod = LinkMovementMethod.getInstance()
             }
         },
         update = { textView ->
             textView.text = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY)
             textView.setTextIsSelectable(selectable)
+            textView.movementMethod = LinkMovementMethod.getInstance()
         },
         modifier = modifier,
     )
