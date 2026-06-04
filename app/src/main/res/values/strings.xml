@@ -107,11 +107,8 @@
     <string name="setting_filter_elements_all">All elements</string>
     <string name="setting_filter_elements_custom">Custom filters configured</string>
     <string name="setting_filter_elements_dialog_title">Filter elements</string>
-    <string name="setting_filter_elements_format">One filter per line, use \'-\' to invert. Examples:
-key=value
-key
-source:*=Name for my * source
--building=dormitory</string>
+    <string name="setting_filter_elements_format">One filter per line. Use \'-\' to invert:</string>
+    <string name="setting_filter_elements_examples">key=value\nkey\nsource:*=*GRB*\n-building=dormitory</string>
     <string name="setting_show_notes">Show notes</string>
     <string name="setting_show_notes_shown">Shown</string>
     <string name="setting_show_notes_hidden">Hidden</string>

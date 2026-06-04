@@ -15,11 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -392,6 +395,8 @@ private fun FilterElementsDialog(
     onConfirm: (String) -> Unit,
 ) {
     var editedFilterLines by rememberSaveable(oldFilterLines) { mutableStateOf(oldFilterLines) }
+    val filterFormatText = stringResource(R.string.setting_filter_elements_format)
+    val filterExamplesText = stringResource(R.string.setting_filter_elements_examples)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -403,7 +408,24 @@ private fun FilterElementsDialog(
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 5,
                 supportingText = {
-                    Text(stringResource(R.string.setting_filter_elements_format))
+                    Column {
+                        Text(filterFormatText)
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                        ) {
+                            Text(
+                                text = filterExamplesText,
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                ),
+                            )
+                        }
+                    }
                 },
             )
         },
